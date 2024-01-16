@@ -1,6 +1,23 @@
-# moving-kissing-circles
+# Moving Kissing Circles
 
-This template should help get you started developing with Vue 3 in Vite.
+The goal of this project is create a small web application that will reander
+a `<canvas>` element with bunch of kissing circles (TODO: add link to concept)
+that shift around while always staying kissing circles.
+
+## Design Brainstorming
+
+My initial thought for implementation is
+* Generate random set of points that will be the centers of the circles
+* Determine radiuses for circles to make them kissing circles. This method should
+** Be a deterministic method. The same set of input points should always
+generate the same set of kissing circles with those input points as centers.
+** Be "smooth" under small peterbations of the input center points. This way we
+can smoothly move the center points to new locations and have the circles look
+like they are moving  smoothly as well.
+* Determine new points to move the center points to.
+* Animate the transition.
+** Move the center points steadily/smoothly from starting position to their
+new positions, and regenerate the kissing circles for each step along the way.
 
 ## Recommended IDE Setup
 
