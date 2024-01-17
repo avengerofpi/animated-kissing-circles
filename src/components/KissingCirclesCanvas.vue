@@ -1,7 +1,7 @@
 <template>
   <h1 class="green">{{ msg }}, now bugger off</h1>
-  <button type="button" @click="regenerate">Regenerate Circles</button>
-  <button type="button" @click="animate">Animate Circles</button>
+  <button type="button" @click="regenerate" :disabled=animating>Regenerate Circles</button>
+  <button type="button" @click="animate" :disabled=animating>Animate Circles</button>
   <div>
     <canvas ref="canvasRef" width="900" height="600" style="border:1px solid #d3d3d3;"></canvas>
   </div>
@@ -17,10 +17,11 @@ import { ref, onMounted } from 'vue'
 const canvasRef = ref(null)
 const ctxRef = ref(null)
 const centersRef = ref([])
-const n = 50;
+const n = 6;
+const nextCentersRef = ref([])
+const animating = ref(false)
 
 onMounted(() => {
-  console.dir(canvasRef.value)
   ctxRef.value = canvasRef.value.getContext("2d") as CanvasRenderingContext2D;
 
   generateCircles()
@@ -34,17 +35,27 @@ function generateCircles() {
 
 function renderKissingCircles(centers: any[]) {
   const ctx: CanvasRenderingContext2D = ctxRef.value as CanvasRenderingContext2D
+  ctx.reset()
   for (let i=0; i<n; i++) {
     let a = centers[i]
     let r = Number.MAX_SAFE_INTEGER
+    let dstCenter: any[] = a
     for (let j=0; j<n; j++) {
       if (i === j) continue;
       let b = centers[j]
-      r = Math.min(r, dist(a, b) / 2)
+      let rNext = dist(a, b) / 2
+      if (rNext < r) {
+        r = rNext
+        dstCenter = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]
+      }
     }
     ctx.beginPath();
     ctx.arc(a[0], a[1], r ,0,2*Math.PI);
     // ctx.strokeText(parseInt(r.toString()), a[0]-5, a[1])
+    ctx.stroke();
+    // Add line segment pointing to nearest neighbor
+    ctx.moveTo(a[0], a[1]);
+    ctx.lineTo(dstCenter[0], dstCenter[1])
     ctx.stroke();
   }
 }
@@ -79,32 +90,44 @@ function regenerate() {
   generateCircles()
 }
 
+let start: number, previousTimeStamp: number;
+let animationTime = 2000 // milliseconds
+
+function isAnimating() { return animating.value; }
 function animate() {
-  const ctx: CanvasRenderingContext2D = ctxRef.value as CanvasRenderingContext2D
-  const srcCenters = centersRef.value
-  const dstCenters: any[] = generateCenters()
-  const stepSizes: any[] = []
-  const numSteps = 100
-  for (let i=0; i<n; i++) {
-    let xStepSize = dstCenters[i][0]
-    xStepSize = xStepSize - srcCenters[i][0]
-    xStepSize = xStepSize / numSteps
-    let yStepSize = (dstCenters[i][1] - srcCenters[i][1]) / numSteps
-    stepSizes.push([xStepSize, yStepSize])
+  nextCentersRef.value = generateCenters()
+  window.requestAnimationFrame(step);
+}
+
+function step(timeStamp: number) {
+  if (!isAnimating()) {
+    animating.value = true
+    start = timeStamp;
+    previousTimeStamp = 0
   }
-  console.dir(stepSizes)
-  // Direct ref, not a copy, overwriting!
-  let newCenters = srcCenters
-  for (let j=0; j<numSteps; j++) {
-    setTimeout(() => {
-      for (let i=0; i<n; i++) {
-        newCenters[i][0] += stepSizes[i][0]
-        newCenters[i][1] += stepSizes[i][1]
-      }
-      renderKissingCircles(newCenters)
-    }, 150)
+  const elapsed = timeStamp - start;
+
+  const stepSize = Math.min(1, elapsed / animationTime)
+  if (elapsed > 0 && timeStamp !== previousTimeStamp) {
+    let newCenters: any[] = []
+    for (let i=0; i<n; i++) {
+      const x = centersRef.value[i][0] + (nextCentersRef.value[i][0] - centersRef.value[i][0]) * stepSize
+      const y = centersRef.value[i][1] + (nextCentersRef.value[i][1] - centersRef.value[i][1]) * stepSize
+      newCenters.push([x, y])
+    }
+    renderKissingCircles(newCenters)
+  }
+
+  if (elapsed < animationTime) {
+    previousTimeStamp = timeStamp;
+    window.requestAnimationFrame(step);
+  } else {
+    animating.value = false
+    centersRef.value = nextCentersRef.value
   }
 }
+
+
 </script>
 
 <style scoped>
