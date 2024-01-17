@@ -2,6 +2,7 @@
   <h1 class="green">{{ msg }}, now bugger off</h1>
   <button type="button" @click="regenerate" :disabled=animating>Regenerate Circles</button>
   <button type="button" @click="animate" :disabled=animating>Animate Circles</button>
+  <button type="button" @click="stopAnimationAfterCurrentSet" v-if=animating>Stop Animation</button>
   <div>
     <canvas ref="canvasRef" width="900" height="600" style="border:1px solid #d3d3d3;"></canvas>
   </div>
@@ -20,6 +21,7 @@ const centersRef = ref([])
 const n = 6;
 const nextCentersRef = ref([])
 const animating = ref(false)
+const stopAnimation = ref(false)
 
 onMounted(() => {
   ctxRef.value = canvasRef.value.getContext("2d") as CanvasRenderingContext2D;
@@ -95,6 +97,7 @@ let animationTime = 2000 // milliseconds
 
 function isAnimating() { return animating.value; }
 function animate() {
+  stopAnimation.value = false
   nextCentersRef.value = generateCenters()
   window.requestAnimationFrame(step);
 }
@@ -124,9 +127,15 @@ function step(timeStamp: number) {
   } else {
     animating.value = false
     centersRef.value = nextCentersRef.value
+    if (!stopAnimation.value) {
+      animate()
+    }
   }
 }
 
+function stopAnimationAfterCurrentSet() {
+  stopAnimation.value = true
+}
 
 </script>
 
