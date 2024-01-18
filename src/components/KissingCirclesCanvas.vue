@@ -2,7 +2,10 @@
   <h1 class="green">{{ msg }}, now bugger off</h1>
   <button type="button" @click="regenerate" :disabled=animating>Regenerate Circles</button>
   <button type="button" @click="animate" :disabled=animating>Animate Circles</button>
-  <button type="button" @click="stopAnimationAfterCurrentSet" v-if=animating>Stop Animation</button>
+  <button type="button" @click="stopAnimationAfterCurrentSet" :disabled="!animating || stopAnimationFlag">
+    <span v-if="!stopAnimationFlag">Stop Animation</span>
+    <span v-if="stopAnimationFlag">Pending Stop...</span>
+  </button>
   <div>
     <canvas ref="canvasRef" width="900" height="600" style="border:1px solid #d3d3d3;"></canvas>
   </div>
@@ -21,7 +24,9 @@ const centersRef = ref([])
 const n = 6;
 const nextCentersRef = ref([])
 const animating = ref(false)
-const stopAnimation = ref(false)
+const stopAnimationFlag = ref(false)
+const animationTime = 2000 // milliseconds
+let start: number, previousTimeStamp: number;
 
 onMounted(() => {
   ctxRef.value = canvasRef.value.getContext("2d") as CanvasRenderingContext2D;
@@ -92,22 +97,17 @@ function regenerate() {
   generateCircles()
 }
 
-let start: number, previousTimeStamp: number;
-let animationTime = 2000 // milliseconds
-
-function isAnimating() { return animating.value; }
 function animate() {
-  stopAnimation.value = false
+  stopAnimationFlag.value = false
   nextCentersRef.value = generateCenters()
+  animating.value = true
+  // Identical to `timeStamp` used in `window.requestAnimationFrame`
+  start = document.timeline.currentTime as number;
+  previousTimeStamp = 0
   window.requestAnimationFrame(step);
 }
 
 function step(timeStamp: number) {
-  if (!isAnimating()) {
-    animating.value = true
-    start = timeStamp;
-    previousTimeStamp = 0
-  }
   const elapsed = timeStamp - start;
 
   const stepSize = Math.min(1, elapsed / animationTime)
@@ -127,14 +127,16 @@ function step(timeStamp: number) {
   } else {
     animating.value = false
     centersRef.value = nextCentersRef.value
-    if (!stopAnimation.value) {
+    if (!stopAnimationFlag.value) {
       animate()
+    } else {
+      stopAnimationFlag.value = false;
     }
   }
 }
 
 function stopAnimationAfterCurrentSet() {
-  stopAnimation.value = true
+  stopAnimationFlag.value = true
 }
 
 </script>
