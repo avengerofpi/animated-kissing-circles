@@ -28,6 +28,16 @@ const stopAnimationFlag = ref(false)
 const animationTime = 2000 // milliseconds
 let start: number, previousTimeStamp: number;
 
+class Coor {
+  x: number
+  y: number
+
+  public constructor(x: number, y: number) {
+    this.x = x
+    this.y = y
+  }
+}
+
 onMounted(() => {
   ctxRef.value = canvasRef.value.getContext("2d") as CanvasRenderingContext2D;
 
@@ -35,44 +45,44 @@ onMounted(() => {
 })
 
 function generateCircles() {
-  const centers = generateCenters()
+  const centers: Coor[] = generateCenters()
   centersRef.value = centers
   renderKissingCircles(centers);
 }
 
-function renderKissingCircles(centers: any[]) {
+function renderKissingCircles(centers: Coor[]) {
   const ctx: CanvasRenderingContext2D = ctxRef.value as CanvasRenderingContext2D
   ctx.reset()
   for (let i=0; i<n; i++) {
-    let a = centers[i]
-    let r = Number.MAX_SAFE_INTEGER
-    let dstCenter: any[] = a
+    let a: Coor = centers[i]
+    let r: number = Number.MAX_SAFE_INTEGER
+    let dstCenter: Coor = a
     for (let j=0; j<n; j++) {
       if (i === j) continue;
-      let b = centers[j]
-      let rNext = dist(a, b) / 2
+      let b: Coor = centers[j]
+      let rNext: number = dist(a, b) / 2
       if (rNext < r) {
         r = rNext
-        dstCenter = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]
+        dstCenter = new Coor((a.x + b.x) / 2, (a.y + b.y) / 2)
       }
     }
     ctx.beginPath();
-    ctx.arc(a[0], a[1], r ,0,2*Math.PI);
+    ctx.arc(a.x, a.y, r ,0,2*Math.PI);
     // ctx.strokeText(parseInt(r.toString()), a[0]-5, a[1])
     ctx.stroke();
     // Add line segment pointing to nearest neighbor
-    ctx.moveTo(a[0], a[1]);
-    ctx.lineTo(dstCenter[0], dstCenter[1])
+    ctx.moveTo(a.x, a.y);
+    ctx.lineTo(dstCenter.x, dstCenter.y)
     ctx.stroke();
   }
 }
 
-function generateCenters(): any[] {
+function generateCenters(): Coor[] {
   const ctx: CanvasRenderingContext2D = ctxRef.value as CanvasRenderingContext2D
   const height = ctx.canvas.height;
   const width = ctx.canvas.width;
 
-  const centers: any[] = []
+  const centers: Coor[] = []
   if (n <= 0) return centers;
 
   const boarderSize = Math.max(height, width) / 10
@@ -82,13 +92,13 @@ function generateCenters(): any[] {
   for (let i=0; i<n; i++) {
     let x: number = boarderSize + xMax*Math.random()
     let y: number = boarderSize + yMax*Math.random()
-    centers.push([x, y])
+    centers.push(new Coor(x, y))
   }
   return centers;
 }
 
-function dist(a: number[], b: number[]) {
-  return Math.sqrt((a[0] - b[0])**2 + (a[1] - b[1])**2)
+function dist(a: Coor, b: Coor): number {
+  return Math.sqrt((a.x - b.x)**2 + (a.y - b.y)**2)
 }
 
 function regenerate() {
@@ -112,11 +122,11 @@ function step(timeStamp: number) {
 
   const stepSize = Math.min(1, elapsed / animationTime)
   if (elapsed > 0 && timeStamp !== previousTimeStamp) {
-    let newCenters: any[] = []
+    let newCenters: Coor[] = []
     for (let i=0; i<n; i++) {
-      const x = centersRef.value[i][0] + (nextCentersRef.value[i][0] - centersRef.value[i][0]) * stepSize
-      const y = centersRef.value[i][1] + (nextCentersRef.value[i][1] - centersRef.value[i][1]) * stepSize
-      newCenters.push([x, y])
+      const x = centersRef.value[i].x + (nextCentersRef.value[i].x - centersRef.value[i].x) * stepSize
+      const y = centersRef.value[i].y + (nextCentersRef.value[i].y - centersRef.value[i].y) * stepSize
+      newCenters.push(new Coor(x, y))
     }
     renderKissingCircles(newCenters)
   }
