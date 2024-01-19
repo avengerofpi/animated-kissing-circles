@@ -1,8 +1,10 @@
 # Moving Kissing Circles
 
-The goal of this project is create a small web application that will reander
-a `<canvas>` element with bunch of kissing circles (TODO: add link to concept)
-that shift around while always staying kissing circles.
+The goal of this project is create a small web application that will render
+a `<canvas>` element with bunch of **kissing circles**
+that shift around while always staying kissing circles. Kissing circles are circles
+that are tangential to each other. See, for example,
+[Descartes' Theorem](https://en.wikipedia.org/wiki/Descartes%27_theorem).
 
 ## Design Brainstorming
 
