@@ -17,16 +17,18 @@ defineProps<{
 }>()
 
 import { ref, onMounted } from 'vue'
+import type { Ref } from 'vue'
 
-const canvasRef = ref(null)
-const ctxRef = ref(null)
-const centersRef = ref([])
 const n = 6;
-const nextCentersRef = ref([])
-const animating = ref(false)
-const stopAnimationFlag = ref(false)
-const animationTime = 2000 // milliseconds
-let start: number, previousTimeStamp: number;
+const canvasRef: Ref<HTMLCanvasElement | null> = ref(null)
+const ctxRef: Ref<CanvasRenderingContext2D | null> = ref(null)
+const centersRef: Ref<Coor[]> = ref([])
+const nextCentersRef: Ref<Coor[]> = ref([])
+const animating: Ref<boolean> = ref(false)
+const stopAnimationFlag: Ref<boolean> = ref(false)
+const animationTime: number = 2000 // milliseconds
+let start: number
+let previousTimeStamp: number;
 
 class Coor {
   x: number
@@ -39,9 +41,13 @@ class Coor {
 }
 
 onMounted(() => {
-  ctxRef.value = canvasRef.value.getContext("2d") as CanvasRenderingContext2D;
+  if (canvasRef.value) {
+    ctxRef.value = canvasRef.value.getContext("2d");
+    generateCircles()
+  } else {
+    console.error('ERROR! Canvas element not available after mount.')
+  }
 
-  generateCircles()
 })
 
 function generateCircles() {
