@@ -52,9 +52,31 @@ onMounted(() => {
 })
 
 function generateCircles() {
+  const ctx: CanvasRenderingContext2D = ctxRef.value as CanvasRenderingContext2D
+  ctx.reset()
   const centers: Coor[] = generateCenters()
   srcCentersRef.value = centers
   renderKissingCircles(centers);
+}
+
+function generateCenters(): Coor[] {
+  const ctx: CanvasRenderingContext2D = ctxRef.value as CanvasRenderingContext2D
+  const height = ctx.canvas.height;
+  const width = ctx.canvas.width;
+
+  const centers: Coor[] = []
+  if (n <= 0) return centers;
+
+  const boarderSize = Math.max(height, width) / 10
+  const xMax = width - 2*boarderSize
+  const yMax = height - 2*boarderSize
+
+  for (let i=0; i<n; i++) {
+    let x: number = boarderSize + xMax*Math.random()
+    let y: number = boarderSize + yMax*Math.random()
+    centers.push(new Coor(x, y))
+  }
+  return centers;
 }
 
 function renderKissingCircles(centers: Coor[]) {
@@ -84,33 +106,11 @@ function renderKissingCircles(centers: Coor[]) {
   }
 }
 
-function generateCenters(): Coor[] {
-  const ctx: CanvasRenderingContext2D = ctxRef.value as CanvasRenderingContext2D
-  const height = ctx.canvas.height;
-  const width = ctx.canvas.width;
-
-  const centers: Coor[] = []
-  if (n <= 0) return centers;
-
-  const boarderSize = Math.max(height, width) / 10
-  const xMax = width - 2*boarderSize
-  const yMax = height - 2*boarderSize
-
-  for (let i=0; i<n; i++) {
-    let x: number = boarderSize + xMax*Math.random()
-    let y: number = boarderSize + yMax*Math.random()
-    centers.push(new Coor(x, y))
-  }
-  return centers;
-}
-
 function dist(a: Coor, b: Coor): number {
   return Math.sqrt((a.x - b.x)**2 + (a.y - b.y)**2)
 }
 
 function regenerate() {
-  const ctx: CanvasRenderingContext2D = ctxRef.value as CanvasRenderingContext2D
-  ctx.reset()
   generateCircles()
 }
 
