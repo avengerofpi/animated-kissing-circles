@@ -2,7 +2,7 @@
   <h1 class="green">{{ msg }}, now bugger off</h1>
   <button type="button" @click="regenerate" :disabled=animating>Regenerate Circles</button>
   <button type="button" @click="animate" :disabled=animating>Animate Circles</button>
-  <button type="button" @click="stopAnimationAfterCurrentSet" :disabled="!animating || stopAnimationFlag">
+  <button type="button" @click="stopAnimationAfterCurrentStep" :disabled="!animating || stopAnimationFlag">
     <span v-if="!stopAnimationFlag">Stop Animation</span>
     <span v-if="stopAnimationFlag">Pending Stop...</span>
   </button>
@@ -22,8 +22,9 @@ import type { Ref } from 'vue'
 const n = 6;
 const canvasRef: Ref<HTMLCanvasElement | null> = ref(null)
 const ctxRef: Ref<CanvasRenderingContext2D | null> = ref(null)
-const centersRef: Ref<Coor[]> = ref([])
-const nextCentersRef: Ref<Coor[]> = ref([])
+const srcCentersRef: Ref<Coor[]> = ref([])
+const dstCentersRef: Ref<Coor[]> = ref([])
+const currCentersRef: Ref<Coor[]> = ref([])
 const animating: Ref<boolean> = ref(false)
 const stopAnimationFlag: Ref<boolean> = ref(false)
 const animationTime: number = 2000 // milliseconds
@@ -52,7 +53,7 @@ onMounted(() => {
 
 function generateCircles() {
   const centers: Coor[] = generateCenters()
-  centersRef.value = centers
+  srcCentersRef.value = centers
   renderKissingCircles(centers);
 }
 
@@ -114,8 +115,7 @@ function regenerate() {
 }
 
 function animate() {
-  stopAnimationFlag.value = false
-  nextCentersRef.value = generateCenters()
+  dstCentersRef.value = generateCenters()
   animating.value = true
   // Identical to `timeStamp` used in `window.requestAnimationFrame`
   start = document.timeline.currentTime as number;
@@ -124,16 +124,23 @@ function animate() {
 }
 
 function step(timeStamp: number) {
+  if (stopAnimationFlag.value) {
+    stopAnimationFlag.value = false
+    animating.value = false
+    srcCentersRef.value = currCentersRef.value
+    return
+  }
   const elapsed = timeStamp - start;
 
   const stepSize = Math.min(1, elapsed / animationTime)
   if (elapsed > 0 && timeStamp !== previousTimeStamp) {
     let newCenters: Coor[] = []
     for (let i=0; i<n; i++) {
-      const x = centersRef.value[i].x + (nextCentersRef.value[i].x - centersRef.value[i].x) * stepSize
-      const y = centersRef.value[i].y + (nextCentersRef.value[i].y - centersRef.value[i].y) * stepSize
+      const x = srcCentersRef.value[i].x + (dstCentersRef.value[i].x - srcCentersRef.value[i].x) * stepSize
+      const y = srcCentersRef.value[i].y + (dstCentersRef.value[i].y - srcCentersRef.value[i].y) * stepSize
       newCenters.push(new Coor(x, y))
     }
+    currCentersRef.value = newCenters
     renderKissingCircles(newCenters)
   }
 
@@ -142,16 +149,12 @@ function step(timeStamp: number) {
     window.requestAnimationFrame(step);
   } else {
     animating.value = false
-    centersRef.value = nextCentersRef.value
-    if (!stopAnimationFlag.value) {
-      animate()
-    } else {
-      stopAnimationFlag.value = false;
-    }
+    srcCentersRef.value = dstCentersRef.value
+    animate()
   }
 }
 
-function stopAnimationAfterCurrentSet() {
+function stopAnimationAfterCurrentStep() {
   stopAnimationFlag.value = true
 }
 
