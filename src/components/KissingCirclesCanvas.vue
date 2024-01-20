@@ -39,27 +39,106 @@ class Coor {
     this.x = x
     this.y = y
   }
+
+  public static fromCoorPair(coorPair: number[]) {
+    return new Coor(coorPair[0], coorPair[1])
+  }
+}
+
+class Circle {
+  center: Coor
+  radius: number | undefined
+
+  public constructor(x: number, y: number, radius: number | undefined = undefined) {
+    this.center = new Coor(x, y)
+    this.radius = radius
+  }
+}
+
+class LineSegment {
+  src: Coor
+  dst: Coor
+
+  public constructor(src: Coor, dst: Coor) {
+    this.src = src
+    this.dst = dst
+  }
+
+  public static fromXYXY(srcX: number, srcY: number, dstX: number, dstY: number) {
+    return new LineSegment(new Coor(srcX, srcY), new Coor(dstX, dstY))
+  }
+
+  public static fromCoorXY(src: Coor, dstX: number, dstY: number) {
+    return new LineSegment(src, new Coor(dstX, dstY))
+  }
+
+  public static fromXYCoor(srcX: number, srcY: number, dst: Coor) {
+    return new LineSegment(new Coor(srcX, srcY), dst)
+  }
+
+  public length(): number {
+    return dist(this.src, this.dst)
+  }
+}
+
+class CircleWithRadiusLine {
+  center: Coor
+  radius: number
+  radiusLine: LineSegment | undefined
+
+  public constructor(center: Coor, radiusLineDst: Coor | undefined = undefined) {
+    this.center = center
+    if (radiusLineDst) {
+      this.radiusLine = new LineSegment(this.center, radiusLineDst)
+    } else {
+      this.radiusLine = new LineSegment(this.center, this.center)
+    }
+    this.radius = this.radiusLine.length()
+  }
+
+  public setRadiusLineDst(radiusLineDst: Coor) {
+    this.radiusLine = new LineSegment(this.center, radiusLineDst)
+    this.radius = this.radiusLine.length()
+  }
 }
 
 onMounted(() => {
   if (canvasRef.value) {
     ctxRef.value = canvasRef.value.getContext("2d");
-    generateCircles()
+    initCanvas()
   } else {
     console.error('ERROR! Canvas element not available after mount.')
   }
 
 })
 
-function generateCircles() {
-  const ctx: CanvasRenderingContext2D = ctxRef.value as CanvasRenderingContext2D
-  ctx.reset()
+function initCanvas() {
+  resetCanvasWithNewCircles()
+}
+
+function resetCanvasWithNewCircles() {
   const centers: Coor[] = generateCenters()
   srcCentersRef.value = centers
+
+  const ctx: CanvasRenderingContext2D = ctxRef.value as CanvasRenderingContext2D
+  ctx.reset()
   renderKissingCircles(centers);
 }
 
 function generateCenters(): Coor[] {
+  // const optionsArray: number[][][] = [
+  //   [[100,100],[150,100],[250,100],[400,100],[600,100],[700,100]]
+  //   // [[,],[,],[,],[,],[,],[,],],
+  //   // [[,],[,],[,],[,],[,],[,],],
+  //   // [[,],[,],[,],[,],[,],[,],],
+  // ]
+  // const options: Coor[][] = optionsArray.map((o: number[][]) => {
+  //   return o.map((coorPair: number[]) => Coor.fromCoorPair(coorPair)) as Coor[]
+  // }) as Coor[][]
+  // console.dir(options)
+  // return options[0]
+
+  /* */
   const ctx: CanvasRenderingContext2D = ctxRef.value as CanvasRenderingContext2D
   const height = ctx.canvas.height;
   const width = ctx.canvas.width;
@@ -77,41 +156,99 @@ function generateCenters(): Coor[] {
     centers.push(new Coor(x, y))
   }
   return centers;
+  /* */
+}
+
+function computeRadii(centers: Coor[]): CircleWithRadiusLine[] {
+  // is there a better way to copy this array?
+  const unprocessedCenters: Coor[] = new Array(...centers).reverse()
+  // const circlesWithRadiusLine = centers.map((center: Coor) => new CircleWithRadiusLine(center))
+  let circlesWithRadiusLine: CircleWithRadiusLine[] = []
+
+  while (unprocessedCenters.length) {
+    const center = unprocessedCenters.pop() as Coor
+    console.log("-----------------------------------------")
+    console.log(`  center: ("x":${center.x.toFixed(1)}, "y":${center.y.toFixed(1)}`)
+    console.log(`  unprocessedCenters: ${unprocessedCenters.length.toFixed(1)}`)
+    console.log(`  circlesWithRadiusLine: ${circlesWithRadiusLine.length}`)
+    // const potentialRadii = unprocessedCenters.map((B) => dist(center, B))
+    //   .concat(circlesWithRadiusLine.map((c) => Math.abs(dist(center, c.center) - c.radius)))
+    // const radius = Math.min(...potentialRadii)
+    let r: number = Number.MAX_VALUE
+    let dstCenter: Coor = center
+    let radiusLineEndpoint: Coor = new Coor(0,0)
+    // First circle will be 1/3 distance between first point and nearest point.
+    if (circlesWithRadiusLine.length === 0) {
+      unprocessedCenters.forEach((B) => {
+        const rNext = dist(center, B)
+        if (rNext < r) {
+          r = rNext
+          dstCenter = B
+          radiusLineEndpoint = new Coor(
+            center.x + (dstCenter.x - center.x) / 3,
+            center.y + (dstCenter.y - center.y) / 3
+          )
+        }
+      })
+    }
+    // Remaining circles will generate based on nearest existing circle
+    else {
+      circlesWithRadiusLine.forEach((c) => {
+        const rNext = Math.abs(dist(center, c.center) - c.radius)
+        if (rNext < r) {
+          // fix this --- dst center gets
+          r = rNext
+          dstCenter = c.center
+          const scale = r / dist(center, c.center)
+          radiusLineEndpoint = new Coor(
+            center.x + (dstCenter.x - center.x) * scale,
+            center.y + (dstCenter.y - center.y) * scale
+          )
+        }
+      })
+    }
+    console.log(`  radius: ${r.toFixed(1)}`)
+    console.log(`  dstCenter: ${JSON.stringify(dstCenter)}`)
+    console.log(`  radiusLineEndpoint: ${JSON.stringify(radiusLineEndpoint)}`)
+    const circle: Circle = new Circle(center.x, center.y, r)
+    // const radiusLineEndpoint = new Coor((center.x + dstCenter.x) / 2, (center.y + dstCenter.y) / 2)
+    circlesWithRadiusLine.push(new CircleWithRadiusLine(circle.center, radiusLineEndpoint))
+    // return new CircleWithRadiusLine(circle.center, radiusLineEndpoint)
+  }
+
+  return circlesWithRadiusLine
 }
 
 function renderKissingCircles(centers: Coor[]) {
+  console.log("###########################################")
+  const circlesWithRadiusLines = computeRadii(centers)
+
   const ctx: CanvasRenderingContext2D = ctxRef.value as CanvasRenderingContext2D
   ctx.reset()
-  for (let i=0; i<n; i++) {
-    let a: Coor = centers[i]
-    let r: number = Number.MAX_SAFE_INTEGER
-    let dstCenter: Coor = a
-    for (let j=0; j<n; j++) {
-      if (i === j) continue;
-      let b: Coor = centers[j]
-      let rNext: number = dist(a, b) / 2
-      if (rNext < r) {
-        r = rNext
-        dstCenter = new Coor((a.x + b.x) / 2, (a.y + b.y) / 2)
-      }
-    }
+  
+  circlesWithRadiusLines.forEach((circlesWithRadiusLine) => {
+    const center = circlesWithRadiusLine.center
+    const radius = circlesWithRadiusLine.radius
+    const radiusLine = circlesWithRadiusLine.radiusLine as LineSegment
     ctx.beginPath();
-    ctx.arc(a.x, a.y, r ,0,2*Math.PI);
-    // ctx.strokeText(parseInt(r.toString()), a[0]-5, a[1])
-    ctx.stroke();
+    ctx.arc(center.x, center.y, radius, 0,2*Math.PI);
+    ctx.strokeText(`(${center.x.toFixed(1)}, ${center.y.toFixed(1)}), ${radius.toFixed(1)}`, center.x-5, center.y)
+    // ctx.strokeText(parseInt(i.toString()), a.x-5, a.y)
+
     // Add line segment pointing to nearest neighbor
-    ctx.moveTo(a.x, a.y);
-    ctx.lineTo(dstCenter.x, dstCenter.y)
+    ctx.moveTo(radiusLine.src.x, radiusLine.src.y);
+    ctx.lineTo(radiusLine.dst.x, radiusLine.dst.y)
+
     ctx.stroke();
-  }
+  })
 }
 
 function dist(a: Coor, b: Coor): number {
   return Math.sqrt((a.x - b.x)**2 + (a.y - b.y)**2)
 }
 
-function regenerate() {
-  generateCircles()
+function regenerateCircles() {
+  resetCanvasWithNewCircles()
 }
 
 function animate() {
