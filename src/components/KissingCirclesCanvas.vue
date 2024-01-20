@@ -23,6 +23,8 @@ import { ref, onMounted } from 'vue'
 import type { Ref } from 'vue'
 
 const n = 6;
+const animationTime: number = 2000 // milliseconds
+
 const canvasRef: Ref<HTMLCanvasElement | null> = ref(null)
 const ctxRef: Ref<CanvasRenderingContext2D | null> = ref(null)
 const srcCentersRef: Ref<Coor[]> = ref([])
@@ -30,7 +32,6 @@ const dstCentersRef: Ref<Coor[]> = ref([])
 const currCentersRef: Ref<Coor[]> = ref([])
 const animating: Ref<boolean> = ref(false)
 const stopAnimationFlag: Ref<boolean> = ref(false)
-const animationTime: number = 2000 // milliseconds
 let start: number
 let previousTimeStamp: number;
 
@@ -203,12 +204,12 @@ function renderKissingCircles(centers: Coor[]) {
   circlesWithRadiusLines.forEach((circlesWithRadiusLine) => {
     const center = circlesWithRadiusLine.center
     const radius = circlesWithRadiusLine.radius
-    const radiusLine = circlesWithRadiusLine.radiusLine as LineSegment
     ctx.beginPath();
     ctx.arc(center.x, center.y, radius, 0,2*Math.PI);
     // ctx.strokeText(`(${center.x.toFixed(1)}, ${center.y.toFixed(1)}), ${radius.toFixed(1)}`, center.x-5, center.y)
 
     // Add line segment pointing to nearest neighbor
+    const radiusLine = circlesWithRadiusLine.radiusLine as LineSegment
     ctx.moveTo(radiusLine.src.x, radiusLine.src.y);
     ctx.lineTo(radiusLine.dst.x, radiusLine.dst.y)
 
