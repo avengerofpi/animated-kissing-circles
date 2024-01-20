@@ -14,6 +14,7 @@
 </template>
 
 <script setup lang="ts">
+// https://vuejs.org/guide/typescript/composition-api
 defineProps<{
   msg: string
 }>()
