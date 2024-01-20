@@ -126,19 +126,6 @@ function resetCanvasWithNewCircles() {
 }
 
 function generateCenters(): Coor[] {
-  // const optionsArray: number[][][] = [
-  //   [[100,100],[150,100],[250,100],[400,100],[600,100],[700,100]]
-  //   // [[,],[,],[,],[,],[,],[,],],
-  //   // [[,],[,],[,],[,],[,],[,],],
-  //   // [[,],[,],[,],[,],[,],[,],],
-  // ]
-  // const options: Coor[][] = optionsArray.map((o: number[][]) => {
-  //   return o.map((coorPair: number[]) => Coor.fromCoorPair(coorPair)) as Coor[]
-  // }) as Coor[][]
-  // console.dir(options)
-  // return options[0]
-
-  /* */
   const ctx: CanvasRenderingContext2D = ctxRef.value as CanvasRenderingContext2D
   const height = ctx.canvas.height;
   const width = ctx.canvas.width;
@@ -156,24 +143,15 @@ function generateCenters(): Coor[] {
     centers.push(new Coor(x, y))
   }
   return centers;
-  /* */
 }
 
 function computeRadii(centers: Coor[]): CircleWithRadiusLine[] {
   // is there a better way to copy this array?
   const unprocessedCenters: Coor[] = new Array(...centers).reverse()
-  // const circlesWithRadiusLine = centers.map((center: Coor) => new CircleWithRadiusLine(center))
   let circlesWithRadiusLine: CircleWithRadiusLine[] = []
 
   while (unprocessedCenters.length) {
     const center = unprocessedCenters.pop() as Coor
-    console.log("-----------------------------------------")
-    console.log(`  center: ("x":${center.x.toFixed(1)}, "y":${center.y.toFixed(1)}`)
-    console.log(`  unprocessedCenters: ${unprocessedCenters.length.toFixed(1)}`)
-    console.log(`  circlesWithRadiusLine: ${circlesWithRadiusLine.length}`)
-    // const potentialRadii = unprocessedCenters.map((B) => dist(center, B))
-    //   .concat(circlesWithRadiusLine.map((c) => Math.abs(dist(center, c.center) - c.radius)))
-    // const radius = Math.min(...potentialRadii)
     let r: number = Number.MAX_VALUE
     let dstCenter: Coor = center
     let radiusLineEndpoint: Coor = new Coor(0,0)
@@ -196,7 +174,6 @@ function computeRadii(centers: Coor[]): CircleWithRadiusLine[] {
       circlesWithRadiusLine.forEach((c) => {
         const rNext = Math.abs(dist(center, c.center) - c.radius)
         if (rNext < r) {
-          // fix this --- dst center gets
           r = rNext
           dstCenter = c.center
           const scale = r / dist(center, c.center)
@@ -207,20 +184,14 @@ function computeRadii(centers: Coor[]): CircleWithRadiusLine[] {
         }
       })
     }
-    console.log(`  radius: ${r.toFixed(1)}`)
-    console.log(`  dstCenter: ${JSON.stringify(dstCenter)}`)
-    console.log(`  radiusLineEndpoint: ${JSON.stringify(radiusLineEndpoint)}`)
     const circle: Circle = new Circle(center.x, center.y, r)
-    // const radiusLineEndpoint = new Coor((center.x + dstCenter.x) / 2, (center.y + dstCenter.y) / 2)
     circlesWithRadiusLine.push(new CircleWithRadiusLine(circle.center, radiusLineEndpoint))
-    // return new CircleWithRadiusLine(circle.center, radiusLineEndpoint)
   }
 
   return circlesWithRadiusLine
 }
 
 function renderKissingCircles(centers: Coor[]) {
-  console.log("###########################################")
   const circlesWithRadiusLines = computeRadii(centers)
 
   const ctx: CanvasRenderingContext2D = ctxRef.value as CanvasRenderingContext2D
@@ -232,8 +203,7 @@ function renderKissingCircles(centers: Coor[]) {
     const radiusLine = circlesWithRadiusLine.radiusLine as LineSegment
     ctx.beginPath();
     ctx.arc(center.x, center.y, radius, 0,2*Math.PI);
-    ctx.strokeText(`(${center.x.toFixed(1)}, ${center.y.toFixed(1)}), ${radius.toFixed(1)}`, center.x-5, center.y)
-    // ctx.strokeText(parseInt(i.toString()), a.x-5, a.y)
+    // ctx.strokeText(`(${center.x.toFixed(1)}, ${center.y.toFixed(1)}), ${radius.toFixed(1)}`, center.x-5, center.y)
 
     // Add line segment pointing to nearest neighbor
     ctx.moveTo(radiusLine.src.x, radiusLine.src.y);
