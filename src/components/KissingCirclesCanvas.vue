@@ -1,11 +1,13 @@
 <template>
   <h1 class="green">{{ msg }}, now bugger off</h1>
-  <button type="button" @click="regenerate" :disabled=animating>Regenerate Circles</button>
-  <button type="button" @click="animate" :disabled=animating>Animate Circles</button>
-  <button type="button" @click="stopAnimationAfterCurrentStep" :disabled="!animating || stopAnimationFlag">
-    <span v-if="!stopAnimationFlag">Stop Animation</span>
-    <span v-if="stopAnimationFlag">Pending Stop...</span>
-  </button>
+  <div>
+    <button type="button" @click="regenerateCircles" :disabled=animating>Regenerate Circles</button>
+    <button type="button" @click="animate" :disabled=animating>Animate Circles</button>
+    <button type="button" @click="stopAnimationAfterCurrentStep" :disabled="!animating || stopAnimationFlag">
+      <span v-if="!stopAnimationFlag">Stop Animation</span>
+      <span v-if="stopAnimationFlag">Pending Stop...</span>
+    </button>
+  </div>
   <div>
     <canvas ref="canvasRef" width="900" height="600" style="border:1px solid #d3d3d3;"></canvas>
   </div>
