@@ -216,9 +216,7 @@ function renderKissingCircles(centers: Coor[]) {
     const radius = circlesWithRadiusLine.radius
     ctx.beginPath();
     ctx.arc(center.x, center.y, radius, 0,2*Math.PI);
-    if (index === 0) {
-      ctx.fillStyle = "hsl(180 100% 50% / 50%)"
-    }
+    ctx.fillStyle = `hsl(${(index / n) * 360} 100% 50% / 50%)`
     ctx.fill()
     ctx.fillStyle = "hsl(0 0% 0% / 0%)"
     // ctx.strokeText(`(${center.x.toFixed(1)}, ${center.y.toFixed(1)}), ${radius.toFixed(1)}`, center.x-5, center.y)
