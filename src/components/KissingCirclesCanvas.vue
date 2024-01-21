@@ -25,6 +25,7 @@ import type { Ref } from 'vue'
 const n = 6;
 const animationTime: number = 2000 // milliseconds
 
+let ctx: CanvasRenderingContext2D
 const canvasRef: Ref<HTMLCanvasElement | null> = ref(null)
 const ctxRef: Ref<CanvasRenderingContext2D | null> = ref(null)
 const srcCentersRef: Ref<Coor[]> = ref([])
@@ -34,6 +35,14 @@ const animating: Ref<boolean> = ref(false)
 const stopAnimationFlag: Ref<boolean> = ref(false)
 let start: number
 let previousTimeStamp: number;
+
+let height: number
+let width: number
+let borderSize: number
+let xMin: number
+let yMin: number
+let xMax: number
+let yMax: number
 
 class Coor {
   x: number
@@ -108,7 +117,7 @@ class CircleWithRadiusLine {
 
 onMounted(() => {
   if (canvasRef.value) {
-    ctxRef.value = canvasRef.value.getContext("2d");
+    ctx = canvasRef.value.getContext("2d") as CanvasRenderingContext2D
     initCanvas()
   } else {
     console.error('ERROR! Canvas element not available after mount.')
@@ -121,29 +130,27 @@ function initCanvas() {
 }
 
 function resetCanvasWithNewCircles() {
-  const centers: Coor[] = generateCenters()
-  srcCentersRef.value = centers
+  height = ctx.canvas.height;
+  width = ctx.canvas.width;
 
-  const ctx: CanvasRenderingContext2D = ctxRef.value as CanvasRenderingContext2D
-  ctx.reset()
-  renderKissingCircles(centers);
+  borderSize = Math.max(height, width) / 10
+  xMin = borderSize
+  yMin = borderSize
+  xMax = width - borderSize
+  yMax = height - borderSize
+  srcCentersRef.value = generateCenters()
+
+  renderKissingCircles(srcCentersRef.value);
 }
 
 function generateCenters(): Coor[] {
-  const ctx: CanvasRenderingContext2D = ctxRef.value as CanvasRenderingContext2D
-  const height = ctx.canvas.height;
-  const width = ctx.canvas.width;
 
   const centers: Coor[] = []
   if (n <= 0) return centers;
 
-  const boarderSize = Math.max(height, width) / 10
-  const xMax = width - 2*boarderSize
-  const yMax = height - 2*boarderSize
-
   for (let i=0; i<n; i++) {
-    let x: number = boarderSize + xMax*Math.random()
-    let y: number = boarderSize + yMax*Math.random()
+    let x: number = xMin + (xMax - xMin)*Math.random()
+    let y: number = yMin + (yMax - yMin)*Math.random()
     centers.push(new Coor(x, y))
   }
   return centers;
@@ -198,14 +205,22 @@ function computeRadii(centers: Coor[]): CircleWithRadiusLine[] {
 function renderKissingCircles(centers: Coor[]) {
   const circlesWithRadiusLines = computeRadii(centers)
 
-  const ctx: CanvasRenderingContext2D = ctxRef.value as CanvasRenderingContext2D
   ctx.reset()
+  ctx.fillStyle = "hsl(100 100% 50% / 50%)"
+  ctx.fillRect(0, 0, width, height)
+  ctx.fillStyle = "white"
+  ctx.fillRect(xMin, yMin, xMax-xMin, yMax-yMin)
   
-  circlesWithRadiusLines.forEach((circlesWithRadiusLine) => {
+  circlesWithRadiusLines.forEach((circlesWithRadiusLine, index) => {
     const center = circlesWithRadiusLine.center
     const radius = circlesWithRadiusLine.radius
     ctx.beginPath();
     ctx.arc(center.x, center.y, radius, 0,2*Math.PI);
+    if (index === 0) {
+      ctx.fillStyle = "hsl(180 100% 50% / 50%)"
+    }
+    ctx.fill()
+    ctx.fillStyle = "hsl(0 0% 0% / 0%)"
     // ctx.strokeText(`(${center.x.toFixed(1)}, ${center.y.toFixed(1)}), ${radius.toFixed(1)}`, center.x-5, center.y)
 
     // Add line segment pointing to nearest neighbor
