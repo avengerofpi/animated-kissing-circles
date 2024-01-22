@@ -43,6 +43,9 @@ let xMin: number
 let yMin: number
 let xMax: number
 let yMax: number
+let scale: number = 1
+let zoomLevel: number = 0
+const scaleStepSize = 2 ** (1/4)
 let colorHueOffset: number = 0
 const colorHueOffsetStepsize: number = 0.3
 
@@ -120,6 +123,14 @@ class CircleWithRadiusLine {
 onMounted(() => {
   if (canvasRef.value) {
     ctx = canvasRef.value.getContext("2d") as CanvasRenderingContext2D
+    // Scale canvas on mouse wheel scrolling
+    canvasRef.value.addEventListener("wheel", (event: WheelEvent) => {
+      if (event.deltaY) {
+        zoomLevel += (event.deltaY > 0) ? -1 : 1
+        scale = scaleStepSize ** zoomLevel
+      }
+      ctx.scale(scale, scale)
+    })
     initCanvas()
   } else {
     console.error('ERROR! Canvas element not available after mount.')
@@ -208,6 +219,7 @@ function renderKissingCircles(centers: Coor[]) {
   const circlesWithRadiusLines = computeRadii(centers)
 
   ctx.reset()
+  ctx.scale(scale, scale)
   ctx.fillStyle = "hsl(100 0% 0% / 20%)"
   ctx.fillRect(0, 0, width, height)
   ctx.fillStyle = "white"
