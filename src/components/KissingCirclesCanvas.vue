@@ -43,6 +43,8 @@ let xMin: number
 let yMin: number
 let xMax: number
 let yMax: number
+let colorHueOffset: number = 0
+const colorHueOffsetStepsize: number = 0.3
 
 class Coor {
   x: number
@@ -206,7 +208,7 @@ function renderKissingCircles(centers: Coor[]) {
   const circlesWithRadiusLines = computeRadii(centers)
 
   ctx.reset()
-  ctx.fillStyle = "hsl(100 100% 50% / 50%)"
+  ctx.fillStyle = "hsl(100 0% 0% / 20%)"
   ctx.fillRect(0, 0, width, height)
   ctx.fillStyle = "white"
   ctx.fillRect(xMin, yMin, xMax-xMin, yMax-yMin)
@@ -216,18 +218,19 @@ function renderKissingCircles(centers: Coor[]) {
     const radius = circlesWithRadiusLine.radius
     ctx.beginPath();
     ctx.arc(center.x, center.y, radius, 0,2*Math.PI);
-    ctx.fillStyle = `hsl(${(index / n) * 360} 100% 50% / 50%)`
+    ctx.fillStyle = `hsl(${(index / n) * 360 + colorHueOffset} 100% 50% / 40%)`
     ctx.fill()
     ctx.fillStyle = "hsl(0 0% 0% / 0%)"
     // ctx.strokeText(`(${center.x.toFixed(1)}, ${center.y.toFixed(1)}), ${radius.toFixed(1)}`, center.x-5, center.y)
 
     // Add line segment pointing to nearest neighbor
-    const radiusLine = circlesWithRadiusLine.radiusLine as LineSegment
-    ctx.moveTo(radiusLine.src.x, radiusLine.src.y);
-    ctx.lineTo(radiusLine.dst.x, radiusLine.dst.y)
+    // const radiusLine = circlesWithRadiusLine.radiusLine as LineSegment
+    // ctx.moveTo(radiusLine.src.x, radiusLine.src.y);
+    // ctx.lineTo(radiusLine.dst.x, radiusLine.dst.y)
 
     ctx.stroke();
   })
+  colorHueOffset += colorHueOffsetStepsize
 }
 
 function dist(a: Coor, b: Coor): number {
