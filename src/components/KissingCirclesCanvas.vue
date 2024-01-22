@@ -27,7 +27,6 @@ const animationTime: number = 2000 // milliseconds
 
 let ctx: CanvasRenderingContext2D
 const canvasRef: Ref<HTMLCanvasElement | null> = ref(null)
-const ctxRef: Ref<CanvasRenderingContext2D | null> = ref(null)
 const srcCentersRef: Ref<Coor[]> = ref([])
 const dstCentersRef: Ref<Coor[]> = ref([])
 const currCentersRef: Ref<Coor[]> = ref([])
