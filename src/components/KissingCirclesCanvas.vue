@@ -161,12 +161,12 @@ function resetCanvasWithNewCircles() {
   yMin = borderSize
   xMax = width - borderSize
   yMax = height - borderSize
-  srcCentersRef.value = generateCenters()
+  srcCentersRef.value = generateRandomCenters()
 
   renderKissingCircles(srcCentersRef.value);
 }
 
-function generateCenters(): Coor[] {
+function generateRandomCenters(): Coor[] {
 
   const centers: Coor[] = []
   if (numCirclesRef.value <= 0) return centers;
@@ -264,7 +264,7 @@ function regenerateCircles() {
 }
 
 function animate() {
-  dstCentersRef.value = generateCenters()
+  dstCentersRef.value = generateRandomCenters()
   animating.value = true
   // Identical to `timeStamp` used in `window.requestAnimationFrame`
   start = document.timeline.currentTime as number;
