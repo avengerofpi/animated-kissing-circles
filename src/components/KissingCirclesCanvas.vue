@@ -39,6 +39,7 @@ const animationDurationRef: Ref<number> = ref(10000) // milliseconds
 let ctx: CanvasRenderingContext2D
 const canvasRef: Ref<HTMLCanvasElement | null> = ref(null)
 const srcCentersRef: Ref<Coor[]> = ref([])
+const srcCentersOnCircles: Ref<CoorOnACircle[]> = ref([])
 const dstCentersRef: Ref<Coor[]> = ref([])
 const currCentersRef: Ref<Coor[]> = ref([])
 const animating: Ref<boolean> = ref(false)
@@ -70,6 +71,23 @@ class Coor {
 
   public static fromCoorPair(coorPair: number[]) {
     return new Coor(coorPair[0], coorPair[1])
+  }
+}
+
+class CoorOnACircle extends Coor {
+  /* radius of the circle the Coor is on */
+  radius: number
+  /* Radian position of Coor on the circle */
+  theta: number
+
+  public constructor(coorOnCircle: Coor, radius: number, theta: number) {
+    const centerOfCircle = new Coor(
+      coorOnCircle.x - (radius * Math.cos(theta)),
+      coorOnCircle.y - (radius * Math.sin(theta))
+    )
+    super(centerOfCircle.x, centerOfCircle.y)
+    this.radius = radius
+    this.theta = theta
   }
 }
 
@@ -162,6 +180,7 @@ function resetCanvasWithNewCircles() {
   xMax = width - borderSize
   yMax = height - borderSize
   srcCentersRef.value = generateRandomCenters()
+  srcCentersOnCircles.value = generateCoorOnCircles(srcCentersRef.value)
 
   renderKissingCircles(srcCentersRef.value);
 }
@@ -177,6 +196,14 @@ function generateRandomCenters(): Coor[] {
     centers.push(new Coor(x, y))
   }
   return centers;
+}
+
+function generateCoorOnCircles(centers: Coor[]): CoorOnACircle[] {
+  return centers.map(center => {
+    const radius = 10 + (190 * Math.random())
+    const theta = (2 * Math.PI) * Math.random()
+    return new CoorOnACircle(center, radius, theta)
+  })
 }
 
 function computeRadii(centers: Coor[]): CircleWithRadiusLine[] {
@@ -287,8 +314,17 @@ function step(timeStamp: number) {
 
     let newCenters: Coor[] = []
     for (let i=0; i<numCirclesRef.value; i++) {
-      const x = srcCentersRef.value[i].x + (dstCentersRef.value[i].x - srcCentersRef.value[i].x) * stepSize
-      const y = srcCentersRef.value[i].y + (dstCentersRef.value[i].y - srcCentersRef.value[i].y) * stepSize
+      // const x = srcCentersRef.value[i].x + (dstCentersRef.value[i].x - srcCentersRef.value[i].x) * stepSize
+      // const y = srcCentersRef.value[i].y + (dstCentersRef.value[i].y - srcCentersRef.value[i].y) * stepSize
+
+      const srcCentersOnCircle = srcCentersOnCircles.value[i]
+      const centerOfCircle = new Coor(srcCentersOnCircle.x, srcCentersOnCircle.y)
+      const radius = srcCentersOnCircle.radius
+      const theta = srcCentersOnCircle.theta + (2 * Math.PI * stepSize)
+
+      const x = centerOfCircle.x + (radius * Math.cos(theta))
+      const y = centerOfCircle.y + (radius * Math.sin(theta))
+
       newCenters.push(new Coor(x, y))
     }
     currCentersRef.value = newCenters
