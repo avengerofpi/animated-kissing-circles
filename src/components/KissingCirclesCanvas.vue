@@ -322,8 +322,12 @@ function step(timeStamp: number) {
       const radius = srcCentersOnCircle.radius
       const theta = srcCentersOnCircle.theta + (2 * Math.PI * stepSize)
 
-      const x = centerOfCircle.x + (radius * Math.cos(theta))
-      const y = centerOfCircle.y + (radius * Math.sin(theta))
+      const MAX_PETURB = 1
+      const xPeturb = MAX_PETURB * Math.random()
+      const yPeturb = MAX_PETURB * Math.random()
+
+      const x = centerOfCircle.x + (radius * Math.cos(theta)) + xPeturb
+      const y = centerOfCircle.y + (radius * Math.sin(theta)) + yPeturb
 
       newCenters.push(new Coor(x, y))
     }
