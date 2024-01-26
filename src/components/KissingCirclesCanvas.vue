@@ -291,7 +291,11 @@ function regenerateCircles() {
 }
 
 function animate() {
-  dstCentersRef.value = generateRandomCenters()
+  // dstCentersRef.value = generateRandomCenters()
+
+  // Shuffle srcCenters to produce dstCenters
+  dstCentersRef.value = (srcCentersRef.value.map(c => [Math.random(), c]) as [number,Coor][]).sort().map(el => el[1])
+
   animating.value = true
   // Identical to `timeStamp` used in `window.requestAnimationFrame`
   start = document.timeline.currentTime as number;
@@ -314,20 +318,20 @@ function step(timeStamp: number) {
 
     let newCenters: Coor[] = []
     for (let i=0; i<numCirclesRef.value; i++) {
-      // const x = srcCentersRef.value[i].x + (dstCentersRef.value[i].x - srcCentersRef.value[i].x) * stepSize
-      // const y = srcCentersRef.value[i].y + (dstCentersRef.value[i].y - srcCentersRef.value[i].y) * stepSize
+      const x = srcCentersRef.value[i].x + (dstCentersRef.value[i].x - srcCentersRef.value[i].x) * stepSize
+      const y = srcCentersRef.value[i].y + (dstCentersRef.value[i].y - srcCentersRef.value[i].y) * stepSize
 
-      const srcCentersOnCircle = srcCentersOnCircles.value[i]
-      const centerOfCircle = new Coor(srcCentersOnCircle.x, srcCentersOnCircle.y)
-      const radius = srcCentersOnCircle.radius
-      const theta = srcCentersOnCircle.theta + (2 * Math.PI * stepSize)
-
-      const MAX_PETURB = 1
-      const xPeturb = MAX_PETURB * Math.random()
-      const yPeturb = MAX_PETURB * Math.random()
-
-      const x = centerOfCircle.x + (radius * Math.cos(theta)) + xPeturb
-      const y = centerOfCircle.y + (radius * Math.sin(theta)) + yPeturb
+      // const srcCentersOnCircle = srcCentersOnCircles.value[i]
+      // const centerOfCircle = new Coor(srcCentersOnCircle.x, srcCentersOnCircle.y)
+      // const radius = srcCentersOnCircle.radius
+      // const theta = srcCentersOnCircle.theta + (2 * Math.PI * stepSize)
+      //
+      // const MAX_PETURB = 1
+      // const xPeturb = MAX_PETURB * Math.random()
+      // const yPeturb = MAX_PETURB * Math.random()
+      //
+      // const x = centerOfCircle.x + (radius * Math.cos(theta)) + xPeturb
+      // const y = centerOfCircle.y + (radius * Math.sin(theta)) + yPeturb
 
       newCenters.push(new Coor(x, y))
     }
