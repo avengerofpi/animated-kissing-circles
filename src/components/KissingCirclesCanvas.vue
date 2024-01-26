@@ -1,5 +1,7 @@
 <template>
+  <!-- Silly header -->
   <h1 class="green">{{ msg }}, now bugger off</h1>
+  <!-- Buttons -->
   <div>
     <button type="button" @click="regenerateCircles" :disabled=animating>Regenerate Circles</button>
     <button type="button" @click="animate" :disabled=animating>Animate Circles</button>
@@ -8,6 +10,15 @@
       <span v-if="stopAnimationFlag">Pending Stop...</span>
     </button>
   </div>
+  <!-- Basic input -->
+  <div>
+    <label for="nInput">Number of Circles:</label>
+    <input id="nInput" v-model.lazy="numCirclesRef">
+
+    <label for="animationTimeInput">Duration of each transition</label>
+    <input id="animationTimeInput" v-model.lazy="animationDurationRef">
+  </div>
+  <!-- Canvas -->
   <div>
     <canvas ref="canvasRef" width="900" height="600" style="border:1px solid #d3d3d3;"></canvas>
   </div>
@@ -22,8 +33,8 @@ defineProps<{
 import { ref, onMounted } from 'vue'
 import type { Ref } from 'vue'
 
-const n = 6;
-const animationTime: number = 2000 // milliseconds
+const numCirclesRef: Ref<number> = ref(10)
+const animationDurationRef: Ref<number> = ref(10000) // milliseconds
 
 let ctx: CanvasRenderingContext2D
 const canvasRef: Ref<HTMLCanvasElement | null> = ref(null)
@@ -158,9 +169,9 @@ function resetCanvasWithNewCircles() {
 function generateCenters(): Coor[] {
 
   const centers: Coor[] = []
-  if (n <= 0) return centers;
+  if (numCirclesRef.value <= 0) return centers;
 
-  for (let i=0; i<n; i++) {
+  for (let i=0; i<numCirclesRef.value; i++) {
     let x: number = xMin + (xMax - xMin)*Math.random()
     let y: number = yMin + (yMax - yMin)*Math.random()
     centers.push(new Coor(x, y))
@@ -229,7 +240,7 @@ function renderKissingCircles(centers: Coor[]) {
     const radius = circlesWithRadiusLine.radius
     ctx.beginPath();
     ctx.arc(center.x, center.y, radius, 0,2*Math.PI);
-    ctx.fillStyle = `hsl(${(index / n) * 360 + colorHueOffset} 100% 50% / 40%)`
+    ctx.fillStyle = `hsl(${(index / numCirclesRef.value) * 360 + colorHueOffset} 100% 50% / 40%)`
     ctx.fill()
     ctx.fillStyle = "hsl(0 0% 0% / 0%)"
     // ctx.strokeText(`(${center.x.toFixed(1)}, ${center.y.toFixed(1)}), ${radius.toFixed(1)}`, center.x-5, center.y)
@@ -270,10 +281,12 @@ function step(timeStamp: number) {
   }
   const elapsed = timeStamp - start;
 
-  const stepSize = Math.min(1, elapsed / animationTime)
   if (elapsed > 0 && timeStamp !== previousTimeStamp) {
+    /* In case `timestamp` is greater than `animationDurationRef.value`, cap the amount of movement at 100% */
+    const stepSize = Math.min(1, elapsed / animationDurationRef.value)
+
     let newCenters: Coor[] = []
-    for (let i=0; i<n; i++) {
+    for (let i=0; i<numCirclesRef.value; i++) {
       const x = srcCentersRef.value[i].x + (dstCentersRef.value[i].x - srcCentersRef.value[i].x) * stepSize
       const y = srcCentersRef.value[i].y + (dstCentersRef.value[i].y - srcCentersRef.value[i].y) * stepSize
       newCenters.push(new Coor(x, y))
@@ -282,7 +295,7 @@ function step(timeStamp: number) {
     renderKissingCircles(newCenters)
   }
 
-  if (elapsed < animationTime) {
+  if (elapsed < animationDurationRef.value) {
     previousTimeStamp = timeStamp;
     window.requestAnimationFrame(step);
   } else {
