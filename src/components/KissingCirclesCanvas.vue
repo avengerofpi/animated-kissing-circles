@@ -76,12 +76,17 @@ class Coor {
 }
 
 class CoorOnACircle extends Coor {
-  /* radius of the circle the Coor is on */
+  /** radius of the circle the Coor is on */
   radius: number
-  /* Radian position of Coor on the circle */
+  /** Radian position of Coor on the circle */
   theta: number
+  /** +1 for clockwise (default), -1 for counter-clockwise, zero for no movement */
+  direction: number
+  /** Speed of animation movement for this point, must be non-negative.
+   * Default is `1.0` for normal speed */
+  speed: number
 
-  public constructor(coorOnCircle: Coor, radius: number, theta: number) {
+  public constructor(coorOnCircle: Coor, radius: number, theta: number, direction: number = 1, speed: number = 1.0) {
     const centerOfCircle = new Coor(
       coorOnCircle.x - (radius * Math.cos(theta)),
       coorOnCircle.y - (radius * Math.sin(theta))
@@ -89,6 +94,14 @@ class CoorOnACircle extends Coor {
     super(centerOfCircle.x, centerOfCircle.y)
     this.radius = radius
     this.theta = theta
+    if (![-1, 0, 1].includes(direction)) {
+      throw Error(`Direction must be -1, 0, or 1, but was ${direction}`)
+    }
+    this.direction = direction
+    if (speed < 0) {
+      throw Error(`Speed must be non-negative, but was ${speed}`)
+    }
+    this.speed = speed
   }
 }
 
@@ -210,13 +223,16 @@ function generateCoorOnCircles(centers: Coor[]): CoorOnACircle[] {
   return centers.map((center, index) => {
     // const radius = 10 + (190 * Math.random())
     // const theta = (2 * Math.PI) * Math.random()
+    const SPEEDS = [1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9]
 
     const diffX = center.x - canvasCenter.x
     const diffY = center.y - canvasCenter.y
     const radius = dist(center, canvasCenter)
     const theta = Math.atan(diffY / diffX)
+    const direction = (-1) ** index
+    const speed = SPEEDS[index % SPEEDS.length]
 
-    return new CoorOnACircle(center, radius, theta)
+    return new CoorOnACircle(center, radius, theta, direction, speed)
   })
 }
 
@@ -344,7 +360,8 @@ function step(timeStamp: number) {
       const srcCenterOnCircle = srcCentersOnCircles.value[i]
       const centerOfCircle = new Coor(srcCenterOnCircle.x, srcCenterOnCircle.y)
       const radius = srcCenterOnCircle.radius
-      const theta = srcCenterOnCircle.theta + (2 * Math.PI * stepSize)
+      const thetaOffset = (2 * Math.PI) * (srcCenterOnCircle.direction * srcCenterOnCircle.speed) * stepSize
+      const theta = srcCenterOnCircle.theta + thetaOffset
       const x = centerOfCircle.x + (radius * Math.cos(theta))
       const y = centerOfCircle.y + (radius * Math.sin(theta))
 
