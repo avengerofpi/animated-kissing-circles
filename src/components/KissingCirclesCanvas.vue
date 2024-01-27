@@ -49,6 +49,7 @@ let previousTimeStamp: number;
 
 let height: number
 let width: number
+let canvasCenter: Coor
 let borderSize: number
 let xMin: number
 let yMin: number
@@ -174,6 +175,9 @@ function resetCanvasWithNewCircles() {
   height = ctx.canvas.height;
   width = ctx.canvas.width;
 
+  // for creating concentric circles
+  canvasCenter = new Coor(width / 2, height / 2)
+
   borderSize = Math.max(height, width) / 10
   xMin = borderSize
   yMin = borderSize
@@ -190,18 +194,28 @@ function generateRandomCenters(): Coor[] {
   const centers: Coor[] = []
   if (numCirclesRef.value <= 0) return centers;
 
+  const xStep: number = width / numCirclesRef.value / 3
+  const yStep: number = height / numCirclesRef.value / 3
   for (let i=0; i<numCirclesRef.value; i++) {
-    let x: number = xMin + (xMax - xMin)*Math.random()
-    let y: number = yMin + (yMax - yMin)*Math.random()
+    // let x: number = xMin + (xMax - xMin)*Math.random()
+    // let y: number = yMin + (yMax - yMin)*Math.random()
+    const x: number = canvasCenter.x + (xStep * (i + 1))
+    const y: number = canvasCenter.y + (yStep * (i + 1))
     centers.push(new Coor(x, y))
   }
   return centers;
 }
 
 function generateCoorOnCircles(centers: Coor[]): CoorOnACircle[] {
-  return centers.map(center => {
-    const radius = 10 + (190 * Math.random())
-    const theta = (2 * Math.PI) * Math.random()
+  return centers.map((center, index) => {
+    // const radius = 10 + (190 * Math.random())
+    // const theta = (2 * Math.PI) * Math.random()
+
+    const diffX = center.x - canvasCenter.x
+    const diffY = center.y - canvasCenter.y
+    const radius = dist(center, canvasCenter)
+    const theta = Math.atan(diffY / diffX)
+
     return new CoorOnACircle(center, radius, theta)
   })
 }
@@ -291,10 +305,10 @@ function regenerateCircles() {
 }
 
 function animate() {
-  // dstCentersRef.value = generateRandomCenters()
+  dstCentersRef.value = generateRandomCenters()
 
   // Shuffle srcCenters to produce dstCenters
-  dstCentersRef.value = (srcCentersRef.value.map(c => [Math.random(), c]) as [number,Coor][]).sort().map(el => el[1])
+  // dstCentersRef.value = (srcCentersRef.value.map(c => [Math.random(), c]) as [number,Coor][]).sort().map(el => el[1])
 
   animating.value = true
   // Identical to `timeStamp` used in `window.requestAnimationFrame`
@@ -318,20 +332,21 @@ function step(timeStamp: number) {
 
     let newCenters: Coor[] = []
     for (let i=0; i<numCirclesRef.value; i++) {
-      const x = srcCentersRef.value[i].x + (dstCentersRef.value[i].x - srcCentersRef.value[i].x) * stepSize
-      const y = srcCentersRef.value[i].y + (dstCentersRef.value[i].y - srcCentersRef.value[i].y) * stepSize
-
-      // const srcCentersOnCircle = srcCentersOnCircles.value[i]
-      // const centerOfCircle = new Coor(srcCentersOnCircle.x, srcCentersOnCircle.y)
-      // const radius = srcCentersOnCircle.radius
-      // const theta = srcCentersOnCircle.theta + (2 * Math.PI * stepSize)
+      // const x = srcCentersRef.value[i].x + (dstCentersRef.value[i].x - srcCentersRef.value[i].x) * stepSize
+      // const y = srcCentersRef.value[i].y + (dstCentersRef.value[i].y - srcCentersRef.value[i].y) * stepSize
       //
       // const MAX_PETURB = 1
       // const xPeturb = MAX_PETURB * Math.random()
       // const yPeturb = MAX_PETURB * Math.random()
-      //
       // const x = centerOfCircle.x + (radius * Math.cos(theta)) + xPeturb
       // const y = centerOfCircle.y + (radius * Math.sin(theta)) + yPeturb
+
+      const srcCenterOnCircle = srcCentersOnCircles.value[i]
+      const centerOfCircle = new Coor(srcCenterOnCircle.x, srcCenterOnCircle.y)
+      const radius = srcCenterOnCircle.radius
+      const theta = srcCenterOnCircle.theta + (2 * Math.PI * stepSize)
+      const x = centerOfCircle.x + (radius * Math.cos(theta))
+      const y = centerOfCircle.y + (radius * Math.sin(theta))
 
       newCenters.push(new Coor(x, y))
     }
