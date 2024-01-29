@@ -40,8 +40,9 @@ let ctx: CanvasRenderingContext2D
 const canvasRef: Ref<HTMLCanvasElement | null> = ref(null)
 const srcCentersRef: Ref<Coor[]> = ref([])
 const srcCentersOnCircles: Ref<CoorOnACircle[]> = ref([])
-const dstCentersRef: Ref<Coor[]> = ref([])
-const currCentersRef: Ref<Coor[]> = ref([])
+const currCentersOnCircles: Ref<CoorOnACircle[]> = ref([])
+// const dstCentersRef: Ref<Coor[]> = ref([])
+// const currCentersRef: Ref<Coor[]> = ref([])
 const animating: Ref<boolean> = ref(false)
 const stopAnimationFlag: Ref<boolean> = ref(false)
 let start: number
@@ -76,6 +77,10 @@ class Coor {
 }
 
 class CoorOnACircle extends Coor {
+  /** Coordinate of the point on the circle */
+  coor: Coor
+  /** Center of the circle the coor is on */
+  center: Coor
   /** radius of the circle the Coor is on */
   radius: number
   /** Radian position of Coor on the circle */
@@ -92,6 +97,8 @@ class CoorOnACircle extends Coor {
       coorOnCircle.y - (radius * Math.sin(theta))
     )
     super(centerOfCircle.x, centerOfCircle.y)
+    this.coor = coorOnCircle
+    this.center = centerOfCircle
     this.radius = radius
     this.theta = theta
     if (![-1, 0, 1].includes(direction)) {
@@ -102,6 +109,16 @@ class CoorOnACircle extends Coor {
       throw Error(`Speed must be non-negative, but was ${speed}`)
     }
     this.speed = speed
+  }
+
+  public copy() {
+    return new CoorOnACircle(
+      this.coor,
+      this.radius,
+      this.theta,
+      this.direction,
+      this.speed,
+    )
   }
 }
 
@@ -321,7 +338,7 @@ function regenerateCircles() {
 }
 
 function animate() {
-  dstCentersRef.value = generateRandomCenters()
+  // dstCentersRef.value = generateRandomCenters()
 
   // Shuffle srcCenters to produce dstCenters
   // dstCentersRef.value = (srcCentersRef.value.map(c => [Math.random(), c]) as [number,Coor][]).sort().map(el => el[1])
@@ -337,7 +354,8 @@ function step(timeStamp: number) {
   if (stopAnimationFlag.value) {
     stopAnimationFlag.value = false
     animating.value = false
-    srcCentersRef.value = currCentersRef.value
+    // srcCentersRef.value = currCentersRef.value
+    srcCentersOnCircles.value = currCentersOnCircles.value
     return
   }
   const elapsed = timeStamp - start;
@@ -347,6 +365,7 @@ function step(timeStamp: number) {
     const stepSize = Math.min(1, elapsed / animationDurationRef.value)
 
     let newCenters: Coor[] = []
+    currCentersOnCircles.value = []
     for (let i=0; i<numCirclesRef.value; i++) {
       // const x = srcCentersRef.value[i].x + (dstCentersRef.value[i].x - srcCentersRef.value[i].x) * stepSize
       // const y = srcCentersRef.value[i].y + (dstCentersRef.value[i].y - srcCentersRef.value[i].y) * stepSize
@@ -358,16 +377,25 @@ function step(timeStamp: number) {
       // const y = centerOfCircle.y + (radius * Math.sin(theta)) + yPeturb
 
       const srcCenterOnCircle = srcCentersOnCircles.value[i]
-      const centerOfCircle = new Coor(srcCenterOnCircle.x, srcCenterOnCircle.y)
+      const centerOfCircle = srcCenterOnCircle.center
       const radius = srcCenterOnCircle.radius
       const thetaOffset = (2 * Math.PI) * (srcCenterOnCircle.direction * srcCenterOnCircle.speed) * stepSize
       const theta = srcCenterOnCircle.theta + thetaOffset
       const x = centerOfCircle.x + (radius * Math.cos(theta))
       const y = centerOfCircle.y + (radius * Math.sin(theta))
 
-      newCenters.push(new Coor(x, y))
+      const newCenter: Coor = new Coor(x, y)
+      newCenters.push(newCenter)
+
+      const newCoorOnCircle: CoorOnACircle = new CoorOnACircle(
+        newCenter,
+        radius,
+        theta,
+        srcCenterOnCircle.direction,
+        srcCenterOnCircle.speed
+      )
+      currCentersOnCircles.value.push(newCoorOnCircle)
     }
-    currCentersRef.value = newCenters
     renderKissingCircles(newCenters)
   }
 
@@ -376,7 +404,7 @@ function step(timeStamp: number) {
     window.requestAnimationFrame(step);
   } else {
     animating.value = false
-    srcCentersRef.value = dstCentersRef.value
+    srcCentersOnCircles.value = currCentersOnCircles.value
     animate()
   }
 }
