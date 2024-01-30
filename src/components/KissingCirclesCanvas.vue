@@ -33,7 +33,7 @@ defineProps<{
 import { ref, onMounted } from 'vue'
 import type { Ref } from 'vue'
 
-const numCirclesRef: Ref<number> = ref(10)
+const numCirclesRef: Ref<number> = ref(300)
 const animationDurationRef: Ref<number> = ref(10000) // milliseconds
 
 let ctx: CanvasRenderingContext2D
@@ -224,8 +224,9 @@ function generateRandomCenters(): Coor[] {
   const centers: Coor[] = []
   if (numCirclesRef.value <= 0) return centers;
 
-  const xStep: number = width / numCirclesRef.value / 3
-  const yStep: number = height / numCirclesRef.value / 3
+  const stepSize = 1.0 / 6
+  const xStep: number = (width / numCirclesRef.value) * stepSize
+  const yStep: number = (height / numCirclesRef.value) * stepSize
   for (let i=0; i<numCirclesRef.value; i++) {
     // let x: number = xMin + (xMax - xMin)*Math.random()
     // let y: number = yMin + (yMax - yMin)*Math.random()
@@ -240,14 +241,15 @@ function generateCoorOnCircles(centers: Coor[]): CoorOnACircle[] {
   return centers.map((center, index) => {
     // const radius = 10 + (190 * Math.random())
     // const theta = (2 * Math.PI) * Math.random()
-    const SPEEDS = [1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9]
+    // const SPEEDS = [1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9]
 
     const diffX = center.x - canvasCenter.x
     const diffY = center.y - canvasCenter.y
     const radius = dist(center, canvasCenter)
     const theta = Math.atan(diffY / diffX)
     const direction = (-1) ** index
-    const speed = SPEEDS[index % SPEEDS.length]
+    // const speed = SPEEDS[index % SPEEDS.length]
+    const speed = 1.001 ** index
 
     return new CoorOnACircle(center, radius, theta, direction, speed)
   })
