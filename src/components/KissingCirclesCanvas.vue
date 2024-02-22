@@ -182,14 +182,13 @@ class CircleWithRadiusLine {
 onMounted(() => {
   if (canvasRef.value) {
     ctx = canvasRef.value.getContext("2d") as CanvasRenderingContext2D
-    // Scale canvas on mouse wheel scrolling
-    canvasRef.value.addEventListener("wheel", (event: WheelEvent) => {
-      if (event.deltaY) {
-        zoomLevel += (event.deltaY > 0) ? -1 : 1
-        scale = scaleStepSize ** zoomLevel
-      }
-      ctx.scale(scale, scale)
-    })
+    canvasRef.value.addEventListener('mousedown', onPointerDown)
+    canvasRef.value.addEventListener('mouseup', onPointerUp)
+    canvasRef.value.addEventListener('mousemove', onPointerMove)
+    canvasRef.value.addEventListener('touchstart', (e) => handleTouch(e, onPointerDown))
+    canvasRef.value.addEventListener('touchend',  (e) => handleTouch(e, onPointerUp))
+    canvasRef.value.addEventListener('touchmove', (e) => handleTouch(e, onPointerMove))
+    canvasRef.value.addEventListener( 'wheel', (e) => adjustZoom((e.deltaY > 0) ? -1 : 1, null))
     initCanvas()
   } else {
     console.error('ERROR! Canvas element not available after mount.')
@@ -305,7 +304,10 @@ function renderKissingCircles(centers: Coor[]) {
   const circlesWithRadiusLines = computeRadii(centers)
 
   ctx.reset()
-  ctx.scale(scale, scale)
+
+  ctx.scale(cameraZoom, cameraZoom)
+  ctx.translate( cameraOffset.x, cameraOffset.y )
+
   ctx.fillStyle = "hsl(100 0% 0% / 20%)"
   ctx.fillRect(0, 0, width, height)
   ctx.fillStyle = "white"
@@ -413,6 +415,103 @@ function step(timeStamp: number) {
 
 function stopAnimationAfterCurrentStep() {
   stopAnimationFlag.value = true
+}
+
+
+
+
+// ************************* PANNING/SCALING *************************
+// Panning and zooming. See https://codepen.io/chengarda/pen/wRxoyB for open source example
+
+let cameraOffset = { x: 0, y: 0 }
+let cameraZoom: number = 1
+let MAX_ZOOM: number = 5
+let MIN_ZOOM: number = 0.1
+let SCROLL_SENSITIVITY: number = 2 ** (1/4)
+
+function getEventLocation(e: MouseEvent | TouchEvent): Coor {
+  if (e instanceof TouchEvent) {
+    if (e.touches && e.touches.length == 1) {
+      return new Coor(e.touches[0].clientX, e.touches[0].clientY)
+    }
+  }
+
+  if (e instanceof MouseEvent) {
+    if (e.clientX && e.clientY) {
+      return new Coor(e.clientX,e.clientY)
+    }
+  }
+  
+  console.error(`Unexpected event: ${e}`)
+}
+
+let isDragging = false
+let dragStart = { x: 0, y: 0 }
+
+function onPointerDown(e: MouseEvent | TouchEvent) {
+  isDragging = true
+  dragStart.x = getEventLocation(e).x/cameraZoom - cameraOffset.x
+  dragStart.y = getEventLocation(e).y/cameraZoom - cameraOffset.y
+}
+
+function onPointerUp(e: MouseEvent | TouchEvent) {
+  isDragging = false
+  initialPinchDistanceSquared = null
+  lastZoom = cameraZoom
+}
+
+function onPointerMove(e: MouseEvent | TouchEvent) {
+  if (isDragging) {
+    cameraOffset.x = getEventLocation(e).x/cameraZoom - dragStart.x
+    cameraOffset.y = getEventLocation(e).y/cameraZoom - dragStart.y
+  }
+}
+
+function handleTouch(e: TouchEvent, singleTouchHandler: CallableFunction) {
+  if ( e.touches.length == 1 )  {
+    singleTouchHandler(e)
+  }
+  else if (e.type == "touchmove" && e.touches.length == 2) {
+    isDragging = false
+    handlePinch(e)
+  }
+}
+
+let initialPinchDistanceSquared: number | null
+let lastZoom = cameraZoom
+
+function handlePinch(e: TouchEvent) {
+  e.preventDefault()
+
+  let touch1 = { x: e.touches[0].clientX, y: e.touches[0].clientY }
+  let touch2 = { x: e.touches[1].clientX, y: e.touches[1].clientY }
+
+  // This is distance squared, but no need for an expensive sqrt as it's only used in ratio
+  let currentDistanceSquared = (touch1.x - touch2.x)**2 + (touch1.y - touch2.y)**2 + (0.1 ** 8)
+
+  if (initialPinchDistanceSquared == null) {
+    initialPinchDistanceSquared = currentDistanceSquared
+  } else {
+    adjustZoom(0, currentDistanceSquared/initialPinchDistanceSquared)
+  }
+}
+
+function adjustZoom(zoomLevelChange: number, zoomFactor: number) {
+  if (!isDragging) {
+    if (zoomLevelChange) {
+      zoomLevel += zoomLevelChange
+      cameraZoom = scaleStepSize ** zoomLevel
+    }
+    else if (zoomFactor) {
+      cameraZoom = zoomFactor*lastZoom
+    }
+
+    cameraZoom = Math.min( cameraZoom, MAX_ZOOM )
+    cameraZoom = Math.max( cameraZoom, MIN_ZOOM )
+
+    console.log(`cameraZoom: ${cameraZoom}`)
+    ctx.scale(cameraZoom, cameraZoom)
+  }
 }
 
 </script>
