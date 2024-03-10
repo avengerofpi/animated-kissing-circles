@@ -187,10 +187,7 @@ onMounted(() => {
     canvasRef.value.addEventListener('mousedown', onPointerDown)
     canvasRef.value.addEventListener('mouseup', onPointerUp)
     canvasRef.value.addEventListener('mousemove', onPointerMove)
-    canvasRef.value.addEventListener('touchstart', (e) => handleTouch(e, onPointerDown))
-    canvasRef.value.addEventListener('touchend',  (e) => handleTouch(e, onPointerUp))
-    canvasRef.value.addEventListener('touchmove', (e) => handleTouch(e, onPointerMove))
-    canvasRef.value.addEventListener('wheel', (e) => adjustZoom((e.deltaY > 0) ? -1 : 1, null))
+    canvasRef.value.addEventListener('wheel', (e) => adjustZoom((e.deltaY > 0) ? -1 : 1))
     initCanvas()
   } else {
     console.error('ERROR! Canvas element not available after mount.')
@@ -435,7 +432,6 @@ const ZOOM_SCALE_STEP_SIZE = 2 ** (1/4)
 
 let isDragging = false
 let dragStart = { x: 0, y: 0 }
-let initialPinchDistanceSquared: number | null
 
 function getEventCoor(e: MouseEvent | TouchEvent): Coor {
   let coor = null
@@ -464,7 +460,6 @@ function onPointerDown(e: MouseEvent | TouchEvent) {
 
 function onPointerUp(e: MouseEvent | TouchEvent) {
   isDragging = false
-  initialPinchDistanceSquared = null
 }
 
 function onPointerMove(e: MouseEvent | TouchEvent) {
@@ -475,46 +470,12 @@ function onPointerMove(e: MouseEvent | TouchEvent) {
   }
 }
 
-function handleTouch(e: TouchEvent, singleTouchHandler: CallableFunction) {
-  if ( e.touches.length == 1 )  {
-    singleTouchHandler(e)
-  }
-  else if (e.type == "touchmove" && e.touches.length == 2) {
-    isDragging = false
-    handlePinch(e)
-  }
-}
-
-function handlePinch(e: TouchEvent) {
-  e.preventDefault()
-
-  let touch1 = { x: e.touches[0].clientX, y: e.touches[0].clientY }
-  let touch2 = { x: e.touches[1].clientX, y: e.touches[1].clientY }
-
-  // This is distance squared, but no need for an expensive sqrt as it's only used in ratio
-  let currentPinchDistanceSquared = (touch1.x - touch2.x)**2 + (touch1.y - touch2.y)**2 + (0.1 ** 8)
-
-  if (initialPinchDistanceSquared == null) {
-    initialPinchDistanceSquared = currentPinchDistanceSquared
-  } else {
-    adjustZoom(0, currentPinchDistanceSquared/initialPinchDistanceSquared)
-  }
-}
-
-function adjustZoom(zoomLevelChange: number, zoomFactor: number) {
+function adjustZoom(zoomLevelChange: number) {
   if (!isDragging) {
-    if (zoomLevelChange) {
-      zoomLevel += zoomLevelChange
-      zoomLevel = Math.min(zoomLevel, MAX_ZOOM_LEVEL)
-      zoomLevel = Math.max(zoomLevel, MIN_ZOOM_LEVEL)
-      canvasScale = ZOOM_SCALE_STEP_SIZE ** zoomLevel
-    }
-    else if (zoomFactor) {
-      canvasScale *= zoomFactor
-    }
-
-    canvasScale = Math.min( canvasScale, MAX_ZOOM_LEVEL )
-    canvasScale = Math.max( canvasScale, MIN_ZOOM_LEVEL )
+    zoomLevel += zoomLevelChange
+    zoomLevel = Math.min(zoomLevel, MAX_ZOOM_LEVEL)
+    zoomLevel = Math.max(zoomLevel, MIN_ZOOM_LEVEL)
+    canvasScale = ZOOM_SCALE_STEP_SIZE ** zoomLevel
 
     ctx.scale(canvasScale, canvasScale)
   }
