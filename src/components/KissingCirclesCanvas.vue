@@ -17,6 +17,9 @@
 
     <label for="animationTimeInput">Duration of each transition</label>
     <input id="animationTimeInput" v-model.lazy="animationDurationRef">
+
+    <span>Zoom Level: {{ zoomLevel.toFixed(3) }}</span>
+    <span>Canvas Scale: {{ canvasScale.toFixed(3) }}</span>
   </div>
   <!-- Canvas -->
   <div>
@@ -56,9 +59,7 @@ let xMin: number
 let yMin: number
 let xMax: number
 let yMax: number
-let scale: number = 1
-let zoomLevel: number = 0
-const scaleStepSize = 2 ** (1/4)
+
 let colorHueOffset: number = 0
 const colorHueOffsetStepsize: number = 0.3
 
@@ -188,7 +189,7 @@ onMounted(() => {
     canvasRef.value.addEventListener('touchstart', (e) => handleTouch(e, onPointerDown))
     canvasRef.value.addEventListener('touchend',  (e) => handleTouch(e, onPointerUp))
     canvasRef.value.addEventListener('touchmove', (e) => handleTouch(e, onPointerMove))
-    canvasRef.value.addEventListener( 'wheel', (e) => adjustZoom((e.deltaY > 0) ? -1 : 1, null))
+    canvasRef.value.addEventListener('wheel', (e) => adjustZoom((e.deltaY > 0) ? -1 : 1, null))
     initCanvas()
   } else {
     console.error('ERROR! Canvas element not available after mount.')
@@ -305,8 +306,8 @@ function renderKissingCircles(centers: Coor[]) {
 
   ctx.reset()
 
-  ctx.scale(cameraZoom, cameraZoom)
-  ctx.translate( cameraOffset.x, cameraOffset.y )
+  ctx.scale(canvasScale, canvasScale)
+  ctx.translate( canvasOffset.x, canvasOffset.y )
 
   ctx.fillStyle = "hsl(100 0% 0% / 20%)"
   ctx.fillRect(0, 0, width, height)
@@ -423,47 +424,53 @@ function stopAnimationAfterCurrentStep() {
 // ************************* PANNING/SCALING *************************
 // Panning and zooming. See https://codepen.io/chengarda/pen/wRxoyB for open source example
 
-let cameraOffset = { x: 0, y: 0 }
-let cameraZoom: number = 1
-let MAX_ZOOM: number = 5
-let MIN_ZOOM: number = 0.1
-let SCROLL_SENSITIVITY: number = 2 ** (1/4)
+let canvasOffset = { x: 0, y: 0 }
+let canvasScale: number = 1
 
-function getEventLocation(e: MouseEvent | TouchEvent): Coor {
-  if (e instanceof TouchEvent) {
-    if (e.touches && e.touches.length == 1) {
-      return new Coor(e.touches[0].clientX, e.touches[0].clientY)
-    }
-  }
-
-  if (e instanceof MouseEvent) {
-    if (e.clientX && e.clientY) {
-      return new Coor(e.clientX,e.clientY)
-    }
-  }
-  
-  console.error(`Unexpected event: ${e}`)
-}
+let zoomLevel: number = 0
+const MIN_ZOOM_LEVEL = -20
+const MAX_ZOOM_LEVEL = 20
+const ZOOM_SCALE_STEP_SIZE = 2 ** (1/4)
 
 let isDragging = false
 let dragStart = { x: 0, y: 0 }
+let initialPinchDistanceSquared: number | null
+
+function getEventCoor(e: MouseEvent | TouchEvent): Coor {
+  let coor = null
+  if (e instanceof TouchEvent) {
+    if (e.touches && e.touches.length == 1) {
+      coor = new Coor(e.touches[0].clientX, e.touches[0].clientY)
+    }
+  } else if (e instanceof MouseEvent) {
+    if (e.clientX && e.clientY) {
+      coor = new Coor(e.clientX,e.clientY)
+    }
+  }
+
+  if (coor === null) {
+    throw TypeError(`Event should be a MouseEvent or TouchEvent, but was ${e}`)
+  }
+  return coor
+}
 
 function onPointerDown(e: MouseEvent | TouchEvent) {
   isDragging = true
-  dragStart.x = getEventLocation(e).x/cameraZoom - cameraOffset.x
-  dragStart.y = getEventLocation(e).y/cameraZoom - cameraOffset.y
+  const pointerCoor = getEventCoor(e)
+  dragStart.x = pointerCoor.x/canvasScale - canvasOffset.x
+  dragStart.y = pointerCoor.y/canvasScale - canvasOffset.y
 }
 
 function onPointerUp(e: MouseEvent | TouchEvent) {
   isDragging = false
   initialPinchDistanceSquared = null
-  lastZoom = cameraZoom
 }
 
 function onPointerMove(e: MouseEvent | TouchEvent) {
   if (isDragging) {
-    cameraOffset.x = getEventLocation(e).x/cameraZoom - dragStart.x
-    cameraOffset.y = getEventLocation(e).y/cameraZoom - dragStart.y
+    const pointerCoor = getEventCoor(e)
+    canvasOffset.x = pointerCoor.x/canvasScale - dragStart.x
+    canvasOffset.y = pointerCoor.y/canvasScale - dragStart.y
   }
 }
 
@@ -477,9 +484,6 @@ function handleTouch(e: TouchEvent, singleTouchHandler: CallableFunction) {
   }
 }
 
-let initialPinchDistanceSquared: number | null
-let lastZoom = cameraZoom
-
 function handlePinch(e: TouchEvent) {
   e.preventDefault()
 
@@ -487,12 +491,12 @@ function handlePinch(e: TouchEvent) {
   let touch2 = { x: e.touches[1].clientX, y: e.touches[1].clientY }
 
   // This is distance squared, but no need for an expensive sqrt as it's only used in ratio
-  let currentDistanceSquared = (touch1.x - touch2.x)**2 + (touch1.y - touch2.y)**2 + (0.1 ** 8)
+  let currentPinchDistanceSquared = (touch1.x - touch2.x)**2 + (touch1.y - touch2.y)**2 + (0.1 ** 8)
 
   if (initialPinchDistanceSquared == null) {
-    initialPinchDistanceSquared = currentDistanceSquared
+    initialPinchDistanceSquared = currentPinchDistanceSquared
   } else {
-    adjustZoom(0, currentDistanceSquared/initialPinchDistanceSquared)
+    adjustZoom(0, currentPinchDistanceSquared/initialPinchDistanceSquared)
   }
 }
 
@@ -500,17 +504,18 @@ function adjustZoom(zoomLevelChange: number, zoomFactor: number) {
   if (!isDragging) {
     if (zoomLevelChange) {
       zoomLevel += zoomLevelChange
-      cameraZoom = scaleStepSize ** zoomLevel
+      zoomLevel = Math.min(zoomLevel, MAX_ZOOM_LEVEL)
+      zoomLevel = Math.max(zoomLevel, MIN_ZOOM_LEVEL)
+      canvasScale = ZOOM_SCALE_STEP_SIZE ** zoomLevel
     }
     else if (zoomFactor) {
-      cameraZoom = zoomFactor*lastZoom
+      canvasScale *= zoomFactor
     }
 
-    cameraZoom = Math.min( cameraZoom, MAX_ZOOM )
-    cameraZoom = Math.max( cameraZoom, MIN_ZOOM )
+    canvasScale = Math.min( canvasScale, MAX_ZOOM_LEVEL )
+    canvasScale = Math.max( canvasScale, MIN_ZOOM_LEVEL )
 
-    console.log(`cameraZoom: ${cameraZoom}`)
-    ctx.scale(cameraZoom, cameraZoom)
+    ctx.scale(canvasScale, canvasScale)
   }
 }
 
