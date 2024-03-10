@@ -435,36 +435,32 @@ let canvasScaleRef = ref(ZOOM_SCALE_STEP_SIZE ** zoomLevelRef.value)
 let isDragging = false
 let dragStart = { x: 0, y: 0 }
 
-function getEventCoor(e: MouseEvent | TouchEvent): Coor {
+function getEventCoor(e: MouseEvent): Coor {
   let coor = null
-  if (e instanceof TouchEvent) {
-    if (e.touches && e.touches.length == 1) {
-      coor = new Coor(e.touches[0].clientX, e.touches[0].clientY)
-    }
-  } else if (e instanceof MouseEvent) {
+  if (e instanceof MouseEvent) {
     if (e.clientX && e.clientY) {
       coor = new Coor(e.clientX,e.clientY)
     }
   }
 
   if (coor === null) {
-    throw TypeError(`Event should be a MouseEvent or TouchEvent, but was ${e}`)
+    throw TypeError(`Event should be a MouseEvent, but was ${e}`)
   }
   return coor
 }
 
-function onPointerDown(e: MouseEvent | TouchEvent) {
+function onPointerDown(e: MouseEvent) {
   isDragging = true
   const pointerCoor = getEventCoor(e)
   dragStart.x = pointerCoor.x/canvasScaleRef.value - canvasOffsetRef.value.x
   dragStart.y = pointerCoor.y/canvasScaleRef.value - canvasOffsetRef.value.y
 }
 
-function onPointerUp(e: MouseEvent | TouchEvent) {
+function onPointerUp(e: MouseEvent) {
   isDragging = false
 }
 
-function onPointerMove(e: MouseEvent | TouchEvent) {
+function onPointerMove(e: MouseEvent) {
   if (isDragging) {
     const pointerCoor = getEventCoor(e)
     canvasOffsetRef.value.x = pointerCoor.x/canvasScaleRef.value - dragStart.x
