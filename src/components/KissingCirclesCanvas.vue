@@ -18,8 +18,9 @@
     <label for="animationTimeInput">Duration of each transition</label>
     <input id="animationTimeInput" v-model.lazy="animationDurationRef">
 
-    <span>Zoom Level: {{ zoomLevel.toFixed(3) }}</span>
-    <span>Canvas Scale: {{ canvasScale.toFixed(3) }}</span>
+    <div>Zoom Level: {{ zoomLevelRef.toFixed(3) }}</div>
+    <div>Canvas Scale: {{ canvasScaleRef.toFixed(3) }}</div>
+    <div>Canvas Offset: ({{ canvasOffsetRef.x.toFixed(1) }}, {{ canvasOffsetRef.y.toFixed(1) }}  )</div>
   </div>
   <!-- Canvas -->
   <div>
@@ -304,8 +305,8 @@ function renderKissingCircles(centers: Coor[]) {
 
   ctx.reset()
 
-  ctx.scale(canvasScale, canvasScale)
-  ctx.translate( canvasOffset.x, canvasOffset.y )
+  ctx.scale(canvasScaleRef.value, canvasScaleRef.value)
+  ctx.translate( canvasOffsetRef.value.x, canvasOffsetRef.value.y )
 
   ctx.fillStyle = "hsl(100 0% 0% / 20%)"
   ctx.fillRect(0, 0, width, height)
@@ -422,13 +423,14 @@ function stopAnimationAfterCurrentStep() {
 // ************************* PANNING/SCALING *************************
 // Panning and zooming. See https://codepen.io/chengarda/pen/wRxoyB for open source example
 
-let canvasOffset = { x: 0, y: 0 }
-let canvasScale: number = 1
+let canvasOffsetRef = ref(new Coor(0,0))
 
-let zoomLevel: number = 0
+let zoomLevelRef: Ref<number> = ref(0)
 const MIN_ZOOM_LEVEL = -20
 const MAX_ZOOM_LEVEL = 20
 const ZOOM_SCALE_STEP_SIZE = 2 ** (1/4)
+
+let canvasScaleRef = ref(ZOOM_SCALE_STEP_SIZE ** zoomLevelRef.value)
 
 let isDragging = false
 let dragStart = { x: 0, y: 0 }
@@ -454,8 +456,8 @@ function getEventCoor(e: MouseEvent | TouchEvent): Coor {
 function onPointerDown(e: MouseEvent | TouchEvent) {
   isDragging = true
   const pointerCoor = getEventCoor(e)
-  dragStart.x = pointerCoor.x/canvasScale - canvasOffset.x
-  dragStart.y = pointerCoor.y/canvasScale - canvasOffset.y
+  dragStart.x = pointerCoor.x/canvasScaleRef.value - canvasOffsetRef.value.x
+  dragStart.y = pointerCoor.y/canvasScaleRef.value - canvasOffsetRef.value.y
 }
 
 function onPointerUp(e: MouseEvent | TouchEvent) {
@@ -465,19 +467,19 @@ function onPointerUp(e: MouseEvent | TouchEvent) {
 function onPointerMove(e: MouseEvent | TouchEvent) {
   if (isDragging) {
     const pointerCoor = getEventCoor(e)
-    canvasOffset.x = pointerCoor.x/canvasScale - dragStart.x
-    canvasOffset.y = pointerCoor.y/canvasScale - dragStart.y
+    canvasOffsetRef.value.x = pointerCoor.x/canvasScaleRef.value - dragStart.x
+    canvasOffsetRef.value.y = pointerCoor.y/canvasScaleRef.value - dragStart.y
   }
 }
 
 function adjustZoom(zoomLevelChange: number) {
   if (!isDragging) {
-    zoomLevel += zoomLevelChange
-    zoomLevel = Math.min(zoomLevel, MAX_ZOOM_LEVEL)
-    zoomLevel = Math.max(zoomLevel, MIN_ZOOM_LEVEL)
-    canvasScale = ZOOM_SCALE_STEP_SIZE ** zoomLevel
+    zoomLevelRef.value += zoomLevelChange
+    zoomLevelRef.value = Math.min(zoomLevelRef.value, MAX_ZOOM_LEVEL)
+    zoomLevelRef.value = Math.max(zoomLevelRef.value, MIN_ZOOM_LEVEL)
+    canvasScaleRef.value = ZOOM_SCALE_STEP_SIZE ** zoomLevelRef.value
 
-    ctx.scale(canvasScale, canvasScale)
+    ctx.scale(canvasScaleRef.value, canvasScaleRef.value)
   }
 }
 
