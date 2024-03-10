@@ -60,6 +60,7 @@ let yMin: number
 let xMax: number
 let yMax: number
 
+// Circle style props
 let colorHueOffset: number = 0
 const colorHueOffsetStepsize: number = 0.3
 
@@ -72,8 +73,8 @@ class Coor {
     this.y = y
   }
 
-  public static fromCoorPair(coorPair: number[]) {
-    return new Coor(coorPair[0], coorPair[1])
+  public static fromXYCoorPair(xyCoorPair: number[]) {
+    return new Coor(xyCoorPair[0], xyCoorPair[1])
   }
 }
 
