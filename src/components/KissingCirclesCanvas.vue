@@ -18,7 +18,7 @@
     <label for="animationTimeInput">Duration of each transition</label>
     <input id="animationTimeInput" v-model.lazy="animationDurationRef">
 
-    <div>Zoom Level: {{ zoomLevelRef.toFixed(3) }}</div>
+    <div>Zoom Level: {{ canvasZoomLevelRef.toFixed(3) }}</div>
     <div>Canvas Scale: {{ canvasScaleRef.toFixed(3) }}</div>
     <div>Canvas Offset: ({{ canvasOffsetRef.x.toFixed(1) }}, {{ canvasOffsetRef.y.toFixed(1) }}  )</div>
   </div>
@@ -37,7 +37,7 @@ defineProps<{
 import { ref, onMounted } from 'vue'
 import type { Ref } from 'vue'
 
-const numCirclesRef: Ref<number> = ref(300)
+const numCirclesRef: Ref<number> = ref(80)
 const animationDurationRef: Ref<number> = ref(10000) // milliseconds
 
 let ctx: CanvasRenderingContext2D
@@ -60,6 +60,8 @@ let xMin: number
 let yMin: number
 let xMax: number
 let yMax: number
+
+let _renderedPointerCoor: Coor
 
 // Circle style props
 let colorHueOffset: number = 0
@@ -188,7 +190,7 @@ onMounted(() => {
     canvasRef.value.addEventListener('mousedown', onPointerDown)
     canvasRef.value.addEventListener('mouseup', onPointerUp)
     canvasRef.value.addEventListener('mousemove', onPointerMove)
-    canvasRef.value.addEventListener('wheel', (e) => adjustZoom((e.deltaY > 0) ? -1 : 1))
+    canvasRef.value.addEventListener('wheel', adjustZoom)
     initCanvas()
   } else {
     console.error('ERROR! Canvas element not available after mount.')
@@ -226,12 +228,19 @@ function generateRandomCenters(): Coor[] {
   const stepSize = 1.0 / 6
   const xStep: number = (width / numCirclesRef.value) * stepSize
   const yStep: number = (height / numCirclesRef.value) * stepSize
+  const xOffset: number = xStep * 10
+  const yOffset: number = yStep * 10
   for (let i=0; i<numCirclesRef.value; i++) {
     // let x: number = xMin + (xMax - xMin)*Math.random()
     // let y: number = yMin + (yMax - yMin)*Math.random()
-    const x: number = canvasCenter.x + (xStep * (i + 1))
-    const y: number = canvasCenter.y + (yStep * (i + 1))
-    centers.push(new Coor(x, y))
+    const x: number = (xStep * (i + 1)) + xOffset
+    const y: number = (yStep * (i + 1)) + yOffset
+    const rotation_angle = 2*Math.PI * (i / numCirclesRef.value)
+    const cos_theta = Math.cos(rotation_angle)
+    const sin_theta = Math.sin(rotation_angle)
+    const x_rotated = canvasCenter.x + (cos_theta*x - sin_theta*y)
+    const y_rotated = canvasCenter.y + (cos_theta*y + sin_theta*y)
+    centers.push(new Coor(x_rotated, y_rotated))
   }
   return centers;
 }
@@ -241,14 +250,17 @@ function generateCoorOnCircles(centers: Coor[]): CoorOnACircle[] {
     // const radius = 10 + (190 * Math.random())
     // const theta = (2 * Math.PI) * Math.random()
     // const SPEEDS = [1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9]
+    // const SPEEDS = [1.0005, 1.0010, 1.0015, 1.0020, 1.0025, 1.0030, 1.0035, 1.0040]
+    const SPEEDS = [1.0005, 1.0010]
 
     const diffX = center.x - canvasCenter.x
     const diffY = center.y - canvasCenter.y
     const radius = dist(center, canvasCenter)
     const theta = Math.atan(diffY / diffX)
-    const direction = (-1) ** index
+    const direction = 1//[1, -1][index % 2]
     // const speed = SPEEDS[index % SPEEDS.length]
-    const speed = 1.001 ** index
+    const speed = SPEEDS[index % SPEEDS.length] ** index
+    // const speed = [1.001, 1.001, 1.002, 1.002][index % 4] ** index
 
     return new CoorOnACircle(center, radius, theta, direction, speed)
   })
@@ -304,7 +316,6 @@ function renderKissingCircles(centers: Coor[]) {
   const circlesWithRadiusLines = computeRadii(centers)
 
   ctx.reset()
-
   ctx.scale(canvasScaleRef.value, canvasScaleRef.value)
   ctx.translate( canvasOffsetRef.value.x, canvasOffsetRef.value.y )
 
@@ -331,6 +342,28 @@ function renderKissingCircles(centers: Coor[]) {
     ctx.stroke();
   })
   colorHueOffset += colorHueOffsetStepsize
+
+  // Add circles at corners
+  const offset = canvasOffsetRef.value
+  // const offset = new Coor(0, 0)
+  const scaledWidth = width/canvasScaleRef.value
+  const scaledHeight = height/canvasScaleRef.value
+  const radius = Math.min(scaledWidth, scaledHeight)/20
+  ctx.beginPath();
+  ctx.arc(-offset.x,               -offset.y,                radius, 0,2*Math.PI);
+  ctx.arc(-offset.x + scaledWidth, -offset.y,                radius, 0,2*Math.PI);
+  ctx.arc(-offset.x + scaledWidth, -offset.y + scaledHeight, radius, 0,2*Math.PI);
+  ctx.arc(-offset.x              , -offset.y + scaledHeight, radius, 0,2*Math.PI);
+  ctx.stroke()
+
+  // Add pointer coor
+  if (_renderedPointerCoor) {
+    ctx.beginPath()
+    ctx.arc(_renderedPointerCoor.x, _renderedPointerCoor.y, radius, 0, 2*Math.PI)
+    ctx.stroke()
+
+  }
+
 }
 
 function dist(a: Coor, b: Coor): number {
@@ -425,12 +458,12 @@ function stopAnimationAfterCurrentStep() {
 
 let canvasOffsetRef = ref(new Coor(0,0))
 
-let zoomLevelRef: Ref<number> = ref(0)
+let canvasZoomLevelRef: Ref<number> = ref(0)
 const MIN_ZOOM_LEVEL = -20
 const MAX_ZOOM_LEVEL = 20
 const ZOOM_SCALE_STEP_SIZE = 2 ** (1/4)
 
-let canvasScaleRef = ref(ZOOM_SCALE_STEP_SIZE ** zoomLevelRef.value)
+let canvasScaleRef = ref(ZOOM_SCALE_STEP_SIZE ** canvasZoomLevelRef.value)
 
 let isDragging = false
 let dragStart = { x: 0, y: 0 }
@@ -439,13 +472,17 @@ function getEventCoor(e: MouseEvent): Coor {
   let coor = null
   if (e instanceof MouseEvent) {
     if (e.clientX && e.clientY) {
-      coor = new Coor(e.clientX,e.clientY)
+      coor = new Coor(e.clientX - e.target.offsetLeft, e.clientY - e.target.offsetTop)
     }
   }
+
+  console.dir(e.target)
 
   if (coor === null) {
     throw TypeError(`Event should be a MouseEvent, but was ${e}`)
   }
+
+  console.log(`${e.type} Event: @ (${coor.x}, ${coor.y})`)
   return coor
 }
 
@@ -454,6 +491,8 @@ function onPointerDown(e: MouseEvent) {
   const pointerCoor = getEventCoor(e)
   dragStart.x = pointerCoor.x/canvasScaleRef.value - canvasOffsetRef.value.x
   dragStart.y = pointerCoor.y/canvasScaleRef.value - canvasOffsetRef.value.y
+  console.log(`onPointerDown: pointerCoor: (${pointerCoor.x}, ${pointerCoor.y}})`)
+  console.log(`onPointerDown: dragStart:   (${dragStart.x}, ${dragStart.y}})`)
 }
 
 function onPointerUp(e: MouseEvent) {
@@ -461,21 +500,57 @@ function onPointerUp(e: MouseEvent) {
 }
 
 function onPointerMove(e: MouseEvent) {
+  const pointerCoor = getEventCoor(e)
+  console.log(`onPointerMove @ (${pointerCoor.x}, ${pointerCoor.y})`)
   if (isDragging) {
-    const pointerCoor = getEventCoor(e)
     canvasOffsetRef.value.x = pointerCoor.x/canvasScaleRef.value - dragStart.x
     canvasOffsetRef.value.y = pointerCoor.y/canvasScaleRef.value - dragStart.y
   }
 }
 
-function adjustZoom(zoomLevelChange: number) {
+function logCanvasDetails(pointerCoor: Coor) {
+  console.log(`  Canvas details:`)
+  console.log(`    Pointer: (${pointerCoor.x.toFixed(2)}, ${pointerCoor.y.toFixed(2)})`)
+  console.log(`    Zoom:    ${canvasZoomLevelRef.value.toFixed(2)}`)
+  console.log(`    Scale:   ${canvasScaleRef.value.toFixed(2)}`)
+  console.log(`    Offset:  (${canvasOffsetRef.value.x.toFixed(2)}, ${canvasOffsetRef.value.y.toFixed(2)})`)
+}
+
+function adjustZoom(e: MouseEvent) {
+  const pointerCoor = getEventCoor(e)
+  const scaledPointerCoor = new Coor(pointerCoor.x/canvasScaleRef.value, pointerCoor.y/canvasScaleRef.value)
+  console.log(`Before`)
+  logCanvasDetails(pointerCoor)
+
   if (!isDragging) {
-    zoomLevelRef.value += zoomLevelChange
-    zoomLevelRef.value = Math.min(zoomLevelRef.value, MAX_ZOOM_LEVEL)
-    zoomLevelRef.value = Math.max(zoomLevelRef.value, MIN_ZOOM_LEVEL)
-    canvasScaleRef.value = ZOOM_SCALE_STEP_SIZE ** zoomLevelRef.value
+    const zoomLevelChange = (e.deltaY > 0) ? -1 : 1
+
+    canvasZoomLevelRef.value += zoomLevelChange
+    canvasZoomLevelRef.value = Math.min(canvasZoomLevelRef.value, MAX_ZOOM_LEVEL)
+    canvasZoomLevelRef.value = Math.max(canvasZoomLevelRef.value, MIN_ZOOM_LEVEL)
+
+    const oldCanvasScale = canvasScaleRef.value
+    const newCanvasScale = ZOOM_SCALE_STEP_SIZE ** canvasZoomLevelRef.value
+    // const newOffsetX = scaledPointerCoor.x - (newCanvasScale/oldCanvasScale) * (scaledPointerCoor.x + canvasOffsetRef.value.x)
+    // const newOffsetY = scaledPointerCoor.y - (newCanvasScale/oldCanvasScale) * (scaledPointerCoor.y + canvasOffsetRef.value.y)
+    // const newOffsetX = scaledPointerCoor.x - (oldCanvasScale/newCanvasScale) * (scaledPointerCoor.x - canvasOffsetRef.value.x)
+    // const newOffsetY = scaledPointerCoor.y - (oldCanvasScale/newCanvasScale) * (scaledPointerCoor.y - canvasOffsetRef.value.y)
+    // const newOffsetX = scaledPointerCoor.x - (oldCanvasScale/newCanvasScale) * (scaledPointerCoor.x - canvasOffsetRef.value.x)
+    // const newOffsetY = scaledPointerCoor.y - (oldCanvasScale/newCanvasScale) * (scaledPointerCoor.y - canvasOffsetRef.value.y)
+    const newOffsetX = scaledPointerCoor.x - (newCanvasScale/oldCanvasScale) * (scaledPointerCoor.x - canvasOffsetRef.value.x)
+    const newOffsetY = scaledPointerCoor.y - (newCanvasScale/oldCanvasScale) * (scaledPointerCoor.y - canvasOffsetRef.value.y)
+
+    canvasScaleRef.value = newCanvasScale
+    canvasOffsetRef.value = new Coor(newOffsetX, newOffsetY)
 
     ctx.scale(canvasScaleRef.value, canvasScaleRef.value)
+    ctx.translate(canvasOffsetRef.value.x, canvasOffsetRef.value.y)
+
+    _renderedPointerCoor = new Coor(scaledPointerCoor.x, scaledPointerCoor.y)
+
+    console.log(`After`)
+    logCanvasDetails(pointerCoor)
+    console.log(`-----------------------------------`)
   }
 }
 
