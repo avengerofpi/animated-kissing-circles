@@ -1,0 +1,565 @@
+<template>
+  <!-- Silly header -->
+  <h1 class="green">{{ msg }}, now bugger off</h1>
+  <!-- Buttons -->
+  <div>
+    <button type="button" @click="regenerateCircles" :disabled=animating>Regenerate Circles</button>
+    <button type="button" @click="animate" :disabled=animating>Animate Circles</button>
+    <button type="button" @click="stopAnimationAfterCurrentStep" :disabled="!animating || stopAnimationFlag">
+      <span v-if="!stopAnimationFlag">Stop Animation</span>
+      <span v-if="stopAnimationFlag">Pending Stop...</span>
+    </button>
+  </div>
+  <!-- Basic input -->
+  <div>
+    <label for="nInput">Number of Circles:</label>
+    <input id="nInput" v-model.lazy="numCirclesRef">
+
+    <label for="animationTimeInput">Duration of each transition</label>
+    <input id="animationTimeInput" v-model.lazy="animationDurationRef">
+  </div>
+  <!-- Canvas -->
+  <KissingCirclesCanvas></KissingCirclesCanvas>
+</template>
+
+<script setup lang="ts">
+// https://vuejs.org/guide/typescript/composition-api
+defineProps<{
+  msg: string
+}>()
+
+import { ref, onMounted } from 'vue'
+import type { Ref } from 'vue'
+import type KissingCirclesCanvasVue from './KissingCirclesCanvas.vue';
+
+const numCirclesRef: Ref<number> = ref(80)
+const animationDurationRef: Ref<number> = ref(10000) // milliseconds
+
+let ctx: CanvasRenderingContext2D
+const canvasRef: Ref<HTMLCanvasElement | null> = ref(null)
+const srcCentersRef: Ref<Coor[]> = ref([])
+const srcCentersOnCircles: Ref<CoorOnACircle[]> = ref([])
+const currCentersOnCircles: Ref<CoorOnACircle[]> = ref([])
+// const dstCentersRef: Ref<Coor[]> = ref([])
+// const currCentersRef: Ref<Coor[]> = ref([])
+const animating: Ref<boolean> = ref(false)
+const stopAnimationFlag: Ref<boolean> = ref(false)
+let start: number
+let previousTimeStamp: number;
+
+let height: number
+let width: number
+let canvasCenter: Coor
+let borderSize: number
+let xMin: number
+let yMin: number
+let xMax: number
+let yMax: number
+
+let _renderedPointerCoor: Coor
+
+// Circle style props
+let colorHueOffset: number = 0
+const colorHueOffsetStepsize: number = 0.3
+
+class Coor {
+  x: number
+  y: number
+
+  public constructor(x: number, y: number) {
+    this.x = x
+    this.y = y
+  }
+
+  public static fromXYCoorPair(xyCoorPair: number[]) {
+    return new Coor(xyCoorPair[0], xyCoorPair[1])
+  }
+}
+
+class CoorOnACircle extends Coor {
+  /** Coordinate of the point on the circle */
+  coor: Coor
+  /** Center of the circle the coor is on */
+  center: Coor
+  /** radius of the circle the Coor is on */
+  radius: number
+  /** Radian position of Coor on the circle */
+  theta: number
+  /** +1 for clockwise (default), -1 for counter-clockwise, zero for no movement */
+  direction: number
+  /** Speed of animation movement for this point, must be non-negative.
+   * Default is `1.0` for normal speed */
+  speed: number
+
+  public constructor(coorOnCircle: Coor, radius: number, theta: number, direction: number = 1, speed: number = 1.0) {
+    const centerOfCircle = new Coor(
+      coorOnCircle.x - (radius * Math.cos(theta)),
+      coorOnCircle.y - (radius * Math.sin(theta))
+    )
+    super(centerOfCircle.x, centerOfCircle.y)
+    this.coor = coorOnCircle
+    this.center = centerOfCircle
+    this.radius = radius
+    this.theta = theta
+    if (![-1, 0, 1].includes(direction)) {
+      throw Error(`Direction must be -1, 0, or 1, but was ${direction}`)
+    }
+    this.direction = direction
+    if (speed < 0) {
+      throw Error(`Speed must be non-negative, but was ${speed}`)
+    }
+    this.speed = speed
+  }
+
+  public copy() {
+    return new CoorOnACircle(
+      this.coor,
+      this.radius,
+      this.theta,
+      this.direction,
+      this.speed,
+    )
+  }
+}
+
+class Circle {
+  center: Coor
+  radius: number | undefined
+
+  public constructor(x: number, y: number, radius: number | undefined = undefined) {
+    this.center = new Coor(x, y)
+    this.radius = radius
+  }
+}
+
+class LineSegment {
+  src: Coor
+  dst: Coor
+
+  public constructor(src: Coor, dst: Coor) {
+    this.src = src
+    this.dst = dst
+  }
+
+  public static fromXYXY(srcX: number, srcY: number, dstX: number, dstY: number) {
+    return new LineSegment(new Coor(srcX, srcY), new Coor(dstX, dstY))
+  }
+
+  public static fromCoorXY(src: Coor, dstX: number, dstY: number) {
+    return new LineSegment(src, new Coor(dstX, dstY))
+  }
+
+  public static fromXYCoor(srcX: number, srcY: number, dst: Coor) {
+    return new LineSegment(new Coor(srcX, srcY), dst)
+  }
+
+  public length(): number {
+    return dist(this.src, this.dst)
+  }
+}
+
+class CircleWithRadiusLine {
+  center: Coor
+  radius: number
+  radiusLine: LineSegment | undefined
+
+  public constructor(center: Coor, radiusLineDst: Coor | undefined = undefined) {
+    this.center = center
+    if (radiusLineDst) {
+      this.radiusLine = new LineSegment(this.center, radiusLineDst)
+    } else {
+      this.radiusLine = new LineSegment(this.center, this.center)
+    }
+    this.radius = this.radiusLine.length()
+  }
+
+  public setRadiusLineDst(radiusLineDst: Coor) {
+    this.radiusLine = new LineSegment(this.center, radiusLineDst)
+    this.radius = this.radiusLine.length()
+  }
+}
+
+onMounted(() => {
+  if (canvasRef.value) {
+    ctx = canvasRef.value.getContext("2d") as CanvasRenderingContext2D
+    canvasRef.value.addEventListener('mousedown', onPointerDown)
+    canvasRef.value.addEventListener('mouseup', onPointerUp)
+    canvasRef.value.addEventListener('mousemove', onPointerMove)
+    canvasRef.value.addEventListener('wheel', adjustZoom)
+    initCanvas()
+  } else {
+    console.error('ERROR! Canvas element not available after mount.')
+  }
+
+})
+
+function initCanvas() {
+  resetCanvasWithNewCircles()
+}
+
+function resetCanvasWithNewCircles() {
+  height = ctx.canvas.height;
+  width = ctx.canvas.width;
+
+  // for creating concentric circles
+  canvasCenter = new Coor(width / 2, height / 2)
+
+  borderSize = Math.max(height, width) / 10
+  xMin = borderSize
+  yMin = borderSize
+  xMax = width - borderSize
+  yMax = height - borderSize
+  srcCentersRef.value = generateRandomCenters()
+  srcCentersOnCircles.value = generateCoorOnCircles(srcCentersRef.value)
+
+  renderKissingCircles(srcCentersRef.value);
+}
+
+function generateRandomCenters(): Coor[] {
+
+  const centers: Coor[] = []
+  if (numCirclesRef.value <= 0) return centers;
+
+  const stepSize = 1.0 / 6
+  const xStep: number = (width / numCirclesRef.value) * stepSize
+  const yStep: number = (height / numCirclesRef.value) * stepSize
+  const xOffset: number = xStep * 10
+  const yOffset: number = yStep * 10
+  for (let i=0; i<numCirclesRef.value; i++) {
+    // let x: number = xMin + (xMax - xMin)*Math.random()
+    // let y: number = yMin + (yMax - yMin)*Math.random()
+    const x: number = (xStep * (i + 1)) + xOffset
+    const y: number = (yStep * (i + 1)) + yOffset
+    const rotation_angle = 2*Math.PI * (i / numCirclesRef.value)
+    const cos_theta = Math.cos(rotation_angle)
+    const sin_theta = Math.sin(rotation_angle)
+    const x_rotated = canvasCenter.x + (cos_theta*x - sin_theta*y)
+    const y_rotated = canvasCenter.y + (cos_theta*y + sin_theta*y)
+    centers.push(new Coor(x_rotated, y_rotated))
+  }
+  return centers;
+}
+
+function generateCoorOnCircles(centers: Coor[]): CoorOnACircle[] {
+  return centers.map((center, index) => {
+    // const radius = 10 + (190 * Math.random())
+    // const theta = (2 * Math.PI) * Math.random()
+    // const SPEEDS = [1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9]
+    // const SPEEDS = [1.0005, 1.0010, 1.0015, 1.0020, 1.0025, 1.0030, 1.0035, 1.0040]
+    const SPEEDS = [1.0005, 1.0010]
+
+    const diffX = center.x - canvasCenter.x
+    const diffY = center.y - canvasCenter.y
+    const radius = dist(center, canvasCenter)
+    const theta = Math.atan(diffY / diffX)
+    const direction = 1//[1, -1][index % 2]
+    // const speed = SPEEDS[index % SPEEDS.length]
+    const speed = SPEEDS[index % SPEEDS.length] ** index
+    // const speed = [1.001, 1.001, 1.002, 1.002][index % 4] ** index
+
+    return new CoorOnACircle(center, radius, theta, direction, speed)
+  })
+}
+
+function computeRadii(centers: Coor[]): CircleWithRadiusLine[] {
+  // is there a better way to copy this array?
+  const unprocessedCenters: Coor[] = new Array(...centers).reverse()
+  let circlesWithRadiusLine: CircleWithRadiusLine[] = []
+
+  while (unprocessedCenters.length) {
+    const center = unprocessedCenters.pop() as Coor
+    let r: number = Number.MAX_VALUE
+    let dstCenter: Coor = center
+    let radiusLineEndpoint: Coor = new Coor(0,0)
+    // First circle will be 1/3 distance between first point and nearest point.
+    if (circlesWithRadiusLine.length === 0) {
+      unprocessedCenters.forEach((B) => {
+        const rNext = dist(center, B)
+        if (rNext < r) {
+          r = rNext
+          dstCenter = B
+          radiusLineEndpoint = new Coor(
+            center.x + (dstCenter.x - center.x) / 3,
+            center.y + (dstCenter.y - center.y) / 3
+          )
+        }
+      })
+    }
+    // Remaining circles will generate based on nearest existing circle
+    else {
+      circlesWithRadiusLine.forEach((c) => {
+        const rNext = Math.abs(dist(center, c.center) - c.radius)
+        if (rNext < r) {
+          r = rNext
+          dstCenter = c.center
+          const scale = r / dist(center, c.center)
+          radiusLineEndpoint = new Coor(
+            center.x + (dstCenter.x - center.x) * scale,
+            center.y + (dstCenter.y - center.y) * scale
+          )
+        }
+      })
+    }
+    const circle: Circle = new Circle(center.x, center.y, r)
+    circlesWithRadiusLine.push(new CircleWithRadiusLine(circle.center, radiusLineEndpoint))
+  }
+
+  return circlesWithRadiusLine
+}
+
+function renderKissingCircles(centers: Coor[]) {
+  const circlesWithRadiusLines = computeRadii(centers)
+
+  ctx.reset()
+  ctx.scale(canvasScaleRef.value, canvasScaleRef.value)
+  ctx.translate( canvasOffsetRef.value.x, canvasOffsetRef.value.y )
+
+  ctx.fillStyle = "hsl(100 0% 0% / 20%)"
+  ctx.fillRect(0, 0, width, height)
+  ctx.fillStyle = "white"
+  ctx.fillRect(xMin, yMin, xMax-xMin, yMax-yMin)
+  
+  circlesWithRadiusLines.forEach((circlesWithRadiusLine, index) => {
+    const center = circlesWithRadiusLine.center
+    const radius = circlesWithRadiusLine.radius
+    ctx.beginPath();
+    ctx.arc(center.x, center.y, radius, 0,2*Math.PI);
+    ctx.fillStyle = `hsl(${(index / numCirclesRef.value) * 360 + colorHueOffset} 100% 50% / 40%)`
+    ctx.fill()
+    ctx.fillStyle = "hsl(0 0% 0% / 0%)"
+    // ctx.strokeText(`(${center.x.toFixed(1)}, ${center.y.toFixed(1)}), ${radius.toFixed(1)}`, center.x-5, center.y)
+
+    // Add line segment pointing to nearest neighbor
+    // const radiusLine = circlesWithRadiusLine.radiusLine as LineSegment
+    // ctx.moveTo(radiusLine.src.x, radiusLine.src.y);
+    // ctx.lineTo(radiusLine.dst.x, radiusLine.dst.y)
+
+    ctx.stroke();
+  })
+  colorHueOffset += colorHueOffsetStepsize
+
+  // Add circles at corners
+  const offset = canvasOffsetRef.value
+  // const offset = new Coor(0, 0)
+  const scaledWidth = width/canvasScaleRef.value
+  const scaledHeight = height/canvasScaleRef.value
+  const radius = Math.min(scaledWidth, scaledHeight)/20
+  ctx.beginPath();
+  ctx.arc(-offset.x,               -offset.y,                radius, 0,2*Math.PI);
+  ctx.arc(-offset.x + scaledWidth, -offset.y,                radius, 0,2*Math.PI);
+  ctx.arc(-offset.x + scaledWidth, -offset.y + scaledHeight, radius, 0,2*Math.PI);
+  ctx.arc(-offset.x              , -offset.y + scaledHeight, radius, 0,2*Math.PI);
+  ctx.stroke()
+
+  // Add pointer coor
+  if (_renderedPointerCoor) {
+    ctx.beginPath()
+    ctx.arc(_renderedPointerCoor.x, _renderedPointerCoor.y, radius, 0, 2*Math.PI)
+    ctx.stroke()
+
+  }
+
+}
+
+function dist(a: Coor, b: Coor): number {
+  return Math.sqrt((a.x - b.x)**2 + (a.y - b.y)**2)
+}
+
+function regenerateCircles() {
+  resetCanvasWithNewCircles()
+}
+
+function animate() {
+  // dstCentersRef.value = generateRandomCenters()
+
+  // Shuffle srcCenters to produce dstCenters
+  // dstCentersRef.value = (srcCentersRef.value.map(c => [Math.random(), c]) as [number,Coor][]).sort().map(el => el[1])
+
+  animating.value = true
+  // Identical to `timeStamp` used in `window.requestAnimationFrame`
+  start = document.timeline.currentTime as number;
+  previousTimeStamp = 0
+  window.requestAnimationFrame(step);
+}
+
+function step(timeStamp: number) {
+  if (stopAnimationFlag.value) {
+    stopAnimationFlag.value = false
+    animating.value = false
+    // srcCentersRef.value = currCentersRef.value
+    srcCentersOnCircles.value = currCentersOnCircles.value
+    return
+  }
+  const elapsed = timeStamp - start;
+
+  if (elapsed > 0 && timeStamp !== previousTimeStamp) {
+    /* In case `timestamp` is greater than `animationDurationRef.value`, cap the amount of movement at 100% */
+    const stepSize = Math.min(1, elapsed / animationDurationRef.value)
+
+    let newCenters: Coor[] = []
+    currCentersOnCircles.value = []
+    for (let i=0; i<numCirclesRef.value; i++) {
+      // const x = srcCentersRef.value[i].x + (dstCentersRef.value[i].x - srcCentersRef.value[i].x) * stepSize
+      // const y = srcCentersRef.value[i].y + (dstCentersRef.value[i].y - srcCentersRef.value[i].y) * stepSize
+      //
+      // const MAX_PETURB = 1
+      // const xPeturb = MAX_PETURB * Math.random()
+      // const yPeturb = MAX_PETURB * Math.random()
+      // const x = centerOfCircle.x + (radius * Math.cos(theta)) + xPeturb
+      // const y = centerOfCircle.y + (radius * Math.sin(theta)) + yPeturb
+
+      const srcCenterOnCircle = srcCentersOnCircles.value[i]
+      const centerOfCircle = srcCenterOnCircle.center
+      const radius = srcCenterOnCircle.radius
+      const thetaOffset = (2 * Math.PI) * (srcCenterOnCircle.direction * srcCenterOnCircle.speed) * stepSize
+      const theta = srcCenterOnCircle.theta + thetaOffset
+      const x = centerOfCircle.x + (radius * Math.cos(theta))
+      const y = centerOfCircle.y + (radius * Math.sin(theta))
+
+      const newCenter: Coor = new Coor(x, y)
+      newCenters.push(newCenter)
+
+      const newCoorOnCircle: CoorOnACircle = new CoorOnACircle(
+        newCenter,
+        radius,
+        theta,
+        srcCenterOnCircle.direction,
+        srcCenterOnCircle.speed
+      )
+      currCentersOnCircles.value.push(newCoorOnCircle)
+    }
+    renderKissingCircles(newCenters)
+  }
+
+  if (elapsed < animationDurationRef.value) {
+    previousTimeStamp = timeStamp;
+    window.requestAnimationFrame(step);
+  } else {
+    animating.value = false
+    srcCentersOnCircles.value = currCentersOnCircles.value
+    animate()
+  }
+}
+
+function stopAnimationAfterCurrentStep() {
+  stopAnimationFlag.value = true
+}
+
+
+
+
+// ************************* PANNING/SCALING *************************
+// Panning and zooming. See https://codepen.io/chengarda/pen/wRxoyB for open source example
+
+let canvasOffsetRef = ref(new Coor(0,0))
+
+let canvasZoomLevelRef: Ref<number> = ref(0)
+const MIN_ZOOM_LEVEL = -20
+const MAX_ZOOM_LEVEL = 20
+const ZOOM_SCALE_STEP_SIZE = 2 ** (1/4)
+
+let canvasScaleRef = ref(ZOOM_SCALE_STEP_SIZE ** canvasZoomLevelRef.value)
+
+let isDragging = false
+let dragStart = { x: 0, y: 0 }
+
+function getEventCoor(e: MouseEvent): Coor {
+  let coor = null
+  if (e instanceof MouseEvent) {
+    if (e.clientX && e.clientY) {
+      coor = new Coor(e.clientX - e.target.offsetLeft, e.clientY - e.target.offsetTop)
+    }
+  }
+
+  console.dir(e.target)
+
+  if (coor === null) {
+    throw TypeError(`Event should be a MouseEvent, but was ${e}`)
+  }
+
+  console.log(`${e.type} Event: @ (${coor.x}, ${coor.y})`)
+  return coor
+}
+
+function onPointerDown(e: MouseEvent) {
+  isDragging = true
+  const pointerCoor = getEventCoor(e)
+  dragStart.x = pointerCoor.x/canvasScaleRef.value - canvasOffsetRef.value.x
+  dragStart.y = pointerCoor.y/canvasScaleRef.value - canvasOffsetRef.value.y
+  console.log(`onPointerDown: pointerCoor: (${pointerCoor.x}, ${pointerCoor.y}})`)
+  console.log(`onPointerDown: dragStart:   (${dragStart.x}, ${dragStart.y}})`)
+}
+
+function onPointerUp(e: MouseEvent) {
+  isDragging = false
+}
+
+function onPointerMove(e: MouseEvent) {
+  const pointerCoor = getEventCoor(e)
+  console.log(`onPointerMove @ (${pointerCoor.x}, ${pointerCoor.y})`)
+  if (isDragging) {
+    canvasOffsetRef.value.x = pointerCoor.x/canvasScaleRef.value - dragStart.x
+    canvasOffsetRef.value.y = pointerCoor.y/canvasScaleRef.value - dragStart.y
+  }
+}
+
+function logCanvasDetails(pointerCoor: Coor) {
+  console.log(`  Canvas details:`)
+  console.log(`    Pointer: (${pointerCoor.x.toFixed(2)}, ${pointerCoor.y.toFixed(2)})`)
+  console.log(`    Zoom:    ${canvasZoomLevelRef.value.toFixed(2)}`)
+  console.log(`    Scale:   ${canvasScaleRef.value.toFixed(2)}`)
+  console.log(`    Offset:  (${canvasOffsetRef.value.x.toFixed(2)}, ${canvasOffsetRef.value.y.toFixed(2)})`)
+}
+
+function adjustZoom(e: MouseEvent) {
+  const pointerCoor = getEventCoor(e)
+  const scaledPointerCoor = new Coor(pointerCoor.x/canvasScaleRef.value, pointerCoor.y/canvasScaleRef.value)
+  console.log(`Before`)
+  logCanvasDetails(pointerCoor)
+
+  if (!isDragging) {
+    const zoomLevelChange = (e.deltaY > 0) ? -1 : 1
+
+    canvasZoomLevelRef.value += zoomLevelChange
+    canvasZoomLevelRef.value = Math.min(canvasZoomLevelRef.value, MAX_ZOOM_LEVEL)
+    canvasZoomLevelRef.value = Math.max(canvasZoomLevelRef.value, MIN_ZOOM_LEVEL)
+
+    const oldCanvasScale = canvasScaleRef.value
+    const newCanvasScale = ZOOM_SCALE_STEP_SIZE ** canvasZoomLevelRef.value
+    // const newOffsetX = scaledPointerCoor.x - (newCanvasScale/oldCanvasScale) * (scaledPointerCoor.x + canvasOffsetRef.value.x)
+    // const newOffsetY = scaledPointerCoor.y - (newCanvasScale/oldCanvasScale) * (scaledPointerCoor.y + canvasOffsetRef.value.y)
+    // const newOffsetX = scaledPointerCoor.x - (oldCanvasScale/newCanvasScale) * (scaledPointerCoor.x - canvasOffsetRef.value.x)
+    // const newOffsetY = scaledPointerCoor.y - (oldCanvasScale/newCanvasScale) * (scaledPointerCoor.y - canvasOffsetRef.value.y)
+    // const newOffsetX = scaledPointerCoor.x - (oldCanvasScale/newCanvasScale) * (scaledPointerCoor.x - canvasOffsetRef.value.x)
+    // const newOffsetY = scaledPointerCoor.y - (oldCanvasScale/newCanvasScale) * (scaledPointerCoor.y - canvasOffsetRef.value.y)
+    const newOffsetX = scaledPointerCoor.x - (newCanvasScale/oldCanvasScale) * (scaledPointerCoor.x - canvasOffsetRef.value.x)
+    const newOffsetY = scaledPointerCoor.y - (newCanvasScale/oldCanvasScale) * (scaledPointerCoor.y - canvasOffsetRef.value.y)
+
+    canvasScaleRef.value = newCanvasScale
+    canvasOffsetRef.value = new Coor(newOffsetX, newOffsetY)
+
+    ctx.scale(canvasScaleRef.value, canvasScaleRef.value)
+    ctx.translate(canvasOffsetRef.value.x, canvasOffsetRef.value.y)
+
+    _renderedPointerCoor = new Coor(scaledPointerCoor.x, scaledPointerCoor.y)
+
+    console.log(`After`)
+    logCanvasDetails(pointerCoor)
+    console.log(`-----------------------------------`)
+  }
+}
+
+</script>
+
+<style scoped>
+h1 {
+  font-weight: 500;
+  font-size: 2.6rem;
+  position: relative;
+  top: -10px;
+}
+
+h3 {
+  font-size: 1.2rem;
+}
+</style>
