@@ -187,13 +187,18 @@ function getEventScaledCoor(e: MouseEvent): Coor {
 }
 
 function onPointerDown(e: MouseEvent) {
-  isDragging = true
   const pointerCoor = getEventCoor(e)
   const scaledPointerCoor = getEventScaledCoor(e)
-  dragStart = scaledPointerCoor
   lastPointerDownCoor = scaledPointerCoor
 
   console.log(`onPointerDown: pointerCoor: (${pointerCoor.x.toFixed(2)}, ${pointerCoor.y.toFixed(2)}}) -> scaled: (${scaledPointerCoor.x.toFixed(2)}, ${scaledPointerCoor.y.toFixed(2)}})`)
+
+  // Prevent a non-Left Mouse Button click from starting a dragging session
+  const LEFT_MOUSEBUTTON_NUM = 0
+  if (e.button === LEFT_MOUSEBUTTON_NUM) {
+    isDragging = true
+    dragStart = scaledPointerCoor
+  }
 }
 
 function onPointerUp(e: MouseEvent) {
