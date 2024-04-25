@@ -1,4 +1,6 @@
 <template>
+  <!-- Message -->
+  <div>{{ msg }}</div>
   <!-- Debug Canvas Details -->
   <div v-if="debug">
     <div>Zoom Level: {{ canvasZoomLevelRef.toFixed(3) }}</div>

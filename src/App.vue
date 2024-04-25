@@ -1,14 +1,15 @@
 <script setup lang="ts">
 import { RouterLink, RouterView } from 'vue-router'
-import KissingCirclesCanvas from './components/KissingCirclesCanvas.vue'
 </script>
 
 <template>
   <header>
-     <div class="wrapper">
-      <KissingCirclesCanvas msg="You did it!" />
-    </div>
+    <nav>
+      <RouterLink to="/">Kissing Circle Canvas</RouterLink>
+    </nav>
   </header>
+
+  <RouterView />
 </template>
 
 <style scoped>
