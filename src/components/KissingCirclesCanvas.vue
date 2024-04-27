@@ -79,10 +79,10 @@ function initAndAnimate() {
   xMax = width - borderSize
   yMax = height - borderSize
 
-  window.requestAnimationFrame(step);
+  window.requestAnimationFrame(debugModeAnimations);
 }
 
-function step() {
+function resetCanvas() {
   ctx.reset()
   ctx.scale(canvasScaleRef.value, canvasScaleRef.value)
   ctx.translate( canvasOffsetRef.value.x, canvasOffsetRef.value.y )
@@ -91,55 +91,64 @@ function step() {
   ctx.fillRect(0, 0, width, height)
   ctx.fillStyle = "white"
   ctx.fillRect(xMin, yMin, xMax-xMin, yMax-yMin)
+}
+
+function addCirclesAtCornersOfCanvas(radius: number, scaledWidth: number, scaledHeight: number) {
+  const offset = canvasOffsetRef.value
+
+  ctx.beginPath();
+  ctx.arc(-offset.x,               -offset.y,                radius, (0/2)*Math.PI, (1/2)*Math.PI);
+  ctx.moveTo(-offset.x,               -offset.y)
+  ctx.lineTo(-offset.x + scaledWidth, -offset.y)
+  ctx.arc(-offset.x + scaledWidth, -offset.y,                radius, (1/2)*Math.PI, (2/2)*Math.PI);
+  ctx.lineTo(-offset.x + scaledWidth, -offset.y)
+  ctx.lineTo(-offset.x + scaledWidth, -offset.y + scaledHeight)
+  ctx.arc(-offset.x + scaledWidth, -offset.y + scaledHeight, radius, (2/2)*Math.PI, (3/2)*Math.PI);
+  ctx.lineTo(-offset.x + scaledWidth, -offset.y + scaledHeight)
+  ctx.lineTo(-offset.x              , -offset.y + scaledHeight)
+  ctx.arc(-offset.x              , -offset.y + scaledHeight, radius, (3/2)*Math.PI, (4/2)*Math.PI);
+  ctx.lineTo(-offset.x              , -offset.y + scaledHeight)
+  ctx.lineTo(-offset.x,               -offset.y)
+  ctx.stroke()
+}
+
+function addPointerDownCoor(radius: number) {
+  ctx.beginPath()
+  ctx.arc(lastPointerDownCoor.x, lastPointerDownCoor.y, radius, 0, 2*Math.PI)
+  ctx.stroke()
+  ctx.strokeText(
+    `PointerDown Center: (${lastPointerDownCoor.x.toFixed(2)}, ${lastPointerDownCoor.y.toFixed(2)})`,
+    lastPointerDownCoor.x,
+    lastPointerDownCoor.y
+  )
+}
+
+function addZoomChangeCoor(radius: number) {
+  ctx.beginPath()
+  ctx.arc(lastZoomChangeCoor.x, lastZoomChangeCoor.y, radius, 0, 2*Math.PI)
+  ctx.stroke()
+  ctx.strokeText(
+    `ZoomChange Center: (${lastZoomChangeCoor.x.toFixed(2)}, ${lastZoomChangeCoor.y.toFixed(2)})`,
+    lastZoomChangeCoor.x,
+    lastZoomChangeCoor.y
+  )
+}
+
+function debugModeAnimations() {
+  resetCanvas()
 
   // Debug rendering
   if (debug) {
-    // Add circles at corners
-    const offset = canvasOffsetRef.value
     const scaledWidth = canvasScaledDimensionsRef.value.x
     const scaledHeight = canvasScaledDimensionsRef.value.y
     const radius = Math.min(scaledWidth, scaledHeight)/20
-    ctx.beginPath();
-    ctx.arc(-offset.x,               -offset.y,                radius, (0/2)*Math.PI, (1/2)*Math.PI);
-    ctx.moveTo(-offset.x,               -offset.y)
-    ctx.lineTo(-offset.x + scaledWidth, -offset.y)
-    ctx.arc(-offset.x + scaledWidth, -offset.y,                radius, (1/2)*Math.PI, (2/2)*Math.PI);
-    ctx.lineTo(-offset.x + scaledWidth, -offset.y)
-    ctx.lineTo(-offset.x + scaledWidth, -offset.y + scaledHeight)
-    ctx.arc(-offset.x + scaledWidth, -offset.y + scaledHeight, radius, (2/2)*Math.PI, (3/2)*Math.PI);
-    ctx.lineTo(-offset.x + scaledWidth, -offset.y + scaledHeight)
-    ctx.lineTo(-offset.x              , -offset.y + scaledHeight)
-    ctx.arc(-offset.x              , -offset.y + scaledHeight, radius, (3/2)*Math.PI, (4/2)*Math.PI);
-    ctx.lineTo(-offset.x              , -offset.y + scaledHeight)
-    ctx.lineTo(-offset.x,               -offset.y)
-    ctx.stroke()
 
-    // Add pointerDown coor
-    if (lastPointerDownCoor) {
-      ctx.beginPath()
-      ctx.arc(lastPointerDownCoor.x, lastPointerDownCoor.y, radius, 0, 2*Math.PI)
-      ctx.stroke()
-      ctx.strokeText(
-        `PointerDown Center: (${lastPointerDownCoor.x.toFixed(2)}, ${lastPointerDownCoor.y.toFixed(2)})`,
-        lastPointerDownCoor.x,
-        lastPointerDownCoor.y
-    )
-    }
-
-    // Add zoomChange coor
-    if (lastZoomChangeCoor) {
-      ctx.beginPath()
-      ctx.arc(lastZoomChangeCoor.x, lastZoomChangeCoor.y, radius, 0, 2*Math.PI)
-      ctx.stroke()
-      ctx.strokeText(
-        `ZoomChange Center: (${lastZoomChangeCoor.x.toFixed(2)}, ${lastZoomChangeCoor.y.toFixed(2)})`,
-        lastZoomChangeCoor.x,
-        lastZoomChangeCoor.y
-      )
-    }
+    addCirclesAtCornersOfCanvas(radius, scaledWidth, scaledHeight)
+    lastPointerDownCoor && addPointerDownCoor(radius)
+    lastZoomChangeCoor  && addZoomChangeCoor(radius)
   }
 
-  window.requestAnimationFrame(step);
+  window.requestAnimationFrame(debugModeAnimations);
 }
 
 // ************************* PANNING/SCALING *************************
