@@ -60,6 +60,7 @@ onMounted(() => {
     canvasRef.value.addEventListener('mouseup', onPointerUp)
     canvasRef.value.addEventListener('mousemove', onPointerMove)
     canvasRef.value.addEventListener('wheel', adjustZoom)
+    canvasRef.value.addEventListener('dblclick', zoomInOneLevel)
     initAndAnimate()
   } else {
     console.error('ERROR! Canvas element not available after mount.')
@@ -231,6 +232,29 @@ function logCanvasDetails(pointerCoor: Coor) {
   console.log(`    Offset:  (${canvasOffsetRef.value.x.toFixed(2)}, ${canvasOffsetRef.value.y.toFixed(2)})`)
 }
 
+function zoomToLevelAtCoor(newZoomLevel: number, scaledPointerCoor: Coor) {
+  canvasZoomLevelRef.value = newZoomLevel
+  canvasZoomLevelRef.value = Math.min(canvasZoomLevelRef.value, MAX_ZOOM_LEVEL)
+  canvasZoomLevelRef.value = Math.max(canvasZoomLevelRef.value, MIN_ZOOM_LEVEL)
+
+  const oldCanvasScale = canvasScaleRef.value
+  const newCanvasScale = ZOOM_SCALE_STEP_SIZE ** newZoomLevel
+
+  const scaledWidth = width/newCanvasScale
+  const scaledHeight = height/newCanvasScale
+  canvasScaledDimensionsRef.value = new Coor(scaledWidth, scaledHeight)
+
+  const newOffset = computeOffsetChangeFromZoomChange(oldCanvasScale, newCanvasScale, scaledPointerCoor, canvasOffsetRef.value)
+
+  canvasScaleRef.value = newCanvasScale
+  canvasOffsetRef.value = newOffset
+
+  ctx.scale(canvasScaleRef.value, canvasScaleRef.value)
+  ctx.translate(Math.round(canvasOffsetRef.value.x), Math.round(canvasOffsetRef.value.y))
+
+  lastZoomChangeCoor = new Coor(scaledPointerCoor.x, scaledPointerCoor.y)
+}
+
 function adjustZoom(e: MouseEvent) {
   const scaledPointerCoor = getEventScaledCoor(e)
   console.log(`Before`)
@@ -238,32 +262,20 @@ function adjustZoom(e: MouseEvent) {
 
   if (!isDragging) {
     const zoomLevelChange = (e.deltaY > 0) ? -1 : 1
-
-    canvasZoomLevelRef.value += zoomLevelChange
-    canvasZoomLevelRef.value = Math.min(canvasZoomLevelRef.value, MAX_ZOOM_LEVEL)
-    canvasZoomLevelRef.value = Math.max(canvasZoomLevelRef.value, MIN_ZOOM_LEVEL)
-
-    const oldCanvasScale = canvasScaleRef.value
-    const newCanvasScale = ZOOM_SCALE_STEP_SIZE ** canvasZoomLevelRef.value
-
-    const scaledWidth = width/newCanvasScale
-    const scaledHeight = height/newCanvasScale
-    canvasScaledDimensionsRef.value = new Coor(scaledWidth, scaledHeight)
-
-    const newOffset = computeOffsetChangeFromZoomChange(oldCanvasScale, newCanvasScale, scaledPointerCoor, canvasOffsetRef.value)
-
-    canvasScaleRef.value = newCanvasScale
-    canvasOffsetRef.value = newOffset
-
-    ctx.scale(canvasScaleRef.value, canvasScaleRef.value)
-    ctx.translate(Math.round(canvasOffsetRef.value.x), Math.round(canvasOffsetRef.value.y))
-
-    lastZoomChangeCoor = new Coor(scaledPointerCoor.x, scaledPointerCoor.y)
+    const newZoomLevel = canvasZoomLevelRef.value + zoomLevelChange
+    zoomToLevelAtCoor(newZoomLevel, scaledPointerCoor)
 
     console.log(`After`)
     logCanvasDetails(scaledPointerCoor)
     console.log(`-----------------------------------`)
   }
+}
+
+function zoomInOneLevel(e: MouseEvent) {
+  const scaledPointerCoor = getEventScaledCoor(e)
+  const zoomLevelChange = 1
+  const newZoomLevel = canvasZoomLevelRef.value + zoomLevelChange
+  zoomToLevelAtCoor(newZoomLevel, scaledPointerCoor)
 }
 
 function computeOffsetChangeFromZoomChange(oldZoom: number, newZoom: number, atCoor: Coor, oldOffset: Coor): Coor {
