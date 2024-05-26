@@ -16,13 +16,14 @@
 
 <script setup lang="ts">
 // https://vuejs.org/guide/typescript/composition-api
-defineProps<{
+const props = defineProps<{
   msg: string
+  addShapes: Function
 }>()
 
 import { ref, onMounted } from 'vue'
 import type { Ref } from 'vue'
-import { Coor } from './../models/shape-type'
+import { Coor } from '../models/coor'
 
 let ctx: CanvasRenderingContext2D
 const canvasRef: Ref<HTMLCanvasElement | null> = ref(null)
@@ -133,8 +134,9 @@ function debugModeAnimations() {
   }
 }
 
-function step() {
+function step(timeStamp: number) {
   resetCanvas()
+  props.addShapes(ctx, timeStamp)
   debugModeAnimations()
 
   window.requestAnimationFrame(step);

@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'vitest'
 
 import { mount } from '@vue/test-utils'
-import KissingCirclesCanvas from '../BaseCanvas.vue'
+import BaseCanvas from '../BaseCanvas.vue'
 
-describe('KissingCirclesCanvas', () => {
+describe('BaseCanvas', () => {
   it('renders properly', () => {
-    const wrapper = mount(KissingCirclesCanvas, { props: { msg: 'Hello Vitest' } })
+    const wrapper = mount(BaseCanvas, { props: { msg: 'Hello Vitest' } })
     expect(wrapper.text()).toContain('Hello Vitest')
   })
 })

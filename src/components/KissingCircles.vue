@@ -19,10 +19,11 @@
     <input id="animationTimeInput" v-model.lazy="animationDurationRef">
   </div>
   <!-- Canvas -->
-  <KissingCirclesCanvas
+  <BaseCanvas
     :msg="msg + ' - KissingCircles HomeView'"
+    :addShapes="addShapes"
   >
-  </KissingCirclesCanvas>
+  </BaseCanvas>
 </template>
 
 <script setup lang="ts">
@@ -33,7 +34,8 @@ defineProps<{
 
 import { ref, onMounted } from 'vue'
 import type { Ref } from 'vue'
-import KissingCirclesCanvas from './BaseCanvas.vue';
+import BaseCanvas from './BaseCanvas.vue';
+import { Coor } from './../models/coor'
 
 const numCirclesRef: Ref<number> = ref(80)
 const animationDurationRef: Ref<number> = ref(10000) // milliseconds
@@ -49,6 +51,8 @@ const animating: Ref<boolean> = ref(false)
 const stopAnimationFlag: Ref<boolean> = ref(false)
 let start: number
 let previousTimeStamp: number;
+const DO_NOTHING = () => {}
+let addShapes = DO_NOTHING
 
 let height: number
 let width: number
@@ -64,20 +68,6 @@ let _renderedPointerCoor: Coor
 // Circle style props
 let colorHueOffset: number = 0
 const colorHueOffsetStepsize: number = 0.3
-
-class Coor {
-  x: number
-  y: number
-
-  public constructor(x: number, y: number) {
-    this.x = x
-    this.y = y
-  }
-
-  public static fromXYCoorPair(xyCoorPair: number[]) {
-    return new Coor(xyCoorPair[0], xyCoorPair[1])
-  }
-}
 
 class CoorOnACircle extends Coor {
   /** Coordinate of the point on the circle */
@@ -368,10 +358,10 @@ function animate() {
   // Identical to `timeStamp` used in `window.requestAnimationFrame`
   start = document.timeline.currentTime as number;
   previousTimeStamp = 0
-  window.requestAnimationFrame(step);
+  addShapes = _addShapes
 }
 
-function step(timeStamp: number) {
+function _addShapes(timeStamp: number) {
   if (stopAnimationFlag.value) {
     stopAnimationFlag.value = false
     animating.value = false
@@ -422,7 +412,7 @@ function step(timeStamp: number) {
 
   if (elapsed < animationDurationRef.value) {
     previousTimeStamp = timeStamp;
-    window.requestAnimationFrame(step);
+    addShapes = DO_NOTHING
   } else {
     animating.value = false
     srcCentersOnCircles.value = currCentersOnCircles.value
