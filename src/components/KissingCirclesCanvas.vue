@@ -79,7 +79,7 @@ function initAndAnimate() {
   xMax = width - borderSize
   yMax = height - borderSize
 
-  window.requestAnimationFrame(debugModeAnimations);
+  window.requestAnimationFrame(step);
 }
 
 function resetCanvas() {
@@ -135,9 +135,6 @@ function addZoomChangeCoor(radius: number) {
 }
 
 function debugModeAnimations() {
-  resetCanvas()
-
-  // Debug rendering
   if (debug) {
     const scaledWidth = canvasScaledDimensionsRef.value.x
     const scaledHeight = canvasScaledDimensionsRef.value.y
@@ -147,8 +144,13 @@ function debugModeAnimations() {
     lastPointerDownCoor && addPointerDownCoor(radius)
     lastZoomChangeCoor  && addZoomChangeCoor(radius)
   }
+}
 
-  window.requestAnimationFrame(debugModeAnimations);
+function step() {
+  resetCanvas()
+  debugModeAnimations()
+
+  window.requestAnimationFrame(step);
 }
 
 // ************************* PANNING/SCALING *************************
