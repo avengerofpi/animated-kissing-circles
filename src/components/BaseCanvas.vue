@@ -22,6 +22,7 @@ defineProps<{
 
 import { ref, onMounted } from 'vue'
 import type { Ref } from 'vue'
+import { Coor } from './../models/shape-type'
 
 let ctx: CanvasRenderingContext2D
 const canvasRef: Ref<HTMLCanvasElement | null> = ref(null)
@@ -38,20 +39,6 @@ let yMax: number
 
 let lastPointerDownCoor: Coor
 let lastZoomChangeCoor: Coor
-
-class Coor {
-  x: number
-  y: number
-
-  public constructor(x: number, y: number) {
-    this.x = x
-    this.y = y
-  }
-
-  public static fromXYCoorPair(xyCoorPair: number[]) {
-    return new Coor(xyCoorPair[0], xyCoorPair[1])
-  }
-}
 
 onMounted(() => {
   if (canvasRef.value) {
