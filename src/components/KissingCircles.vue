@@ -30,7 +30,7 @@ defineProps<{
 
 import { ref, onMounted } from 'vue'
 import type { Ref } from 'vue'
-import type KissingCirclesCanvasVue from './KissingCirclesCanvas.vue';
+import type KissingCirclesCanvas from './KissingCirclesCanvas.vue';
 
 const numCirclesRef: Ref<number> = ref(80)
 const animationDurationRef: Ref<number> = ref(10000) // milliseconds
@@ -178,20 +178,6 @@ class CircleWithRadiusLine {
     this.radius = this.radiusLine.length()
   }
 }
-
-onMounted(() => {
-  if (canvasRef.value) {
-    ctx = canvasRef.value.getContext("2d") as CanvasRenderingContext2D
-    canvasRef.value.addEventListener('mousedown', onPointerDown)
-    canvasRef.value.addEventListener('mouseup', onPointerUp)
-    canvasRef.value.addEventListener('mousemove', onPointerMove)
-    canvasRef.value.addEventListener('wheel', adjustZoom)
-    initCanvas()
-  } else {
-    console.error('ERROR! Canvas element not available after mount.')
-  }
-
-})
 
 function initCanvas() {
   resetCanvasWithNewCircles()
@@ -443,110 +429,6 @@ function step(timeStamp: number) {
 
 function stopAnimationAfterCurrentStep() {
   stopAnimationFlag.value = true
-}
-
-
-
-
-// ************************* PANNING/SCALING *************************
-// Panning and zooming. See https://codepen.io/chengarda/pen/wRxoyB for open source example
-
-let canvasOffsetRef = ref(new Coor(0,0))
-
-let canvasZoomLevelRef: Ref<number> = ref(0)
-const MIN_ZOOM_LEVEL = -20
-const MAX_ZOOM_LEVEL = 20
-const ZOOM_SCALE_STEP_SIZE = 2 ** (1/4)
-
-let canvasScaleRef = ref(ZOOM_SCALE_STEP_SIZE ** canvasZoomLevelRef.value)
-
-let isDragging = false
-let dragStart = { x: 0, y: 0 }
-
-function getEventCoor(e: MouseEvent): Coor {
-  let coor = null
-  if (e instanceof MouseEvent) {
-    if (e.clientX && e.clientY) {
-      coor = new Coor(e.clientX - e.target.offsetLeft, e.clientY - e.target.offsetTop)
-    }
-  }
-
-  console.dir(e.target)
-
-  if (coor === null) {
-    throw TypeError(`Event should be a MouseEvent, but was ${e}`)
-  }
-
-  console.log(`${e.type} Event: @ (${coor.x}, ${coor.y})`)
-  return coor
-}
-
-function onPointerDown(e: MouseEvent) {
-  isDragging = true
-  const pointerCoor = getEventCoor(e)
-  dragStart.x = pointerCoor.x/canvasScaleRef.value - canvasOffsetRef.value.x
-  dragStart.y = pointerCoor.y/canvasScaleRef.value - canvasOffsetRef.value.y
-  console.log(`onPointerDown: pointerCoor: (${pointerCoor.x}, ${pointerCoor.y}})`)
-  console.log(`onPointerDown: dragStart:   (${dragStart.x}, ${dragStart.y}})`)
-}
-
-function onPointerUp(e: MouseEvent) {
-  isDragging = false
-}
-
-function onPointerMove(e: MouseEvent) {
-  const pointerCoor = getEventCoor(e)
-  console.log(`onPointerMove @ (${pointerCoor.x}, ${pointerCoor.y})`)
-  if (isDragging) {
-    canvasOffsetRef.value.x = pointerCoor.x/canvasScaleRef.value - dragStart.x
-    canvasOffsetRef.value.y = pointerCoor.y/canvasScaleRef.value - dragStart.y
-  }
-}
-
-function logCanvasDetails(pointerCoor: Coor) {
-  console.log(`  Canvas details:`)
-  console.log(`    Pointer: (${pointerCoor.x.toFixed(2)}, ${pointerCoor.y.toFixed(2)})`)
-  console.log(`    Zoom:    ${canvasZoomLevelRef.value.toFixed(2)}`)
-  console.log(`    Scale:   ${canvasScaleRef.value.toFixed(2)}`)
-  console.log(`    Offset:  (${canvasOffsetRef.value.x.toFixed(2)}, ${canvasOffsetRef.value.y.toFixed(2)})`)
-}
-
-function adjustZoom(e: MouseEvent) {
-  const pointerCoor = getEventCoor(e)
-  const scaledPointerCoor = new Coor(pointerCoor.x/canvasScaleRef.value, pointerCoor.y/canvasScaleRef.value)
-  console.log(`Before`)
-  logCanvasDetails(pointerCoor)
-
-  if (!isDragging) {
-    const zoomLevelChange = (e.deltaY > 0) ? -1 : 1
-
-    canvasZoomLevelRef.value += zoomLevelChange
-    canvasZoomLevelRef.value = Math.min(canvasZoomLevelRef.value, MAX_ZOOM_LEVEL)
-    canvasZoomLevelRef.value = Math.max(canvasZoomLevelRef.value, MIN_ZOOM_LEVEL)
-
-    const oldCanvasScale = canvasScaleRef.value
-    const newCanvasScale = ZOOM_SCALE_STEP_SIZE ** canvasZoomLevelRef.value
-    // const newOffsetX = scaledPointerCoor.x - (newCanvasScale/oldCanvasScale) * (scaledPointerCoor.x + canvasOffsetRef.value.x)
-    // const newOffsetY = scaledPointerCoor.y - (newCanvasScale/oldCanvasScale) * (scaledPointerCoor.y + canvasOffsetRef.value.y)
-    // const newOffsetX = scaledPointerCoor.x - (oldCanvasScale/newCanvasScale) * (scaledPointerCoor.x - canvasOffsetRef.value.x)
-    // const newOffsetY = scaledPointerCoor.y - (oldCanvasScale/newCanvasScale) * (scaledPointerCoor.y - canvasOffsetRef.value.y)
-    // const newOffsetX = scaledPointerCoor.x - (oldCanvasScale/newCanvasScale) * (scaledPointerCoor.x - canvasOffsetRef.value.x)
-    // const newOffsetY = scaledPointerCoor.y - (oldCanvasScale/newCanvasScale) * (scaledPointerCoor.y - canvasOffsetRef.value.y)
-    const newOffsetX = scaledPointerCoor.x - (newCanvasScale/oldCanvasScale) * (scaledPointerCoor.x - canvasOffsetRef.value.x)
-    const newOffsetY = scaledPointerCoor.y - (newCanvasScale/oldCanvasScale) * (scaledPointerCoor.y - canvasOffsetRef.value.y)
-
-    canvasScaleRef.value = newCanvasScale
-    canvasOffsetRef.value = new Coor(newOffsetX, newOffsetY)
-
-    ctx.scale(canvasScaleRef.value, canvasScaleRef.value)
-    ctx.translate(canvasOffsetRef.value.x, canvasOffsetRef.value.y)
-
-    _renderedPointerCoor = new Coor(scaledPointerCoor.x, scaledPointerCoor.y)
-
-    console.log(`After`)
-    logCanvasDetails(pointerCoor)
-    console.log(`-----------------------------------`)
-  }
 }
 
 </script>

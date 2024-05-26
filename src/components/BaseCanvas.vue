@@ -1,6 +1,6 @@
 <template>
   <!-- Message -->
-  <div>{{ msg }}</div>
+  <div style="color: red">{{ msg }}</div>
   <!-- Debug Canvas Details -->
   <div v-if="debug">
     <div>Zoom Level: {{ canvasZoomLevelRef.toFixed(3) }}</div>
@@ -16,8 +16,9 @@
 
 <script setup lang="ts">
 // https://vuejs.org/guide/typescript/composition-api
-defineProps<{
+const props = defineProps<{
   msg: string
+  addShapes: Function
 }>()
 
 import { ref, onMounted } from 'vue'
@@ -38,6 +39,12 @@ let yMax: number
 
 let lastPointerDownCoor: Coor
 let lastZoomChangeCoor: Coor
+
+// let _addShapes: Function
+// function setAddShapesFunction(addShapesFunction: Function) {
+//   _addShapes = addShapesFunction
+// }
+// export setAddShapesFunction
 
 class Coor {
   x: number
@@ -79,7 +86,7 @@ function initAndAnimate() {
   xMax = width - borderSize
   yMax = height - borderSize
 
-  window.requestAnimationFrame(debugModeAnimations);
+  window.requestAnimationFrame(step);
 }
 
 function resetCanvas() {
@@ -135,9 +142,6 @@ function addZoomChangeCoor(radius: number) {
 }
 
 function debugModeAnimations() {
-  resetCanvas()
-
-  // Debug rendering
   if (debug) {
     const scaledWidth = canvasScaledDimensionsRef.value.x
     const scaledHeight = canvasScaledDimensionsRef.value.y
@@ -147,8 +151,14 @@ function debugModeAnimations() {
     lastPointerDownCoor && addPointerDownCoor(radius)
     lastZoomChangeCoor  && addZoomChangeCoor(radius)
   }
+}
 
-  window.requestAnimationFrame(debugModeAnimations);
+function step() {
+  resetCanvas()
+  props.addShapes()
+  debugModeAnimations()
+
+  window.requestAnimationFrame(step);
 }
 
 // ************************* PANNING/SCALING *************************

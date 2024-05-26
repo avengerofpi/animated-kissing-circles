@@ -5,7 +5,7 @@ import { RouterLink, RouterView } from 'vue-router'
 <template>
   <header>
     <nav>
-      <RouterLink to="/">Kissing Circle Canvas</RouterLink>
+      <RouterLink to="/">GOTO: Kissing Circle Base Page</RouterLink>
     </nav>
   </header>
 
