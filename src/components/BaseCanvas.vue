@@ -16,9 +16,8 @@
 
 <script setup lang="ts">
 // https://vuejs.org/guide/typescript/composition-api
-const props = defineProps<{
+defineProps<{
   msg: string
-  addShapes: Function
 }>()
 
 import { ref, onMounted } from 'vue'
@@ -39,12 +38,6 @@ let yMax: number
 
 let lastPointerDownCoor: Coor
 let lastZoomChangeCoor: Coor
-
-// let _addShapes: Function
-// function setAddShapesFunction(addShapesFunction: Function) {
-//   _addShapes = addShapesFunction
-// }
-// export setAddShapesFunction
 
 class Coor {
   x: number
@@ -155,7 +148,6 @@ function debugModeAnimations() {
 
 function step() {
   resetCanvas()
-  props.addShapes()
   debugModeAnimations()
 
   window.requestAnimationFrame(step);

@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import KissingCirclesCanvas from '../components/KissingCirclesCanvas.vue'
+import KissingCircles from '../components/KissingCircles.vue'
 </script>
 
 <template>
   <main>
-    <KissingCirclesCanvas msg="KissingCircles HomeView"/>
+    <KissingCircles msg="From HomeView"/>
   </main>
 </template>

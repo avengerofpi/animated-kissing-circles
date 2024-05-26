@@ -19,7 +19,10 @@
     <input id="animationTimeInput" v-model.lazy="animationDurationRef">
   </div>
   <!-- Canvas -->
-  <KissingCirclesCanvas></KissingCirclesCanvas>
+  <KissingCirclesCanvas
+    :msg="msg + ' - KissingCircles HomeView'"
+  >
+  </KissingCirclesCanvas>
 </template>
 
 <script setup lang="ts">
@@ -30,7 +33,7 @@ defineProps<{
 
 import { ref, onMounted } from 'vue'
 import type { Ref } from 'vue'
-import type KissingCirclesCanvas from './KissingCirclesCanvas.vue';
+import KissingCirclesCanvas from './BaseCanvas.vue';
 
 const numCirclesRef: Ref<number> = ref(80)
 const animationDurationRef: Ref<number> = ref(10000) // milliseconds

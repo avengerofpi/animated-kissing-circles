@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 
 import { mount } from '@vue/test-utils'
-import KissingCirclesCanvas from '../KissingCirclesCanvas.vue'
+import KissingCirclesCanvas from '../BaseCanvas.vue'
 
 describe('KissingCirclesCanvas', () => {
   it('renders properly', () => {
