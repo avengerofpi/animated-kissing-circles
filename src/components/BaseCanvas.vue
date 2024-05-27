@@ -24,7 +24,7 @@ import { ref, onMounted } from 'vue'
 import type { Ref } from 'vue'
 import { Coor } from '../models/coor'
 
-const addShapes: Ref<Function> = defineModel({ default: () => {} })
+const addShapes: Ref<Function> = defineModel<Function>({ default: (ctx, timestamp) => {} })
 
 let ctx: CanvasRenderingContext2D
 const canvasRef: Ref<HTMLCanvasElement | null> = ref(null)
@@ -135,9 +135,10 @@ function debugModeAnimations() {
   }
 }
 
-function step(timeStamp: number) {
+function step(timestamp: number) {
+  console.log(`timestamp: ${timestamp}`)
   resetCanvas()
-  addShapes.value(ctx, timeStamp)
+  addShapes.value(ctx, timestamp)
   debugModeAnimations()
 
   window.requestAnimationFrame(step);

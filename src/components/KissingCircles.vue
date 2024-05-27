@@ -37,7 +37,7 @@ import type { Ref } from 'vue'
 import BaseCanvas from './BaseCanvas.vue';
 import { Coor } from './../models/coor'
 
-const numCirclesRef: Ref<number> = ref(80)
+const numCirclesRef: Ref<number> = ref(5)
 const animationDurationRef: Ref<number> = ref(10000) // milliseconds
 
 const srcCentersRef: Ref<Coor[]> = ref([])
@@ -54,6 +54,7 @@ const DO_NOTHING = (ctx: CanvasRenderingContext2D, timeStamp: number) => {
 }
 const addShapes: Ref<Function> = ref(DO_NOTHING)
 
+let initialized = false
 let height: number
 let width: number
 let canvasCenter: Coor
@@ -176,40 +177,68 @@ onMounted(() => {
   addShapes.value = _addShapes
 })
 
-function initCanvas() {
-  resetCanvasWithNewCircles()
-}
+function initCanvas(ctx: CanvasRenderingContext2D) {
+  start = document.timeline.currentTime as number;
 
-function resetCanvasWithNewCircles() {
+  height = ctx.canvas.height;
+  width = ctx.canvas.width;
+  initialized = true;
 
   // for creating concentric circles
   canvasCenter = new Coor(width / 2, height / 2)
 
   borderSize = Math.max(height, width) / 10
+  xMin = borderSize
+  yMin = borderSize
+  xMax = width - borderSize
+  yMax = height - borderSize
   srcCentersRef.value = generateRandomCenters()
   srcCentersOnCircles.value = generateCoorOnCircles(srcCentersRef.value)
 
+  // renderKissingCircles(srcCentersRef.value, ctx);
 }
 
 function generateRandomCenters(): Coor[] {
 
-  const centers: Coor[] = [
-    new Coor(50, 50),
-    new Coor(100, 100),
-  ]
+  const centers: Coor[] = []
+  if (numCirclesRef.value <= 0) return centers;
 
+  const stepSize = 1.0 / 6
+  const xStep: number = (width / numCirclesRef.value) * stepSize
+  const yStep: number = (height / numCirclesRef.value) * stepSize
+  const xOffset: number = xStep * 10
+  const yOffset: number = yStep * 10
+  for (let i=0; i<numCirclesRef.value; i++) {
+    // let x: number = xMin + (xMax - xMin)*Math.random()
+    // let y: number = yMin + (yMax - yMin)*Math.random()
+    const x: number = (xStep * (i + 1)) + xOffset
+    const y: number = (yStep * (i + 1)) + yOffset
+    const rotation_angle = 2*Math.PI * (i / numCirclesRef.value)
+    const cos_theta = Math.cos(rotation_angle)
+    const sin_theta = Math.sin(rotation_angle)
+    const x_rotated = canvasCenter.x + (cos_theta*x - sin_theta*y)
+    const y_rotated = canvasCenter.y + (cos_theta*y + sin_theta*y)
+    centers.push(new Coor(x_rotated, y_rotated))
+  }
   return centers;
 }
 
 function generateCoorOnCircles(centers: Coor[]): CoorOnACircle[] {
   return centers.map((center, index) => {
+    // const radius = 10 + (190 * Math.random())
+    // const theta = (2 * Math.PI) * Math.random()
+    // const SPEEDS = [1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9]
+    // const SPEEDS = [1.0005, 1.0010, 1.0015, 1.0020, 1.0025, 1.0030, 1.0035, 1.0040]
+    const SPEEDS = [1.0005, 1.0010]
 
     const diffX = center.x - canvasCenter.x
     const diffY = center.y - canvasCenter.y
     const radius = dist(center, canvasCenter)
     const theta = Math.atan(diffY / diffX)
-    const direction = 1
-    const speed = 1.0
+    const direction = 1//[1, -1][index % 2]
+    // const speed = SPEEDS[index % SPEEDS.length]
+    const speed = SPEEDS[index % SPEEDS.length] ** index
+    // const speed = [1.001, 1.001, 1.002, 1.002][index % 4] ** index
 
     return new CoorOnACircle(center, radius, theta, direction, speed)
   })
@@ -262,8 +291,9 @@ function computeRadii(centers: Coor[]): CircleWithRadiusLine[] {
 }
 
 function renderKissingCircles(centers: Coor[], ctx: CanvasRenderingContext2D) {
+  console.log(`calling renderKissingCircles(${centers})`)
   const circlesWithRadiusLines = computeRadii(centers)
-
+  
   circlesWithRadiusLines.forEach((circlesWithRadiusLine, index) => {
     const center = circlesWithRadiusLine.center
     const radius = circlesWithRadiusLine.radius
@@ -272,11 +302,16 @@ function renderKissingCircles(centers: Coor[], ctx: CanvasRenderingContext2D) {
     ctx.fillStyle = `hsl(${(index / numCirclesRef.value) * 360 + colorHueOffset} 100% 50% / 40%)`
     ctx.fill()
     ctx.fillStyle = "hsl(0 0% 0% / 0%)"
+    // ctx.strokeText(`(${center.x.toFixed(1)}, ${center.y.toFixed(1)}), ${radius.toFixed(1)}`, center.x-5, center.y)
+
+    // Add line segment pointing to nearest neighbor
+    // const radiusLine = circlesWithRadiusLine.radiusLine as LineSegment
+    // ctx.moveTo(radiusLine.src.x, radiusLine.src.y);
+    // ctx.lineTo(radiusLine.dst.x, radiusLine.dst.y)
 
     ctx.stroke();
   })
   colorHueOffset += colorHueOffsetStepsize
-
 }
 
 function dist(a: Coor, b: Coor): number {
@@ -287,20 +322,80 @@ function regenerateCircles() {
   resetCanvasWithNewCircles()
 }
 
-function _addShapes(ctx: CanvasRenderingContext2D, timeStamp: number) {
-  height = ctx.canvas.height;
-  width = ctx.canvas.width;
+function animate() {
+  // dstCentersRef.value = generateRandomCenters()
 
-  xMin = borderSize
-  yMin = borderSize
-  xMax = width - borderSize
-  yMax = height - borderSize
+  // Shuffle srcCenters to produce dstCenters
+  // dstCentersRef.value = (srcCentersRef.value.map(c => [Math.random(), c]) as [number,Coor][]).sort().map(el => el[1])
 
-  const newCenters: Coor[] = [
-    new Coor(50, 50),
-    new Coor(100, 100),
-  ]
-  renderKissingCircles(newCenters, ctx)
+  animating.value = true
+  // Identical to `timeStamp` used in `window.requestAnimationFrame`
+  start = document.timeline.currentTime as number;
+  previousTimeStamp = 0
+  addShapes.value = _addShapes
+}
+
+function _addShapes(ctx: CanvasRenderingContext2D, timestamp: number) {
+  console.log(`calling _addShapes`)
+  initialized || initCanvas(ctx)
+
+  if (stopAnimationFlag.value) {
+    stopAnimationFlag.value = false
+    animating.value = false
+    // srcCentersRef.value = currCentersRef.value
+    srcCentersOnCircles.value = currCentersOnCircles.value
+    return
+  }
+  const elapsed = timestamp - start;
+
+  if (elapsed > 0 && timestamp !== previousTimeStamp) {
+    /* In case `timestamp` is greater than `animationDurationRef.value`, cap the amount of movement at 100% */
+    const stepSize = Math.min(1, elapsed / animationDurationRef.value)
+
+    let newCenters: Coor[] = []
+    currCentersOnCircles.value = []
+    for (let i=0; i<numCirclesRef.value; i++) {
+      // const x = srcCentersRef.value[i].x + (dstCentersRef.value[i].x - srcCentersRef.value[i].x) * stepSize
+      // const y = srcCentersRef.value[i].y + (dstCentersRef.value[i].y - srcCentersRef.value[i].y) * stepSize
+      //
+      // const MAX_PETURB = 1
+      // const xPeturb = MAX_PETURB * Math.random()
+      // const yPeturb = MAX_PETURB * Math.random()
+      // const x = centerOfCircle.x + (radius * Math.cos(theta)) + xPeturb
+      // const y = centerOfCircle.y + (radius * Math.sin(theta)) + yPeturb
+
+      const srcCenterOnCircle = srcCentersOnCircles.value[i]
+      const centerOfCircle = srcCenterOnCircle.center
+      const radius = srcCenterOnCircle.radius
+      const thetaOffset = (2 * Math.PI) * (srcCenterOnCircle.direction * srcCenterOnCircle.speed) * stepSize
+      const theta = srcCenterOnCircle.theta + thetaOffset
+      const x = centerOfCircle.x + (radius * Math.cos(theta))
+      const y = centerOfCircle.y + (radius * Math.sin(theta))
+
+      const newCenter: Coor = new Coor(x, y)
+      newCenters.push(newCenter)
+
+      const newCoorOnCircle: CoorOnACircle = new CoorOnACircle(
+        newCenter,
+        radius,
+        theta,
+        srcCenterOnCircle.direction,
+        srcCenterOnCircle.speed
+      )
+      currCentersOnCircles.value.push(newCoorOnCircle)
+    }
+
+    renderKissingCircles(newCenters, ctx)
+  }
+
+  // if (elapsed < animationDurationRef.value) {
+  //   previousTimeStamp = timeStamp;
+  //   addShapes.value = DO_NOTHING
+  // } else {
+  //   animating.value = false
+  //   srcCentersOnCircles.value = currCentersOnCircles.value
+  //   animate()
+  // }
 }
 
 function stopAnimationAfterCurrentStep() {
