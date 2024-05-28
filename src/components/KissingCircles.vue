@@ -49,10 +49,7 @@ const animating: Ref<boolean> = ref(false)
 const stopAnimationFlag: Ref<boolean> = ref(false)
 let start: number
 let previousTimeStamp: number;
-const DO_NOTHING = (ctx: CanvasRenderingContext2D, timeStamp: number) => {
-  console.log("do nothing - do not add any shapes")
-}
-const addShapes: Ref<Function> = ref(DO_NOTHING)
+const addShapes: Ref<Function> = ref(_addShapes)
 
 let initialized = false
 let height: number
@@ -348,9 +345,11 @@ function _addShapes(ctx: CanvasRenderingContext2D, timestamp: number) {
   }
   const elapsed = timestamp - start;
 
-  if (elapsed > 0 && timestamp !== previousTimeStamp) {
+  let stepSize = 0
+  if (animating.value) {
     /* In case `timestamp` is greater than `animationDurationRef.value`, cap the amount of movement at 100% */
-    const stepSize = Math.min(1, elapsed / animationDurationRef.value)
+    stepSize = Math.min(1, elapsed / animationDurationRef.value)
+  }
 
     let newCenters: Coor[] = []
     currCentersOnCircles.value = []
@@ -385,8 +384,7 @@ function _addShapes(ctx: CanvasRenderingContext2D, timestamp: number) {
       currCentersOnCircles.value.push(newCoorOnCircle)
     }
 
-    renderKissingCircles(newCenters, ctx)
-  }
+  renderKissingCircles(newCenters, ctx)
 
   // if (elapsed < animationDurationRef.value) {
   //   previousTimeStamp = timeStamp;
