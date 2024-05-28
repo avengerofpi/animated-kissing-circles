@@ -291,9 +291,10 @@ function computeRadii(centers: Coor[]): CircleWithRadiusLine[] {
 }
 
 function renderKissingCircles(centers: Coor[], ctx: CanvasRenderingContext2D) {
-  console.log(`calling renderKissingCircles(${centers})`)
+  console.log(`calling renderKissingCircles(${centers.length} circles)`)
+  // console.dir(centers)
+
   const circlesWithRadiusLines = computeRadii(centers)
-  
   circlesWithRadiusLines.forEach((circlesWithRadiusLine, index) => {
     const center = circlesWithRadiusLine.center
     const radius = circlesWithRadiusLine.radius
@@ -311,6 +312,7 @@ function renderKissingCircles(centers: Coor[], ctx: CanvasRenderingContext2D) {
 
     ctx.stroke();
   })
+
   colorHueOffset += colorHueOffsetStepsize
 }
 
@@ -332,7 +334,6 @@ function animate() {
   // Identical to `timeStamp` used in `window.requestAnimationFrame`
   start = document.timeline.currentTime as number;
   previousTimeStamp = 0
-  addShapes.value = _addShapes
 }
 
 function _addShapes(ctx: CanvasRenderingContext2D, timestamp: number) {
@@ -354,38 +355,38 @@ function _addShapes(ctx: CanvasRenderingContext2D, timestamp: number) {
     stepSize = Math.min(1, elapsed / animationDurationRef.value)
   }
 
-    let newCenters: Coor[] = []
-    currCentersOnCircles.value = []
-    for (let i=0; i<numCirclesRef.value; i++) {
-      // const x = srcCentersRef.value[i].x + (dstCentersRef.value[i].x - srcCentersRef.value[i].x) * stepSize
-      // const y = srcCentersRef.value[i].y + (dstCentersRef.value[i].y - srcCentersRef.value[i].y) * stepSize
-      //
-      // const MAX_PETURB = 1
-      // const xPeturb = MAX_PETURB * Math.random()
-      // const yPeturb = MAX_PETURB * Math.random()
-      // const x = centerOfCircle.x + (radius * Math.cos(theta)) + xPeturb
-      // const y = centerOfCircle.y + (radius * Math.sin(theta)) + yPeturb
+  let newCenters: Coor[] = []
+  currCentersOnCircles.value = []
+  for (let i=0; i<numCirclesRef.value; i++) {
+    // const x = srcCentersRef.value[i].x + (dstCentersRef.value[i].x - srcCentersRef.value[i].x) * stepSize
+    // const y = srcCentersRef.value[i].y + (dstCentersRef.value[i].y - srcCentersRef.value[i].y) * stepSize
+    //
+    // const MAX_PETURB = 1
+    // const xPeturb = MAX_PETURB * Math.random()
+    // const yPeturb = MAX_PETURB * Math.random()
+    // const x = centerOfCircle.x + (radius * Math.cos(theta)) + xPeturb
+    // const y = centerOfCircle.y + (radius * Math.sin(theta)) + yPeturb
 
-      const srcCenterOnCircle = srcCentersOnCircles.value[i]
-      const centerOfCircle = srcCenterOnCircle.center
-      const radius = srcCenterOnCircle.radius
-      const thetaOffset = (2 * Math.PI) * (srcCenterOnCircle.direction * srcCenterOnCircle.speed) * stepSize
-      const theta = srcCenterOnCircle.theta + thetaOffset
-      const x = centerOfCircle.x + (radius * Math.cos(theta))
-      const y = centerOfCircle.y + (radius * Math.sin(theta))
+    const srcCenterOnCircle = srcCentersOnCircles.value[i]
+    const centerOfCircle = srcCenterOnCircle.center
+    const radius = srcCenterOnCircle.radius
+    const thetaOffset = (2 * Math.PI) * (srcCenterOnCircle.direction * srcCenterOnCircle.speed) * stepSize
+    const theta = srcCenterOnCircle.theta + thetaOffset
+    const x = centerOfCircle.x + (radius * Math.cos(theta))
+    const y = centerOfCircle.y + (radius * Math.sin(theta))
 
-      const newCenter: Coor = new Coor(x, y)
-      newCenters.push(newCenter)
+    const newCenter: Coor = new Coor(x, y)
+    newCenters.push(newCenter)
 
-      const newCoorOnCircle: CoorOnACircle = new CoorOnACircle(
-        newCenter,
-        radius,
-        theta,
-        srcCenterOnCircle.direction,
-        srcCenterOnCircle.speed
-      )
-      currCentersOnCircles.value.push(newCoorOnCircle)
-    }
+    const newCoorOnCircle: CoorOnACircle = new CoorOnACircle(
+      newCenter,
+      radius,
+      theta,
+      srcCenterOnCircle.direction,
+      srcCenterOnCircle.speed
+    )
+    currCentersOnCircles.value.push(newCoorOnCircle)
+  }
 
   renderKissingCircles(newCenters, ctx)
 
@@ -397,6 +398,8 @@ function _addShapes(ctx: CanvasRenderingContext2D, timestamp: number) {
   //   srcCentersOnCircles.value = currCentersOnCircles.value
   //   animate()
   // }
+
+  return
 }
 
 function stopAnimationAfterCurrentStep() {

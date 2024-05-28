@@ -140,6 +140,7 @@ function step(timestamp: number) {
   resetCanvas()
   addShapes.value(ctx, timestamp)
   debugModeAnimations()
+  console.log(`---------------------------------------`)
 
   window.requestAnimationFrame(step);
 }
