@@ -189,10 +189,13 @@ function initCanvas(ctx: CanvasRenderingContext2D) {
   yMin = borderSize
   xMax = width - borderSize
   yMax = height - borderSize
+
+  resetCanvasWithNewCircles()
+}
+
+function resetCanvasWithNewCircles() {
   srcCentersRef.value = generateRandomCenters()
   srcCentersOnCircles.value = generateCoorOnCircles(srcCentersRef.value)
-
-  // renderKissingCircles(srcCentersRef.value, ctx);
 }
 
 function generateRandomCenters(): Coor[] {
