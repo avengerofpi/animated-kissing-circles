@@ -4,8 +4,8 @@
   <!-- Buttons -->
   <div>
     <button type="button" @click="regenerateCircles" :disabled=animating>Regenerate Circles</button>
-    <button type="button" @click="animate" :disabled=animating>Animate Circles</button>
-    <button type="button" @click="stopAnimationAfterCurrentStep" :disabled="!animating || stopAnimationFlag">
+    <button v-if="!animating && !stopAnimationFlag" type="button" @click="animate">Animate Circles</button>
+    <button v-if="animating || stopAnimationFlag" type="button" @click="stopAnimationAfterCurrentStep" :disabled="stopAnimationFlag">
       <span v-if="!stopAnimationFlag">Stop Animation</span>
       <span v-if="stopAnimationFlag">Pending Stop...</span>
     </button>
@@ -331,6 +331,7 @@ function animate() {
   // dstCentersRef.value = (srcCentersRef.value.map(c => [Math.random(), c]) as [number,Coor][]).sort().map(el => el[1])
 
   animating.value = true
+  stopAnimationFlag.value = false
   // Identical to `timeStamp` used in `window.requestAnimationFrame`
   start = document.timeline.currentTime as number;
   previousTimeStamp = 0
