@@ -2,6 +2,10 @@
   <!-- Message -->
   <div style="color: red">{{ msg }}</div>
   <!-- Debug Canvas Details -->
+  <div>
+    <input type="checkbox" id="debug-checkbox" v-model="debug">
+    <label for="debug-checkbox">&nbsp;Debug</label>
+  </div>
   <div v-if="debug">
     <div>Zoom Level: {{ canvasZoomLevelRef.toFixed(3) }}</div>
     <div>Canvas Scale: {{ canvasScaleRef.toFixed(3) }}</div>
@@ -29,7 +33,7 @@ const addShapes: Ref<Function> = defineModel<Function>({ default: (ctx, timestam
 let ctx: CanvasRenderingContext2D
 const canvasRef: Ref<HTMLCanvasElement | null> = ref(null)
 
-const debug = true
+const debug: Ref<boolean> = ref(true)
 
 let height: number
 let width: number
