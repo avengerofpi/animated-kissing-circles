@@ -128,7 +128,7 @@ function addZoomChangeCoor(radius: number) {
 }
 
 function debugModeAnimations() {
-  if (debug) {
+  if (debug.value) {
     const scaledWidth = canvasScaledDimensionsRef.value.x
     const scaledHeight = canvasScaledDimensionsRef.value.y
     const radius = Math.min(scaledWidth, scaledHeight)/20
