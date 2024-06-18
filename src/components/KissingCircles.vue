@@ -13,7 +13,7 @@
   <!-- Basic input -->
   <div>
     <label for="nInput">Number of Circles:</label>
-    <input id="nInput" v-model.lazy="numCirclesRef">
+    <input id="nInput" :value="numCirclesRef" @change="(e: Event) => updateNumCircles(e.target.value)">
 
     <label for="animationTimeInput">Duration of each transition</label>
     <input id="animationTimeInput" v-model.lazy="animationDurationRef">
@@ -62,6 +62,21 @@ let xMax: number
 let yMax: number
 
 let _renderedPointerCoor: Coor
+
+function updateNumCircles(newNumCircles: number) {
+  const newStart = document.timeline.currentTime as number
+  const numAdditionalCircles: number = newNumCircles - numCirclesRef.value
+  if (numAdditionalCircles < 0) {
+    srcCentersRef.value = srcCentersRef.value.slice(0, newNumCircles)
+    srcCentersOnCircles.value = currCentersOnCircles.value.slice(0, newNumCircles)
+  } else {
+    const additionalCircles: Coor[] = generateRandomCenters(numAdditionalCircles, srcCentersRef.value)
+    srcCentersRef.value = srcCentersRef.value.concat(additionalCircles)
+    srcCentersOnCircles.value = generateCoorOnCircles(srcCentersRef.value)
+  }
+
+  numCirclesRef.value = newNumCircles
+}
 
 // Circle style props
 let colorHueOffset: number = 0
@@ -194,26 +209,28 @@ function initCanvas(ctx: CanvasRenderingContext2D) {
 }
 
 function resetCanvasWithNewCircles() {
-  srcCentersRef.value = generateRandomCenters()
+  srcCentersRef.value = generateRandomCenters(numCirclesRef.value)
   srcCentersOnCircles.value = generateCoorOnCircles(srcCentersRef.value)
 }
 
-function generateRandomCenters(): Coor[] {
+function generateRandomCenters(n: number, existingCenters: Coor[] = []): Coor[] {
 
   const centers: Coor[] = []
-  if (numCirclesRef.value <= 0) return centers;
+  if (n <= 0) { return centers };
 
+  const m = existingCenters.length
   const stepSize = 1.0 / 6
-  const xStep: number = (width / numCirclesRef.value) * stepSize
-  const yStep: number = (height / numCirclesRef.value) * stepSize
+  const xStep: number = (width / 5) * stepSize
+  const yStep: number = (height / 5) * stepSize
   const xOffset: number = xStep * 10
   const yOffset: number = yStep * 10
-  for (let i=0; i<numCirclesRef.value; i++) {
+  for (let i=0; i<n; i++) {
+    let j=m+i
     // let x: number = xMin + (xMax - xMin)*Math.random()
     // let y: number = yMin + (yMax - yMin)*Math.random()
-    const x: number = (xStep * (i + 1)) + xOffset
-    const y: number = (yStep * (i + 1)) + yOffset
-    const rotation_angle = 2*Math.PI * (i / numCirclesRef.value)
+    const x: number = (xStep * (j + 1)) + xOffset
+    const y: number = (yStep * (j + 1)) + yOffset
+    const rotation_angle = 2*Math.PI * (j / 5)
     const cos_theta = Math.cos(rotation_angle)
     const sin_theta = Math.sin(rotation_angle)
     const x_rotated = canvasCenter.x + (cos_theta*x - sin_theta*y)
