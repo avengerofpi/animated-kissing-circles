@@ -169,11 +169,12 @@ function getEventCoor(e: MouseEvent): Coor {
   let coor = null
   if (e instanceof MouseEvent) {
     if (e.clientX && e.clientY) {
-      coor = new Coor(e.clientX - e.target.offsetLeft, e.clientY - e.target.offsetTop)
+      coor = new Coor(
+        e.clientX - e.target.offsetLeft + document.scrollingElement.scrollLeft,
+        e.clientY - e.target.offsetTop + document.scrollingElement.scrollTop
+      )
     }
   }
-
-  // console.dir(e.target)
 
   if (coor === null) {
     throw TypeError(`Event should be a MouseEvent, but was ${e}`)
@@ -187,8 +188,6 @@ function getEventScaledCoor(e: MouseEvent): Coor {
   const pointerCoor = getEventCoor(e)
   const scaledPointerX = pointerCoor.x/canvasScaleRef.value - canvasOffsetRef.value.x
   const scaledPointerY = pointerCoor.y/canvasScaleRef.value - canvasOffsetRef.value.y
-  // const scaledPointerX = canvasOffsetRef.value.x + pointerCoor.x/canvasScaleRef.value
-  // const scaledPointerY = canvasOffsetRef.value.y + pointerCoor.y/canvasScaleRef.value
   const scaledPointerCoor = new Coor(scaledPointerX, scaledPointerY)
   return scaledPointerCoor
 }
