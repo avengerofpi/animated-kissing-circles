@@ -339,7 +339,31 @@ function renderKissingCircles(centers: Coor[], ctx: CanvasRenderingContext2D) {
     // ctx.moveTo(radiusLine.src.x, radiusLine.src.y);
     // ctx.lineTo(radiusLine.dst.x, radiusLine.dst.y)
 
+    // Draw center dot
+    const dotRadius = 5
+    ctx.beginPath();
+    ctx.arc(center.x, center.y, dotRadius, 0,2*Math.PI);
+    ctx.fillStyle = `hsl(${(index / numCirclesRef.value) * 360 + colorHueOffset} 100% 50% / 40%)`
+    ctx.fill()
+    ctx.fillStyle = "hsl(0 0% 0% / 0%)"
+
     ctx.stroke();
+  })
+
+  colorHueOffset += colorHueOffsetStepsize
+}
+
+function renderSrcCentersOnCircles(ctx: CanvasRenderingContext2D) {
+  srcCentersOnCircles.value.forEach((srcCenterOnCircle, index) => {
+    const center = srcCenterOnCircle.center
+    const radius = srcCenterOnCircle.radius
+
+    ctx.beginPath();
+    ctx.setLineDash([7,3]);
+    ctx.arc(center.x, center.y, radius, 0,2*Math.PI);
+
+    ctx.stroke();
+    ctx.setLineDash([]);
   })
 
   colorHueOffset += colorHueOffsetStepsize
@@ -419,6 +443,7 @@ function _addShapes(ctx: CanvasRenderingContext2D, timestamp: number) {
   }
 
   renderKissingCircles(newCenters, ctx)
+  renderSrcCentersOnCircles(ctx)
 
   // if (elapsed < animationDurationRef.value) {
   //   previousTimeStamp = timeStamp;
