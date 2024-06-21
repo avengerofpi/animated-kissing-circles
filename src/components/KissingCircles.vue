@@ -12,9 +12,21 @@
   </div>
   <!-- Basic input -->
   <div>
-    <label for="nInput">Number of Circles:</label>
-    <input id="nInput" :value="numCirclesRef" @change="(e: Event) => updateNumCircles(e.target.value)">
+    <div>
+      <label for="nInput">Number of Circles:</label>
+      <input id="nInput" :value="numCirclesRef" @change="(e: Event) => updateNumCircles(e.target.value)">
+    </div>
+    <div>
+      <button @click="() => updateNumCircles(numCirclesRef + 1)">
+        Increment
+      </button>
+      <button @click="() => updateNumCircles(numCirclesRef - 1)">
+        Decrement
+      </button>
+    </div>
+  </div>
 
+  <div>
     <label for="animationTimeInput">Duration of each transition</label>
     <input id="animationTimeInput" v-model.lazy="animationDurationRef">
   </div>
