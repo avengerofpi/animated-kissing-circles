@@ -252,6 +252,7 @@ function zoomToLevelAtCoor(newZoomLevel: number, scaledPointerCoor: Coor) {
 }
 
 function adjustZoom(e: MouseEvent) {
+  e.preventDefault()
   const scaledPointerCoor = getEventScaledCoor(e)
   console.log(`Before`)
   logCanvasDetails(scaledPointerCoor)
