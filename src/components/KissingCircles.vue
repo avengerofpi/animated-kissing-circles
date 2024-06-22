@@ -12,24 +12,29 @@
   </div>
   <!-- Basic input -->
   <div>
+    <!-- Number of circles -->
     <div>
       <label for="nInput">Number of Circles:</label>
       <input id="nInput" :value="numCirclesRef" @change="(e: Event) => updateNumCircles(e.target.value)">
-    </div>
-    <div>
-      <button @click="() => updateNumCircles(numCirclesRef + 1)">
-        Increment
-      </button>
-      <button @click="() => updateNumCircles(numCirclesRef - 1)">
+      <button @click="updateNumCircles(numCirclesRef - 1)">
         Decrement
       </button>
+      <button @click="updateNumCircles(numCirclesRef + 1)">
+        Increment
+      </button>
     </div>
-  </div>
-
-  <div>
-    <label for="animationTimeInput">Duration of each transition</label>
-    <input id="animationTimeInput" v-model.lazy="animationDurationRef">
-  </div>
+    <!-- Animation duration -->
+    <div>
+      <label for="animationTimeInput">Duration of each transition</label>
+      <input id="animationTimeInput" v-model.lazy="animationDurationRef">
+      <button @click="updateAnimationDuration(animationDurationRef - 1)">
+        Shorter (faster)
+      </button>
+      <button @click="updateAnimationDuration(animationDurationRef + 1)">
+        Longer (slower)
+      </button>
+    </div>
+    </div>
   <!-- Canvas -->
   <BaseCanvas
     :msg="msg + ' - KissingCircles HomeView'"
@@ -50,7 +55,7 @@ import BaseCanvas from './BaseCanvas.vue';
 import { Coor } from './../models/coor'
 
 const numCirclesRef: Ref<number> = ref(5)
-const animationDurationRef: Ref<number> = ref(10000) // milliseconds
+const animationDurationRef: Ref<number> = ref(10) // seconds
 
 const srcCentersRef: Ref<Coor[]> = ref([])
 const srcCentersOnCircles: Ref<CoorOnACircle[]> = ref([])
@@ -79,7 +84,7 @@ function updateNumCircles(newNumCircles: number) {
   const numAdditionalCircles: number = newNumCircles - numCirclesRef.value
   if (numAdditionalCircles < 0) {
     srcCentersRef.value = srcCentersRef.value.slice(0, newNumCircles)
-    srcCentersOnCircles.value = currCentersOnCircles.value.slice(0, newNumCircles)
+    srcCentersOnCircles.value = generateCoorOnCircles(srcCentersRef.value)
   } else {
     const additionalCircles: Coor[] = generateRandomCenters(numAdditionalCircles, srcCentersRef.value)
     srcCentersRef.value = srcCentersRef.value.concat(additionalCircles)
@@ -87,6 +92,10 @@ function updateNumCircles(newNumCircles: number) {
   }
 
   numCirclesRef.value = newNumCircles
+}
+
+function updateAnimationDuration(newAnimationDuration: number) {
+  animationDurationRef.value = newAnimationDuration
 }
 
 // Circle style props
@@ -404,8 +413,8 @@ function _addShapes(ctx: CanvasRenderingContext2D, timestamp: number) {
 
   let stepSize = 0
   if (animating.value) {
-    /* In case `timestamp` is greater than `animationDurationRef.value`, cap the amount of movement at 100% */
-    stepSize = Math.min(1, elapsed / animationDurationRef.value)
+    // Loop animation, instead of stop animation after animationDuration
+    stepSize = elapsed / (animationDurationRef.value * 1000)
   }
 
   let newCenters: Coor[] = []
