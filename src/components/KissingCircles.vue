@@ -78,8 +78,6 @@ let yMin: number
 let xMax: number
 let yMax: number
 
-let _renderedPointerCoor: Coor
-
 function updateNumCircles(newNumCircles: number) {
   const numAdditionalCircles: number = newNumCircles - numCirclesRef.value
   if (numAdditionalCircles < 0) {
