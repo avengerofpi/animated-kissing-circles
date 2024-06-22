@@ -156,7 +156,7 @@ let canvasOffsetRef = ref(new Coor(0, 0))
 let canvasScaledDimensionsRef = ref(new Coor(0, 0))
 
 let canvasZoomLevelRef: Ref<number> = ref(0)
-const MIN_ZOOM_LEVEL = -20
+const MIN_ZOOM_LEVEL = -40
 const MAX_ZOOM_LEVEL = 20
 const ZOOM_SCALE_STEP_SIZE = 2 ** (1/4)
 
