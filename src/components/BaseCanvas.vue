@@ -140,11 +140,9 @@ function debugModeAnimations() {
 }
 
 function step(timestamp: number) {
-  console.log(`timestamp: ${timestamp}`)
   resetCanvas()
   addShapes.value(ctx, timestamp)
   debugModeAnimations()
-  console.log(`---------------------------------------`)
 
   window.requestAnimationFrame(step);
 }
@@ -193,11 +191,8 @@ function getEventScaledCoor(e: MouseEvent): Coor {
 }
 
 function onPointerDown(e: MouseEvent) {
-  const pointerCoor = getEventCoor(e)
   const scaledPointerCoor = getEventScaledCoor(e)
   lastPointerDownCoor = scaledPointerCoor
-
-  console.log(`onPointerDown: pointerCoor: (${pointerCoor.x.toFixed(2)}, ${pointerCoor.y.toFixed(2)}}) -> scaled: (${scaledPointerCoor.x.toFixed(2)}, ${scaledPointerCoor.y.toFixed(2)}})`)
 
   // Prevent a non-Left Mouse Button click from starting a dragging session
   const LEFT_MOUSEBUTTON_NUM = 0
@@ -213,19 +208,10 @@ function onPointerUp(e: MouseEvent) {
 
 function onPointerMove(e: MouseEvent) {
   const pointerCoor = getEventCoor(e)
-  console.log(`onPointerMove @ (${pointerCoor.x}, ${pointerCoor.y})`)
   if (isDragging) {
     canvasOffsetRef.value.x = pointerCoor.x/canvasScaleRef.value - dragStart.x
     canvasOffsetRef.value.y = pointerCoor.y/canvasScaleRef.value - dragStart.y
   }
-}
-
-function logCanvasDetails(pointerCoor: Coor) {
-  console.log(`  Canvas details:`)
-  console.log(`    Pointer: (${pointerCoor.x.toFixed(2)}, ${pointerCoor.y.toFixed(2)})`)
-  console.log(`    Zoom:    ${canvasZoomLevelRef.value.toFixed(2)}`)
-  console.log(`    Scale:   ${canvasScaleRef.value.toFixed(2)}`)
-  console.log(`    Offset:  (${canvasOffsetRef.value.x.toFixed(2)}, ${canvasOffsetRef.value.y.toFixed(2)})`)
 }
 
 function zoomToLevelAtCoor(newZoomLevel: number, scaledPointerCoor: Coor) {
@@ -254,17 +240,11 @@ function zoomToLevelAtCoor(newZoomLevel: number, scaledPointerCoor: Coor) {
 function adjustZoom(e: MouseEvent) {
   e.preventDefault()
   const scaledPointerCoor = getEventScaledCoor(e)
-  console.log(`Before`)
-  logCanvasDetails(scaledPointerCoor)
 
   if (!isDragging) {
     const zoomLevelChange = (e.deltaY > 0) ? -1 : 1
     const newZoomLevel = canvasZoomLevelRef.value + zoomLevelChange
     zoomToLevelAtCoor(newZoomLevel, scaledPointerCoor)
-
-    console.log(`After`)
-    logCanvasDetails(scaledPointerCoor)
-    console.log(`-----------------------------------`)
   }
 }
 
@@ -276,15 +256,9 @@ function zoomInOneLevel(e: MouseEvent) {
 }
 
 function computeOffsetChangeFromZoomChange(oldZoom: number, newZoom: number, atCoor: Coor, oldOffset: Coor): Coor {
-  console.log(`_adjustZoom`)
-  console.log(`  zoom:   ${oldZoom} -> ${newZoom}`)
-  console.log(`  atCoor: (${atCoor.x}, ${atCoor.y})`)
-
   const newOffsetX = -atCoor.x + (oldZoom/newZoom) * (atCoor.x + oldOffset.x) 
   const newOffsetY = -atCoor.y + (oldZoom/newZoom) * (atCoor.y + oldOffset.y)
   const newOffset = new Coor(newOffsetX, newOffsetY)
-
-  console.log(`  offset: (${oldOffset.x.toFixed(3)}, ${oldOffset.y.toFixed(3)}) -> (${newOffset.x.toFixed(3)}, ${newOffset.y.toFixed(3)})`)
 
   return newOffset
 }

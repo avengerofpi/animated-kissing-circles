@@ -326,9 +326,6 @@ function computeRadii(centers: Coor[]): CircleWithRadiusLine[] {
 }
 
 function renderKissingCircles(centers: Coor[], ctx: CanvasRenderingContext2D) {
-  console.log(`calling renderKissingCircles(${centers.length} circles)`)
-  // console.dir(centers)
-
   const circlesWithRadiusLines = computeRadii(centers)
   circlesWithRadiusLines.forEach((circlesWithRadiusLine, index) => {
     const center = circlesWithRadiusLine.center
@@ -397,7 +394,6 @@ function animate() {
 }
 
 function _addShapes(ctx: CanvasRenderingContext2D, timestamp: number) {
-  console.log(`calling _addShapes`)
   initialized || initCanvas(ctx)
 
   if (stopAnimationFlag.value) {
