@@ -76,7 +76,6 @@ let yMax: number
 let _renderedPointerCoor: Coor
 
 function updateNumCircles(newNumCircles: number) {
-  const newStart = document.timeline.currentTime as number
   const numAdditionalCircles: number = newNumCircles - numCirclesRef.value
   if (numAdditionalCircles < 0) {
     srcCentersRef.value = srcCentersRef.value.slice(0, newNumCircles)
