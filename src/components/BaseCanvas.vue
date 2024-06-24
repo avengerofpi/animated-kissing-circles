@@ -52,7 +52,7 @@ onMounted(() => {
     canvasRef.value.addEventListener('mousedown', onPointerDown)
     canvasRef.value.addEventListener('mouseup', onPointerUp)
     canvasRef.value.addEventListener('mousemove', onPointerMove)
-    canvasRef.value.addEventListener('wheel', adjustZoom)
+    canvasRef.value.addEventListener('wheel', adjustZoom, {passive: false} )
     canvasRef.value.addEventListener('dblclick', zoomInOneLevel)
     initAndAnimate()
   } else {
