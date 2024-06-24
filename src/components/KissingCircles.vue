@@ -15,22 +15,22 @@
     <!-- Number of circles -->
     <div>
       <label for="nInput">Number of Circles:</label>
-      <input id="nInput" :value="numCirclesRef" @change="(e: Event) => updateNumCircles(e.target.value)">
-      <button @click="updateNumCircles(numCirclesRef - 1)">
+      <input id="nInput" v-model.number.lazy="numCirclesRef">
+      <button @click="decrementNumCircles()">
         Decrement
       </button>
-      <button @click="updateNumCircles(numCirclesRef + 1)">
+      <button @click="incrementNumCircles()">
         Increment
       </button>
     </div>
     <!-- Animation duration -->
     <div>
       <label for="animationTimeInput">Duration of each transition</label>
-      <input id="animationTimeInput" v-model.lazy="animationDurationRef">
-      <button @click="updateAnimationDuration(animationDurationRef - 1)">
+      <input id="animationTimeInput" v-model.number.lazy="animationDurationRef">
+      <button @click="decrementAnimationDuration()">
         Shorter (faster)
       </button>
-      <button @click="updateAnimationDuration(animationDurationRef + 1)">
+      <button @click="incrementAnimationDuration()">
         Longer (slower)
       </button>
     </div>
@@ -49,7 +49,7 @@ defineProps<{
   msg: string
 }>()
 
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import type { Ref } from 'vue'
 import BaseCanvas from './BaseCanvas.vue';
 import { Coor } from './../models/coor'
@@ -78,22 +78,38 @@ let yMin: number
 let xMax: number
 let yMax: number
 
-function updateNumCircles(newNumCircles: number) {
-  const numAdditionalCircles: number = newNumCircles - numCirclesRef.value
+
+watch(numCirclesRef, (newNumCircles: number, oldNumCircles: number) => {
+  const numAdditionalCircles: number = newNumCircles - oldNumCircles
   if (numAdditionalCircles < 0) {
-    srcCentersRef.value = srcCentersRef.value.slice(0, newNumCircles)
-    srcCentersOnCircles.value = generateCoorOnCircles(srcCentersRef.value)
+    if (initialized) {
+      srcCentersRef.value = srcCentersRef.value.slice(0, newNumCircles)
+      srcCentersOnCircles.value = generateCoorOnCircles(srcCentersRef.value)
+    }
   } else {
-    const additionalCircles: Coor[] = generateRandomCenters(numAdditionalCircles, srcCentersRef.value)
-    srcCentersRef.value = srcCentersRef.value.concat(additionalCircles)
-    srcCentersOnCircles.value = generateCoorOnCircles(srcCentersRef.value)
+    if (initialized) {
+      const additionalCircles: Coor[] = generateRandomCenters(numAdditionalCircles, srcCentersRef.value)
+      srcCentersRef.value = srcCentersRef.value.concat(additionalCircles)
+      srcCentersOnCircles.value = generateCoorOnCircles(srcCentersRef.value)
+    }
   }
 
-  numCirclesRef.value = newNumCircles
+})
+
+function incrementNumCircles() {
+  numCirclesRef.value++
 }
 
-function updateAnimationDuration(newAnimationDuration: number) {
-  animationDurationRef.value = newAnimationDuration
+function decrementNumCircles() {
+  numCirclesRef.value--
+}
+
+function incrementAnimationDuration() {
+  animationDurationRef.value++
+}
+
+function decrementAnimationDuration() {
+  animationDurationRef.value--
 }
 
 // Circle style props
