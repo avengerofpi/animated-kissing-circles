@@ -412,13 +412,9 @@ function animate() {
 function _addShapes(ctx: CanvasRenderingContext2D, timestamp: number) {
   initialized || initCanvas(ctx)
 
-  if (stopAnimationFlag.value) {
-    stopAnimationFlag.value = false
-    animating.value = false
-    // srcCentersRef.value = currCentersRef.value
-    srcCentersOnCircles.value = currCentersOnCircles.value
-    return
-  }
+  // Don't process stopAnimationFlag till end, to make sure the current
+  // batch of shapes gets painted.
+
   const elapsed = timestamp - start;
 
   let stepSize = 0
@@ -471,6 +467,13 @@ function _addShapes(ctx: CanvasRenderingContext2D, timestamp: number) {
   //   srcCentersOnCircles.value = currCentersOnCircles.value
   //   animate()
   // }
+
+  if (stopAnimationFlag.value) {
+    stopAnimationFlag.value = false
+    animating.value = false
+    // srcCentersRef.value = currCentersRef.value
+    srcCentersOnCircles.value = currCentersOnCircles.value
+  }
 
   return
 }
