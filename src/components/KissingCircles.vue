@@ -65,19 +65,12 @@ const currCentersOnCircles: Ref<CoorOnACircle[]> = ref([])
 const animating: Ref<boolean> = ref(false)
 const stopAnimationFlag: Ref<boolean> = ref(false)
 let start: number
-let previousTimeStamp: number;
 const addShapes: Ref<Function> = ref(_addShapes)
 
 let initialized = false
 let height: number
 let width: number
 let canvasCenter: Coor
-let borderSize: number
-let xMin: number
-let yMin: number
-let xMax: number
-let yMax: number
-
 
 watch(numCirclesRef, (newNumCircles: number, oldNumCircles: number) => {
   const numAdditionalCircles: number = newNumCircles - oldNumCircles
@@ -233,12 +226,6 @@ function initCanvas(ctx: CanvasRenderingContext2D) {
   // for creating concentric circles
   canvasCenter = new Coor(width / 2, height / 2)
 
-  borderSize = Math.max(height, width) / 10
-  xMin = borderSize
-  yMin = borderSize
-  xMax = width - borderSize
-  yMax = height - borderSize
-
   resetCanvasWithNewCircles()
 }
 
@@ -259,9 +246,7 @@ function generateRandomCenters(n: number, existingCenters: Coor[] = []): Coor[] 
   const xOffset: number = xStep * 10
   const yOffset: number = yStep * 10
   for (let i=0; i<n; i++) {
-    let j=m+i
-    // let x: number = xMin + (xMax - xMin)*Math.random()
-    // let y: number = yMin + (yMax - yMin)*Math.random()
+    const j=m+i
     const x: number = (xStep * (j + 1)) + xOffset
     const y: number = (yStep * (j + 1)) + yOffset
     const rotation_angle = 2*Math.PI * (j / 5)
@@ -406,7 +391,6 @@ function animate() {
   stopAnimationFlag.value = false
   // Identical to `timeStamp` used in `window.requestAnimationFrame`
   start = document.timeline.currentTime as number;
-  previousTimeStamp = 0
 }
 
 function _addShapes(ctx: CanvasRenderingContext2D, timestamp: number) {
@@ -458,15 +442,6 @@ function _addShapes(ctx: CanvasRenderingContext2D, timestamp: number) {
 
   renderKissingCircles(newCenters, ctx)
   renderSrcCentersOnCircles(ctx)
-
-  // if (elapsed < animationDurationRef.value) {
-  //   previousTimeStamp = timeStamp;
-  //   addShapes.value = DO_NOTHING
-  // } else {
-  //   animating.value = false
-  //   srcCentersOnCircles.value = currCentersOnCircles.value
-  //   animate()
-  // }
 
   if (stopAnimationFlag.value) {
     stopAnimationFlag.value = false
