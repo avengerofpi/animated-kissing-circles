@@ -38,7 +38,9 @@
   <!-- Canvas -->
   <BaseCanvas
     :msg="msg + ' - KissingCircles HomeView'"
-    v-model="addShapes"
+    :animating="animating"
+    v-model:add-shapes="addShapes"
+    v-model:step-at-least-once="stepAtLeastOnce"
   >
   </BaseCanvas>
 </template>
@@ -64,8 +66,10 @@ const currCentersOnCircles: Ref<CoorOnACircle[]> = ref([])
 // const currCentersRef: Ref<Coor[]> = ref([])
 const animating: Ref<boolean> = ref(false)
 const stopAnimationFlag: Ref<boolean> = ref(false)
-let start: number
+let startTimestamp: number
+let pauseTimestamp: number
 const addShapes: Ref<Function> = ref(_addShapes)
+const stepAtLeastOnce: Ref<boolean> = ref(true)
 
 let initialized = false
 let height: number
@@ -73,6 +77,7 @@ let width: number
 let canvasCenter: Coor
 
 watch(numCirclesRef, (newNumCircles: number, oldNumCircles: number) => {
+  stepAtLeastOnce.value = true
   const numAdditionalCircles: number = newNumCircles - oldNumCircles
   if (numAdditionalCircles < 0) {
     if (initialized) {
@@ -96,6 +101,10 @@ function incrementNumCircles() {
 function decrementNumCircles() {
   numCirclesRef.value--
 }
+
+watch(animationDurationRef, (newAnimationDuration: number) => {
+  stepAtLeastOnce.value = true
+})
 
 function incrementAnimationDuration() {
   animationDurationRef.value++
@@ -216,8 +225,9 @@ onMounted(() => {
   addShapes.value = _addShapes
 })
 
-function initCanvas(ctx: CanvasRenderingContext2D) {
-  start = document.timeline.currentTime as number;
+function initCanvas(ctx: CanvasRenderingContext2D, timestamp: number) {
+  startTimestamp = timestamp
+  pauseTimestamp = timestamp
 
   height = ctx.canvas.height;
   width = ctx.canvas.width;
@@ -390,22 +400,28 @@ function animate() {
   animating.value = true
   stopAnimationFlag.value = false
   // Identical to `timeStamp` used in `window.requestAnimationFrame`
-  start = document.timeline.currentTime as number;
+  const ellapsedOffset = pauseTimestamp - startTimestamp
+  startTimestamp = (document.timeline.currentTime as number) - ellapsedOffset;
 }
 
 function _addShapes(ctx: CanvasRenderingContext2D, timestamp: number) {
-  initialized || initCanvas(ctx)
+  initialized || initCanvas(ctx, timestamp)
 
   // Don't process stopAnimationFlag till end, to make sure the current
   // batch of shapes gets painted.
 
-  const elapsed = timestamp - start;
+  let elapsed: number = timestamp - startTimestamp;
 
   let stepSize = 0
   if (animating.value) {
-    // Loop animation, instead of stop animation after animationDuration
-    stepSize = elapsed / (animationDurationRef.value * 1000)
+    pauseTimestamp = timestamp
+    elapsed = timestamp - startTimestamp
+  } else if (stepAtLeastOnce.value) {
+    elapsed = pauseTimestamp - startTimestamp
   }
+
+  // Loop animation, instead of stop animation after animationDuration
+  stepSize = elapsed / (animationDurationRef.value * 1000)
 
   let newCenters: Coor[] = []
   currCentersOnCircles.value = []
@@ -447,7 +463,7 @@ function _addShapes(ctx: CanvasRenderingContext2D, timestamp: number) {
     stopAnimationFlag.value = false
     animating.value = false
     // srcCentersRef.value = currCentersRef.value
-    srcCentersOnCircles.value = currCentersOnCircles.value
+    // srcCentersOnCircles.value = currCentersOnCircles.value
   }
 
   return

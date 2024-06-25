@@ -20,15 +20,17 @@
 
 <script setup lang="ts">
 // https://vuejs.org/guide/typescript/composition-api
-defineProps<{
+const props = defineProps<{
   msg: string
+  animating: boolean
 }>()
 
 import { ref, onMounted } from 'vue'
 import type { Ref } from 'vue'
 import { Coor } from '../models/coor'
 
-const addShapes: Ref<Function> = defineModel<Function>({ default: (ctx, timestamp) => {} })
+const addShapes: Ref<Function> = defineModel<Function>("addShapes", { required: true, default: (ctx, timestamp) => {} })
+const stepAtLeastOnce: Ref<boolean> = defineModel<boolean>("stepAtLeastOnce", { required: true, default: true })
 
 let ctx: CanvasRenderingContext2D
 const canvasRef: Ref<HTMLCanvasElement | null> = ref(null)
@@ -140,10 +142,12 @@ function debugModeAnimations() {
 }
 
 function step(timestamp: number) {
-  resetCanvas()
-  addShapes.value(ctx, timestamp)
-  debugModeAnimations()
-
+  if (props.animating || stepAtLeastOnce.value) {
+    resetCanvas()
+    addShapes.value(ctx, timestamp)
+    debugModeAnimations()
+    stepAtLeastOnce.value = false
+}
   window.requestAnimationFrame(step);
 }
 
@@ -183,6 +187,7 @@ function getEventCoor(e: MouseEvent): Coor {
 }
 
 function getEventScaledCoor(e: MouseEvent): Coor {
+  stepAtLeastOnce.value = true
   const pointerCoor = getEventCoor(e)
   const scaledPointerX = pointerCoor.x/canvasScaleRef.value - canvasOffsetRef.value.x
   const scaledPointerY = pointerCoor.y/canvasScaleRef.value - canvasOffsetRef.value.y
@@ -209,12 +214,14 @@ function onPointerUp(e: MouseEvent) {
 function onPointerMove(e: MouseEvent) {
   const pointerCoor = getEventCoor(e)
   if (isDragging) {
+    stepAtLeastOnce.value = true
     canvasOffsetRef.value.x = pointerCoor.x/canvasScaleRef.value - dragStart.x
     canvasOffsetRef.value.y = pointerCoor.y/canvasScaleRef.value - dragStart.y
   }
 }
 
 function zoomToLevelAtCoor(newZoomLevel: number, scaledPointerCoor: Coor) {
+  stepAtLeastOnce.value = true
   canvasZoomLevelRef.value = newZoomLevel
   canvasZoomLevelRef.value = Math.min(canvasZoomLevelRef.value, MAX_ZOOM_LEVEL)
   canvasZoomLevelRef.value = Math.max(canvasZoomLevelRef.value, MIN_ZOOM_LEVEL)
