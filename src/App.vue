@@ -4,9 +4,6 @@ import { RouterLink, RouterView } from 'vue-router'
 
 <template>
   <header>
-    <nav>
-      <RouterLink to="/">GOTO: Kissing Circle Base Page</RouterLink>
-    </nav>
   </header>
 
   <RouterView />

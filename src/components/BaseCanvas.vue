@@ -1,6 +1,4 @@
 <template>
-  <!-- Message -->
-  <div style="color: red">{{ msg }}</div>
   <!-- Debug Canvas Details -->
   <div>
     <input type="checkbox" id="debug-checkbox" v-model="debug">
@@ -21,7 +19,6 @@
 <script setup lang="ts">
 // https://vuejs.org/guide/typescript/composition-api
 const props = defineProps<{
-  msg: string
   animating: boolean
 }>()
 

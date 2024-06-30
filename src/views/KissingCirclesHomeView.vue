@@ -4,6 +4,6 @@ import KissingCircles from '../components/KissingCircles.vue'
 
 <template>
   <main>
-    <KissingCircles msg="From HomeView"/>
+    <KissingCircles />
   </main>
 </template>

@@ -1,6 +1,4 @@
 <template>
-  <!-- Silly header -->
-  <h1 class="green">{{ msg }}, now bugger off</h1>
   <!-- Buttons -->
   <div>
     <button type="button" @click="regenerateCircles" :disabled=animating>Regenerate Circles</button>
@@ -37,7 +35,6 @@
     </div>
   <!-- Canvas -->
   <BaseCanvas
-    :msg="msg + ' - KissingCircles HomeView'"
     :animating="animating"
     v-model:add-shapes="addShapes"
     v-model:step-at-least-once="stepAtLeastOnce"
@@ -47,9 +44,7 @@
 
 <script setup lang="ts">
 // https://vuejs.org/guide/typescript/composition-api
-defineProps<{
-  msg: string
-}>()
+// defineProps<{}>()
 
 import { ref, onMounted, watch } from 'vue'
 import type { Ref } from 'vue'
