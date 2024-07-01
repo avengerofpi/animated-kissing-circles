@@ -25,6 +25,7 @@ const props = defineProps<{
 import { ref, onMounted } from 'vue'
 import type { Ref } from 'vue'
 import { Coor } from '../models/coor'
+import { debounce } from 'lodash'
 
 const addShapes: Ref<Function> = defineModel<Function>("addShapes", { required: true, default: (ctx, timestamp) => {} })
 const stepAtLeastOnce: Ref<boolean> = defineModel<boolean>("stepAtLeastOnce", { required: true, default: true })
@@ -47,12 +48,15 @@ let lastZoomChangeCoor: Coor
 
 onMounted(() => {
   if (canvasRef.value) {
+    updateCanvasSize()
     ctx = canvasRef.value.getContext("2d") as CanvasRenderingContext2D
     canvasRef.value.addEventListener('mousedown', onPointerDown)
     canvasRef.value.addEventListener('mouseup', onPointerUp)
     canvasRef.value.addEventListener('mousemove', onPointerMove)
     canvasRef.value.addEventListener('wheel', adjustZoom, {passive: false} )
     canvasRef.value.addEventListener('dblclick', zoomInOneLevel)
+    addEventListener("resize", debouncedHandleResize);
+
     initAndAnimate()
   } else {
     console.error('ERROR! The required <canvas> HTML element was not available after mount.')
@@ -147,6 +151,19 @@ function step(timestamp: number) {
 }
   window.requestAnimationFrame(step);
 }
+
+function handleResize(e: Event) {
+  updateCanvasSize()
+}
+
+function updateCanvasSize() {
+  canvasRef.value.height = window.innerHeight - 200;
+  canvasRef.value.width = window.innerWidth - 100;
+  stepAtLeastOnce.value = true
+  console.log(`canvas resized to ${canvasRef.value.width} x ${canvasRef.value?.height}`)
+}
+
+const debouncedHandleResize = debounce(handleResize, 50)
 
 // ************************* PANNING/SCALING *************************
 // Panning and zooming. See https://codepen.io/chengarda/pen/wRxoyB for open source example
