@@ -39,8 +39,8 @@ watch(debug, newDebugValue => {
   stepAtLeastOnce.value = true
 })
 
-let height: number
-let width: number
+let initialHeight: number
+let initialWidth: number
 let borderSize: number
 let xMin: number
 let yMin: number
@@ -52,7 +52,6 @@ let lastZoomChangeCoor: Coor
 
 onMounted(() => {
   if (canvasRef.value) {
-    updateCanvasSize()
     ctx = canvasRef.value.getContext("2d") as CanvasRenderingContext2D
     canvasRef.value.addEventListener('mousedown', onPointerDown)
     canvasRef.value.addEventListener('mouseup', onPointerUp)
@@ -62,22 +61,22 @@ onMounted(() => {
     addEventListener("resize", debouncedHandleResize);
 
     initAndAnimate()
+    updateCanvasSize()
   } else {
     console.error('ERROR! The required <canvas> HTML element was not available after mount.')
   }
 })
 
 function initAndAnimate() {
-  height = ctx.canvas.height;
-  width = ctx.canvas.width;
-  canvasScaledDimensionsRef.value = new Coor(width, height)
+  initialHeight = ctx.canvas.height;
+  initialWidth = ctx.canvas.width;
 
   // borderSize = Math.max(height, width) / 10
   borderSize = 100
   xMin = borderSize
   yMin = borderSize
-  xMax = width - borderSize
-  yMax = height - borderSize
+  xMax = initialWidth - borderSize
+  yMax = initialHeight - borderSize
 
   window.requestAnimationFrame(step);
 }
@@ -88,7 +87,7 @@ function resetCanvas() {
   ctx.translate( canvasOffsetRef.value.x, canvasOffsetRef.value.y )
 
   ctx.fillStyle = "hsl(100 0% 0% / 20%)"
-  ctx.fillRect(0, 0, width, height)
+  ctx.fillRect(0, 0, initialWidth, initialHeight)
   ctx.fillStyle = "white"
   ctx.fillRect(xMin, yMin, xMax-xMin, yMax-yMin)
 }
@@ -159,15 +158,27 @@ function step(timestamp: number) {
 function handleResize(e: Event) {
   updateCanvasSize()
 }
+const debouncedHandleResize = debounce(handleResize, 50)
 
 function updateCanvasSize() {
-  canvasRef.value.height = window.innerHeight - 200;
-  canvasRef.value.width = window.innerWidth - 100;
+  if (canvasRef.value) {
+    canvasRef.value.height = window.innerHeight - 200;
+    canvasRef.value.width = window.innerWidth - 100;
+  }
+
+  updateCanvasScaledDimensions()
+
   stepAtLeastOnce.value = true
-  console.log(`canvas resized to ${canvasRef.value.width} x ${canvasRef.value?.height}`)
+  console.log(`canvas resized to ${canvasRef.value?.width} x ${canvasRef.value?.height}`)
 }
 
-const debouncedHandleResize = debounce(handleResize, 50)
+function updateCanvasScaledDimensions() {
+  if (canvasRef.value) {
+    const scaledWidth = canvasRef.value.width / canvasScaleRef.value
+    const scaledHeight = canvasRef.value.height / canvasScaleRef.value
+    canvasScaledDimensionsRef.value = new Coor(scaledWidth, scaledHeight)
+  }
+}
 
 // ************************* PANNING/SCALING *************************
 // Panning and zooming. See https://codepen.io/chengarda/pen/wRxoyB for open source example
@@ -246,15 +257,12 @@ function zoomToLevelAtCoor(newZoomLevel: number, scaledPointerCoor: Coor) {
 
   const oldCanvasScale = canvasScaleRef.value
   const newCanvasScale = ZOOM_SCALE_STEP_SIZE ** newZoomLevel
-
-  const scaledWidth = width/newCanvasScale
-  const scaledHeight = height/newCanvasScale
-  canvasScaledDimensionsRef.value = new Coor(scaledWidth, scaledHeight)
+  canvasScaleRef.value = newCanvasScale
 
   const newOffset = computeOffsetChangeFromZoomChange(oldCanvasScale, newCanvasScale, scaledPointerCoor, canvasOffsetRef.value)
-
-  canvasScaleRef.value = newCanvasScale
   canvasOffsetRef.value = newOffset
+
+  updateCanvasScaledDimensions()
 
   ctx.scale(canvasScaleRef.value, canvasScaleRef.value)
   ctx.translate(Math.round(canvasOffsetRef.value.x), Math.round(canvasOffsetRef.value.y))
