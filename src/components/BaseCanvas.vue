@@ -22,7 +22,7 @@ const props = defineProps<{
   animating: boolean
 }>()
 
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import type { Ref } from 'vue'
 import { Coor } from '../models/coor'
 import { debounce } from 'lodash'
@@ -33,7 +33,11 @@ const stepAtLeastOnce: Ref<boolean> = defineModel<boolean>("stepAtLeastOnce", { 
 let ctx: CanvasRenderingContext2D
 const canvasRef: Ref<HTMLCanvasElement | null> = ref(null)
 
-const debug: Ref<boolean> = ref(true)
+const debug: Ref<boolean> = ref(false)
+
+watch(debug, newDebugValue => {
+  stepAtLeastOnce.value = true
+})
 
 let height: number
 let width: number
