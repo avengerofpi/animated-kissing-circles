@@ -53,6 +53,7 @@ import { Coor } from './../models/coor'
 
 const numCirclesRef: Ref<number> = ref(60)
 const animationDurationRef: Ref<number> = ref(10) // seconds
+const numArms = 6
 
 const movingCoorsOnCircles: Ref<MovingCoorOnACircle[]> = ref([])
 const routeCircles: Ref<Circle[]> = ref([])
@@ -231,9 +232,9 @@ function resetCanvasWithNewCircles() {
 
 function generateRouteCircles(n: number, existingRouteCircles: Circle[] = []): Circle[] {
   const m = existingRouteCircles.length
-  const xStep: number = width * (1/50)
-  const yStep: number = height * (1/50)
-  const thetaStep = (2 * Math.PI) / 6
+  const xStep: number = width / (10 * numArms)
+  const yStep: number = height / (10 * numArms)
+  const thetaStep = (2 * Math.PI) / numArms
 
   const circles: Circle[] = []
   for (let i=0; i<n; i++) {
@@ -246,7 +247,7 @@ function generateRouteCircles(n: number, existingRouteCircles: Circle[] = []): C
     const x = canvasCenter.x + xAfterRotation
     const y = canvasCenter.y + yAfterRotation
     const center = new Coor(x, y)
-    const radius = dist(center, canvasCenter)
+    const radius = dist(center, canvasCenter) / 1.5
 
     circles.push(new Circle(x, y, radius))
   }
@@ -255,13 +256,13 @@ function generateRouteCircles(n: number, existingRouteCircles: Circle[] = []): C
 }
 
 function generateMovingCoorsOnCircles(routeCircles: Circle[]): MovingCoorOnACircle[] {
-  const thetaStep = (2 * Math.PI) / 6
+  const thetaStep = (2 * Math.PI) / numArms
   const movingCoorsOnCircles = routeCircles.map((routeCircle, index) => {
     const movingCoorOnACircles = new MovingCoorOnACircle(
       routeCircle,
       thetaStep * index,
       1,
-      1.000
+      1 + (0.005 * (index % numArms))
     )
     return movingCoorOnACircles
   })
