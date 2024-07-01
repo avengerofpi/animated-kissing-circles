@@ -21,15 +21,15 @@
         Increment
       </button>
     </div>
-    <!-- Animation duration -->
+    <!-- Animation speed -->
     <div>
-      <label for="animationTimeInput">Duration of each transition</label>
-      <input id="animationTimeInput" v-model.number.lazy="animationDurationRef">
-      <button @click="decrementAnimationDuration()">
-        Shorter (faster)
+      <label for="animationTimeInput">Animation cycles per minute</label>
+      <input id="animationTimeInput" v-model.number.lazy="animationCyclesPerMinuteRef">
+      <button @click="decrementAnimationSpeed()">
+        Decrease speed
       </button>
-      <button @click="incrementAnimationDuration()">
-        Longer (slower)
+      <button @click="incrementAnimationSpeed()">
+        Increase speed
       </button>
     </div>
     </div>
@@ -52,7 +52,7 @@ import BaseCanvas from './BaseCanvas.vue';
 import { Coor } from './../models/coor'
 
 const numCirclesRef: Ref<number> = ref(60)
-const animationDurationRef: Ref<number> = ref(10) // seconds
+const animationCyclesPerMinuteRef: Ref<number> = ref(6)
 const numArms = 6
 
 const movingCoorsOnCircles: Ref<MovingCoorOnACircle[]> = ref([])
@@ -87,10 +87,11 @@ watch(numCirclesRef, (newNumCircles: number, oldNumCircles: number) => {
       routeCircles.value = routeCircles.value.concat(additionalRouteCircles)
       movingCoorsOnCircles.value = generateMovingCoorsOnCircles(routeCircles.value)
     }
+    console.log(`${numAdditionalCircles} additional routeCircles`)
   }
 })
 
-watch(animationDurationRef, (newAnimationDuration: number) => {
+watch(animationCyclesPerMinuteRef, (newAnimationCyclesPerMinute: number) => {
   stepAtLeastOnce.value = true
 })
 
@@ -102,12 +103,12 @@ function decrementNumCircles() {
   numCirclesRef.value--
 }
 
-function incrementAnimationDuration() {
-  animationDurationRef.value++
+function incrementAnimationSpeed() {
+  animationCyclesPerMinuteRef.value++
 }
 
-function decrementAnimationDuration() {
-  animationDurationRef.value--
+function decrementAnimationSpeed() {
+  animationCyclesPerMinuteRef.value--
 }
 
 function regenerateCircles() {
@@ -397,8 +398,8 @@ function _addShapes(ctx: CanvasRenderingContext2D, timestamp: number) {
     elapsed = pauseTimestamp - startTimestamp
   }
 
-  // Loop animation, instead of stop animation after animationDuration
-  stepSize = elapsed / (animationDurationRef.value * 1000)
+  // Loop animation, instead of stop animation after an animation cycle
+  stepSize = elapsed / (60 * 1000 / (animationCyclesPerMinuteRef.value))
 
   let kissingCircleCenters: Coor[] = []
   for (let i=0; i<numCirclesRef.value; i++) {
