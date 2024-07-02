@@ -75,6 +75,7 @@ function incrementNumCircles() {
 
 function decrementNumCircles() {
   numCirclesRef.value--
+  numCirclesRef.value = Math.max(0, numCirclesRef.value)
 }
 
 function incrementAnimationSpeed() {
@@ -83,6 +84,7 @@ function incrementAnimationSpeed() {
 
 function decrementAnimationSpeed() {
   animationCyclesPerMinuteRef.value--
+  animationCyclesPerMinuteRef.value = Math.max(1, animationCyclesPerMinuteRef.value)
 }
 
 
