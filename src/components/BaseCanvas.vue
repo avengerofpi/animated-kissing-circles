@@ -25,6 +25,7 @@ const props = defineProps<{
 import { ref, onMounted, watch } from 'vue'
 import type { Ref } from 'vue'
 import { Coor } from '../models/coor'
+import { Dimensions } from '../models/dimensions'
 import { debounce } from 'lodash'
 
 const addShapes: Ref<Function> = defineModel<Function>("addShapes", { required: true, default: (ctx, timestamp) => {} })
@@ -41,11 +42,6 @@ watch(debug, newDebugValue => {
 
 let initialHeight: number
 let initialWidth: number
-let borderSize: number
-let xMin: number
-let yMin: number
-let xMax: number
-let yMax: number
 
 let lastPointerDownCoor: Coor
 let lastZoomChangeCoor: Coor
@@ -60,8 +56,8 @@ onMounted(() => {
     canvasRef.value.addEventListener('dblclick', zoomInOneLevel)
     addEventListener("resize", debouncedHandleResize);
 
-    initAndAnimate()
     updateCanvasSize()
+    initAndAnimate()
   } else {
     console.error('ERROR! The required <canvas> HTML element was not available after mount.')
   }
@@ -71,12 +67,7 @@ function initAndAnimate() {
   initialHeight = ctx.canvas.height;
   initialWidth = ctx.canvas.width;
 
-  // borderSize = Math.max(height, width) / 10
-  borderSize = 100
-  xMin = borderSize
-  yMin = borderSize
-  xMax = initialWidth - borderSize
-  yMax = initialHeight - borderSize
+  canvasOffsetRef.value = new Coor(initialWidth / 2, initialHeight / 2)
 
   window.requestAnimationFrame(step);
 }
@@ -84,12 +75,32 @@ function initAndAnimate() {
 function resetCanvas() {
   ctx.reset()
   ctx.scale(canvasScaleRef.value, canvasScaleRef.value)
-  ctx.translate( canvasOffsetRef.value.x, canvasOffsetRef.value.y )
+  ctx.translate(canvasOffsetRef.value.x, canvasOffsetRef.value.y)
+
+  addShadedBorder()
+  addCrosshairsAtOrigin()
+}
+
+function addShadedBorder() {
+  const borderSize = 100
+
+  const outerBoarderUpperLeftCorner = new Coor(-initialWidth / 2, -initialHeight / 2)
+  const outerBoarderDimensions = new Dimensions(initialWidth, initialHeight)
 
   ctx.fillStyle = "hsl(100 0% 0% / 20%)"
-  ctx.fillRect(0, 0, initialWidth, initialHeight)
+  ctx.fillRect(
+    outerBoarderUpperLeftCorner.x, outerBoarderUpperLeftCorner.y,
+    outerBoarderDimensions.width, outerBoarderDimensions.height
+  )
+
+  const innerBoarderUpperLeftCorner = new Coor(-(initialWidth / 2) + borderSize, -(initialHeight / 2) + borderSize)
+  const innerBoarderDimensions = new Dimensions(initialWidth - (2 * borderSize), initialHeight - (2 * borderSize))
+
   ctx.fillStyle = "white"
-  ctx.fillRect(xMin, yMin, xMax-xMin, yMax-yMin)
+  ctx.fillRect(
+    innerBoarderUpperLeftCorner.x, innerBoarderUpperLeftCorner.y,
+    innerBoarderDimensions.width, innerBoarderDimensions.height
+  )
 }
 
 function addCirclesAtCornersOfCanvas(radius: number, scaledWidth: number, scaledHeight: number) {
@@ -109,6 +120,20 @@ function addCirclesAtCornersOfCanvas(radius: number, scaledWidth: number, scaled
   ctx.lineTo(-offset.x              , -offset.y + scaledHeight)
   ctx.lineTo(-offset.x,               -offset.y)
   ctx.stroke()
+}
+
+function addCrosshairsAtOrigin() {
+  const crosshairWidth = 250
+  const crosshairHeight = 160
+
+  ctx.beginPath();
+  ctx.setLineDash([4, 6]);
+  ctx.moveTo(-crosshairWidth / 2, 0)
+  ctx.lineTo(crosshairWidth / 2, 0)
+  ctx.moveTo(0, -crosshairHeight / 2)
+  ctx.lineTo(0, crosshairHeight / 2)
+  ctx.stroke()
+  ctx.setLineDash([]);
 }
 
 function addPointerDownCoor(radius: number) {

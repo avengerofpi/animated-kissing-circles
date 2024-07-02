@@ -158,7 +158,7 @@ function initCanvas(ctx: CanvasRenderingContext2D, timestamp: number) {
   initialized = true;
 
   // for creating concentric circles
-  canvasCenter = new Coor(width / 2, height / 2)
+  canvasCenter = new Coor(0, 0)
 
   resetCanvasWithNewCircles()
 }
