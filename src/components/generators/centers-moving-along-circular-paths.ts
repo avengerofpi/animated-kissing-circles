@@ -317,6 +317,10 @@ function renderRouteCircles(ctx: CanvasRenderingContext2D) {
   colorHueOffset += colorHueOffsetStepsize
 }
 
+function addDebugShapes(ctx: CanvasRenderingContext2D) {
+  renderRouteCircles(ctx)
+}
+
 function dist(a: Coor, b: Coor): number {
   return Math.sqrt((a.x - b.x)**2 + (a.y - b.y)**2)
 }
@@ -378,6 +382,7 @@ function stopAnimationAfterCurrentStep() {
 export {
   title,
   addShapes,
+  addDebugShapes,
   regenerateCircles,
   animating,
   stopAnimationFlag,

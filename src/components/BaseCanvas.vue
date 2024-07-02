@@ -29,6 +29,7 @@ import { Dimensions } from '../models/dimensions'
 import { debounce } from 'lodash'
 
 const addShapes: Ref<Function> = defineModel<Function>("addShapes", { required: true, default: (ctx, timestamp) => {} })
+const addDebugShapes: Ref<Function> = defineModel<Function>("addDebugShapes", { required: true, default: (ctx) => {} })
 const stepAtLeastOnce: Ref<boolean> = defineModel<boolean>("stepAtLeastOnce", { required: true, default: true })
 
 let ctx: CanvasRenderingContext2D
@@ -160,6 +161,8 @@ function addZoomChangeCoor(radius: number) {
 
 function debugModeAnimations() {
   if (debug.value) {
+    addDebugShapes.value(ctx)
+
     const scaledWidth = canvasScaledDimensionsRef.value.x
     const scaledHeight = canvasScaledDimensionsRef.value.y
     const radius = Math.min(scaledWidth, scaledHeight)/20

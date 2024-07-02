@@ -39,6 +39,7 @@
   <BaseCanvas
     :animating="animating"
     v-model:add-shapes="addShapes"
+    v-model:add-debug-shapes="addDebugShapes"
     v-model:step-at-least-once="stepAtLeastOnce"
   >
   </BaseCanvas>
@@ -54,6 +55,7 @@ import BaseCanvas from './BaseCanvas.vue';
 import {
   title,
   addShapes,
+  addDebugShapes,
   regenerateCircles,
   animating,
   stopAnimationFlag,
