@@ -54,16 +54,16 @@ import { onMounted } from 'vue'
 import BaseCanvas from './BaseCanvas.vue';
 import {
   title,
-  addShapes,
-  addDebugShapes,
+  numCirclesRef,
   regenerateCircles,
+  animationCyclesPerMinuteRef,
   animating,
   stopAnimationFlag,
-  animate,
   stopAnimationAfterCurrentStep,
-  animationCyclesPerMinuteRef,
-  numCirclesRef,
   stepAtLeastOnce,
+  animate,
+  addShapes,
+  addDebugShapes,
 } from './generators/centers-moving-along-circular-paths'
 
 onMounted(() => {

@@ -154,7 +154,6 @@ function initCanvas(ctx: CanvasRenderingContext2D, timestamp: number) {
   width = ctx.canvas.width;
   initialized = true;
 
-  // for creating concentric circles
   canvasCenter = new Coor(0, 0)
 
   resetCanvasWithNewCircles()
@@ -348,7 +347,7 @@ function _addShapes(ctx: CanvasRenderingContext2D, timestamp: number) {
   }
 
   // Loop animation, instead of stop animation after an animation cycle
-  stepSize = elapsed / (60 * 1000 / (animationCyclesPerMinuteRef.value))
+  stepSize = (elapsed / 1000) / (60 / animationCyclesPerMinuteRef.value)
 
   const kissingCircleCenters: Coor[] = []
   for (let i=0; i<numCirclesRef.value; i++) {
@@ -365,7 +364,6 @@ function _addShapes(ctx: CanvasRenderingContext2D, timestamp: number) {
   }
 
   renderKissingCircles(kissingCircleCenters, ctx)
-  // renderRouteCircles(ctx)
 
   if (stopAnimationFlag.value) {
     stopAnimationFlag.value = false
@@ -382,14 +380,14 @@ function stopAnimationAfterCurrentStep() {
 
 export {
   title,
-  addShapes,
-  addDebugShapes,
+  numCirclesRef,
   regenerateCircles,
+  animationCyclesPerMinuteRef,
   animating,
   stopAnimationFlag,
-  animate,
   stopAnimationAfterCurrentStep,
-  animationCyclesPerMinuteRef,
-  numCirclesRef,
   stepAtLeastOnce,
+  animate,
+  addShapes,
+  addDebugShapes,
 }
