@@ -48,7 +48,11 @@ watch(numCirclesRef, (newNumCircles: number, oldNumCircles: number) => {
   }
 })
 
-watch(animationCyclesPerMinuteRef, (newAnimationCyclesPerMinute: number) => {
+watch(animationCyclesPerMinuteRef, (newSpeed: number, oldSpeed: number) => {
+  const numCyclesSinceStart = (pauseTimestamp - startTimestamp) * oldSpeed / 60000
+  const newStartTimestamp = pauseTimestamp - (numCyclesSinceStart * 60000) / newSpeed
+
+  startTimestamp = newStartTimestamp
   stepAtLeastOnce.value = true
 })
 
@@ -336,25 +340,25 @@ function animate() {
 function _addShapes(ctx: CanvasRenderingContext2D, timestamp: number) {
   initialized || initCanvas(ctx, timestamp)
 
-  let elapsed: number = timestamp - startTimestamp;
-
-  let stepSize = 0
+  let elapsed: number
   if (animating.value) {
     pauseTimestamp = timestamp
     elapsed = timestamp - startTimestamp
   } else if (stepAtLeastOnce.value) {
     elapsed = pauseTimestamp - startTimestamp
+  } else {
+    throw new Error(`_addShapes should not have been called`)
   }
 
   // Loop animation, instead of stop animation after an animation cycle
-  stepSize = (elapsed / 1000) / (60 / animationCyclesPerMinuteRef.value)
+  const numCycles = elapsed * animationCyclesPerMinuteRef.value / 60000
 
   const kissingCircleCenters: Coor[] = []
   for (let i=0; i<numCirclesRef.value; i++) {
     const movingCoorOnCircle = movingCoorsOnCircles.value[i]
     const routeCircle = movingCoorOnCircle.routeCircle
     const radius = routeCircle.radius as number
-    const thetaOffset = (2 * Math.PI) * (movingCoorOnCircle.direction * movingCoorOnCircle.speed) * stepSize
+    const thetaOffset = (2 * Math.PI) * (movingCoorOnCircle.direction * movingCoorOnCircle.speed) * numCycles
     const theta = movingCoorOnCircle.initialTheta + thetaOffset
     const x = routeCircle.center.x + (radius * Math.cos(theta))
     const y = routeCircle.center.y + (radius * Math.sin(theta))
