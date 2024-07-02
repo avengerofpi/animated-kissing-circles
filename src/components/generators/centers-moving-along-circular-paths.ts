@@ -150,9 +150,6 @@ class CircleWithRadiusLine {
 }
 
 function initCanvas(ctx: CanvasRenderingContext2D, timestamp: number) {
-  startTimestamp = timestamp
-  pauseTimestamp = timestamp
-
   height = ctx.canvas.height;
   width = ctx.canvas.width;
   initialized = true;
@@ -166,6 +163,10 @@ function initCanvas(ctx: CanvasRenderingContext2D, timestamp: number) {
 function resetCanvasWithNewCircles() {
   routeCircles.value = generateRouteCircles(numCirclesRef.value)
   movingCoorsOnCircles.value = generateMovingCoorsOnCircles(routeCircles.value)
+
+  startTimestamp = (document.timeline.currentTime as number)
+  pauseTimestamp = startTimestamp
+  stepAtLeastOnce.value = true
 }
 
 function generateRouteCircles(n: number, existingRouteCircles: Circle[] = []): Circle[] {
