@@ -108,18 +108,18 @@ function addCirclesAtCornersOfCanvas(radius: number, scaledWidth: number, scaled
   const offset = canvasOffsetRef.value
 
   ctx.beginPath();
-  ctx.arc(-offset.x,               -offset.y,                radius, (0/2)*Math.PI, (1/2)*Math.PI);
-  ctx.moveTo(-offset.x,               -offset.y)
+  ctx.arc(-offset.x, -offset.y, radius, (0/2)*Math.PI, (1/2)*Math.PI);
+  ctx.moveTo(-offset.x, -offset.y)
   ctx.lineTo(-offset.x + scaledWidth, -offset.y)
-  ctx.arc(-offset.x + scaledWidth, -offset.y,                radius, (1/2)*Math.PI, (2/2)*Math.PI);
+  ctx.arc(-offset.x + scaledWidth, -offset.y, radius, (1/2)*Math.PI, (2/2)*Math.PI);
   ctx.lineTo(-offset.x + scaledWidth, -offset.y)
   ctx.lineTo(-offset.x + scaledWidth, -offset.y + scaledHeight)
   ctx.arc(-offset.x + scaledWidth, -offset.y + scaledHeight, radius, (2/2)*Math.PI, (3/2)*Math.PI);
   ctx.lineTo(-offset.x + scaledWidth, -offset.y + scaledHeight)
-  ctx.lineTo(-offset.x              , -offset.y + scaledHeight)
-  ctx.arc(-offset.x              , -offset.y + scaledHeight, radius, (3/2)*Math.PI, (4/2)*Math.PI);
-  ctx.lineTo(-offset.x              , -offset.y + scaledHeight)
-  ctx.lineTo(-offset.x,               -offset.y)
+  ctx.lineTo(-offset.x, -offset.y + scaledHeight)
+  ctx.arc(-offset.x, -offset.y + scaledHeight, radius, (3/2)*Math.PI, (4/2)*Math.PI);
+  ctx.lineTo(-offset.x, -offset.y + scaledHeight)
+  ctx.lineTo(-offset.x, -offset.y)
   ctx.stroke()
 }
 
@@ -165,7 +165,7 @@ function debugModeAnimations() {
 
     const scaledWidth = canvasScaledDimensionsRef.value.x
     const scaledHeight = canvasScaledDimensionsRef.value.y
-    const radius = Math.min(scaledWidth, scaledHeight)/20
+    const radius = Math.min(scaledWidth, scaledHeight) / 20
 
     addCirclesAtCornersOfCanvas(radius, scaledWidth, scaledHeight)
     lastPointerDownCoor && addPointerDownCoor(radius)
