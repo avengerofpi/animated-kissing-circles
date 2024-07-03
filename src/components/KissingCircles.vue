@@ -78,13 +78,27 @@ function decrementNumCircles() {
   numCirclesRef.value = Math.max(0, numCirclesRef.value)
 }
 
+const animationSpeedStepSizes = [1, 0.1, 0.01, 0.001]
+const numAnimationSpeedStepSizes = animationSpeedStepSizes.length
+
 function incrementAnimationSpeed() {
-  animationCyclesPerMinuteRef.value++
+  for (const stepSize of animationSpeedStepSizes) {
+    if (animationCyclesPerMinuteRef.value >= stepSize) {
+      animationCyclesPerMinuteRef.value += stepSize
+      break
+    }
+  }
+  animationCyclesPerMinuteRef.value = Math.max(animationSpeedStepSizes[numAnimationSpeedStepSizes-1], animationCyclesPerMinuteRef.value)
 }
 
 function decrementAnimationSpeed() {
-  animationCyclesPerMinuteRef.value--
-  animationCyclesPerMinuteRef.value = Math.max(1, animationCyclesPerMinuteRef.value)
+  for (const stepSize of animationSpeedStepSizes) {
+    if (animationCyclesPerMinuteRef.value >= 2 * stepSize) {
+      animationCyclesPerMinuteRef.value -= stepSize
+      break
+    }
+  }
+  animationCyclesPerMinuteRef.value = Math.max(animationSpeedStepSizes[numAnimationSpeedStepSizes-1], animationCyclesPerMinuteRef.value)
 }
 
 
