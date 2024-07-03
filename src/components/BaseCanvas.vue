@@ -124,8 +124,8 @@ function addCirclesAtCornersOfCanvas(radius: number, scaledWidth: number, scaled
 }
 
 function addCrosshairsAtOrigin() {
-  const crosshairWidth = 250
-  const crosshairHeight = 160
+  const crosshairWidth = 264 // 26 * (4 + 6) + 4
+  const crosshairHeight = 164 // 16 * (4 + 6) + 4
 
   ctx.beginPath();
   ctx.setLineDash([4, 6]);
