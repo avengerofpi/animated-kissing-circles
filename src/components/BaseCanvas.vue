@@ -1,8 +1,17 @@
 <template>
-  <!-- Debug Canvas Details -->
   <div>
-    <input type="checkbox" id="debug-checkbox" v-model="debug">
-    <label for="debug-checkbox">&nbsp;Debug</label>
+    <!-- Debug Canvas Details -->
+    <div>
+      <input type="checkbox" id="debug-checkbox" v-model="debug">
+      <label for="debug-checkbox">&nbsp;Debug</label>
+    </div>
+    <!-- Video recording -->
+    <div>
+      <!-- <input type="checkbox" id="stream-checkbox" v-model="recording" :disabled="recording"> -->
+      <input type="checkbox" id="stream-checkbox" v-model="recordingFlag">
+      <label for="stream-checkbox">&nbsp;Capture Video Stream</label>
+    </div>
+    <a ref="downloadRef" download="kissing-circles.mp4">Download the most recent recording</a>
   </div>
   <div v-if="debug">
     <div>Zoom Level: {{ canvasZoomLevelRef.toFixed(3) }}</div>
@@ -36,16 +45,59 @@ let ctx: CanvasRenderingContext2D
 const canvasRef: Ref<HTMLCanvasElement | null> = ref(null)
 
 const debug: Ref<boolean> = ref(false)
-
-watch(debug, newDebugValue => {
-  stepAtLeastOnce.value = true
-})
+const recordingFlag: Ref<boolean> = ref(false)
+const downloadRef: Ref<HTMLAnchorElement | null> = ref(null)
+let mediaRecorder: MediaRecorder
+let videoChunks: Blob[] = []
 
 let initialHeight: number
 let initialWidth: number
 
 let lastPointerDownCoor: Coor
 let lastZoomChangeCoor: Coor
+
+watch(debug, newDebugValue => {
+  stepAtLeastOnce.value = true
+})
+
+watch(recordingFlag, (isRecording, wasRecording) => {
+  console.log(`toggled recording: ${wasRecording} -> ${isRecording}`)
+  if (!canvasRef.value) return
+
+  if (isRecording) {
+    const stream = canvasRef.value.captureStream(60)
+    mediaRecorder = new MediaRecorder(stream)
+
+    mediaRecorder.start();
+    if (downloadRef.value) {
+      downloadRef.value.removeAttribute("href")
+    }
+    console.log(`mediaRecorder.state: ${mediaRecorder.state}`);
+    console.log("recorder started");
+
+    mediaRecorder.onstop = (e) => {
+      console.log("data available after MediaRecorder.stop() called.")
+
+      const blob = new Blob(videoChunks, { type: "video/mp4" })
+      const blobUrl = URL.createObjectURL(blob)
+      videoChunks = []
+
+      if (downloadRef.value) {
+        downloadRef.value.href = blobUrl
+      }
+    }
+
+  mediaRecorder.ondataavailable = (e) => {
+    videoChunks.push(e.data);
+  };
+
+    stepAtLeastOnce.value = true
+  } else {
+    mediaRecorder.stop();
+    console.log(`mediaRecorder.state: ${mediaRecorder.state}`);
+    console.log("recorder stopped");
+  }
+})
 
 onMounted(() => {
   if (canvasRef.value) {
