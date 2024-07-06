@@ -23,6 +23,9 @@
   <div>
     <canvas ref="canvasRef" width="900" height="600" style="border:1px solid #d3d3d3;"></canvas>
   </div>
+  <div>
+    <video video playsinline autoplay muted ref="videoRef" width="900" height="600" style="border:1px solid #d3d3d3;"></video>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -43,6 +46,8 @@ const stepAtLeastOnce: Ref<boolean> = defineModel<boolean>("stepAtLeastOnce", { 
 
 let ctx: CanvasRenderingContext2D
 const canvasRef: Ref<HTMLCanvasElement | null> = ref(null)
+const videoRef: Ref<HTMLVideoElement | null> = ref(null)
+let canvasStream: MediaStream
 
 const debug: Ref<boolean> = ref(false)
 const recordingFlag: Ref<boolean> = ref(false)
@@ -65,8 +70,7 @@ watch(recordingFlag, (isRecording, wasRecording) => {
   if (!canvasRef.value) return
 
   if (isRecording) {
-    const stream = canvasRef.value.captureStream(60)
-    mediaRecorder = new MediaRecorder(stream)
+    mediaRecorder = new MediaRecorder(canvasStream)
 
     mediaRecorder.start();
     if (downloadRef.value) {
@@ -87,11 +91,9 @@ watch(recordingFlag, (isRecording, wasRecording) => {
       }
     }
 
-  mediaRecorder.ondataavailable = (e) => {
-    videoChunks.push(e.data);
-  };
-
-    stepAtLeastOnce.value = true
+    mediaRecorder.ondataavailable = (e) => {
+      videoChunks.push(e.data);
+    };
   } else {
     mediaRecorder.stop();
     console.log(`mediaRecorder.state: ${mediaRecorder.state}`);
@@ -121,6 +123,13 @@ function initAndAnimate() {
   initialWidth = ctx.canvas.width;
 
   canvasOffsetRef.value = new Coor(initialWidth / 2, initialHeight / 2)
+
+  if (canvasRef.value) {
+    canvasStream = canvasRef.value.captureStream(60)
+    if (videoRef.value) {
+      videoRef.value.srcObject = canvasStream
+    }
+  }
 
   window.requestAnimationFrame(step);
 }
@@ -241,9 +250,15 @@ function handleResize(e: Event) {
 const debouncedHandleResize = debounce(handleResize, 50)
 
 function updateCanvasSize() {
+  const height = (window.innerHeight - 200) / 2
+  const width = (window.innerWidth - 100)
   if (canvasRef.value) {
-    canvasRef.value.height = window.innerHeight - 200;
-    canvasRef.value.width = window.innerWidth - 100;
+    canvasRef.value.height = height
+    canvasRef.value.width = width
+  }
+  if (videoRef.value) {
+    videoRef.value.height = height
+    videoRef.value.width = width
   }
 
   updateCanvasScaledDimensions()
