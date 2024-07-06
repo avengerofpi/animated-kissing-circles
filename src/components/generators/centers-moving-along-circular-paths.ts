@@ -294,7 +294,11 @@ function renderKissingCircles(centers: Coor[], ctx: CanvasRenderingContext2D) {
     ctx.stroke();
   })
 
-  colorHueOffset += colorHueOffsetStepsize
+  // Don't progress hue if we are not actively animating (e.g., when repaiting
+  // due to a mouse event or param change)
+  if (animating.value) {
+    colorHueOffset += colorHueOffsetStepsize
+  }
 }
 
 function renderRouteCircles(ctx: CanvasRenderingContext2D) {
