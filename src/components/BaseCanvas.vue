@@ -154,7 +154,9 @@ function addShadedBorder() {
   const outerBoarderUpperLeftCorner = new Coor(-initialWidth / 2, -initialHeight / 2)
   const outerBoarderDimensions = new Dimensions(initialWidth, initialHeight)
 
-  ctx.fillStyle = "hsl(100 0% 0% / 20%)"
+  const currentFillStyle = ctx.fillStyle
+  const transparentGray = "hsl(100 0% 0% / 20%)"
+  ctx.fillStyle = transparentGray
   ctx.fillRect(
     outerBoarderUpperLeftCorner.x, outerBoarderUpperLeftCorner.y,
     outerBoarderDimensions.width, outerBoarderDimensions.height
@@ -168,6 +170,8 @@ function addShadedBorder() {
     innerBoarderUpperLeftCorner.x, innerBoarderUpperLeftCorner.y,
     innerBoarderDimensions.width, innerBoarderDimensions.height
   )
+
+  ctx.fillStyle = currentFillStyle
 }
 
 function addCirclesAtCornersOfCanvas(radius: number, scaledWidth: number, scaledHeight: number) {
