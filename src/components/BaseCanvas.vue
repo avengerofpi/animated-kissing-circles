@@ -139,6 +139,11 @@ function resetCanvas() {
   ctx.scale(canvasScaleRef.value, canvasScaleRef.value)
   ctx.translate(canvasOffsetRef.value.x, canvasOffsetRef.value.y)
 
+  ctx.fillStyle = "white"
+  ctx.fillRect(
+    -canvasOffsetRef.value.x, -canvasOffsetRef.value.y,
+    canvasRef.value.width/canvasScaleRef.value, canvasRef.value.height/canvasScaleRef.value
+  )
   addShadedBorder()
   addCrosshairsAtOrigin()
 }
