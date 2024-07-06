@@ -107,6 +107,7 @@ onMounted(() => {
     canvasRef.value.addEventListener('mousedown', onPointerDown)
     canvasRef.value.addEventListener('mouseup', onPointerUp)
     canvasRef.value.addEventListener('mousemove', onPointerMove)
+    canvasRef.value.addEventListener('mouseover', onPointerOver)
     canvasRef.value.addEventListener('wheel', adjustZoom, {passive: false} )
     canvasRef.value.addEventListener('dblclick', zoomInOneLevel)
     addEventListener("resize", debouncedHandleResize);
@@ -300,6 +301,22 @@ let canvasScaleRef = ref(ZOOM_SCALE_STEP_SIZE ** canvasZoomLevelRef.value)
 let isDragging = false
 let dragStart = new Coor(0, 0)
 
+// Constants to help with using the MouseEvent.button prop
+// https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/button
+const LEFT_MOUSEBUTTON_NUM = 0 // main
+const WHEEL_MOUSEBUTTON_NUM = 1 // auxillary
+const RIGHT_MOUSEBUTTON_NUM = 2 // secondary
+const BACK_MOUSEBUTTON_NUM = 3 // fourth button
+const FORWARD_MOUSEBUTTON_NUM = 4 // fifth button
+
+// Constants to help with using the MouseEvent.buttons prop
+// https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/buttons
+const LEFT_MOUSEBUTTONS_NUM = 1 // main
+const WHEEL_MOUSEBUTTONS_NUM = 2 // auxillary
+const RIGHT_MOUSEBUTTONS_NUM = 4 // secondary
+const BACK_MOUSEBUTTONS_NUM = 8 // fourth button
+const FORWARD_MOUSEBUTTONS_NUM = 16 // fifth button
+
 function getEventCoor(e: MouseEvent): Coor {
   let coor = null
   if (e instanceof MouseEvent) {
@@ -333,7 +350,6 @@ function onPointerDown(e: MouseEvent) {
   lastPointerDownCoor = scaledPointerCoor
 
   // Prevent a non-Left Mouse Button click from starting a dragging session
-  const LEFT_MOUSEBUTTON_NUM = 0
   if (e.button === LEFT_MOUSEBUTTON_NUM) {
     isDragging = true
     dragStart = scaledPointerCoor
@@ -350,6 +366,13 @@ function onPointerMove(e: MouseEvent) {
     stepAtLeastOnce.value = true
     canvasOffsetRef.value.x = pointerCoor.x/canvasScaleRef.value - dragStart.x
     canvasOffsetRef.value.y = pointerCoor.y/canvasScaleRef.value - dragStart.y
+  }
+}
+
+function onPointerOver(e: MouseEvent) {
+  const leftMouseButtonIsDown = e.buttons & LEFT_MOUSEBUTTONS_NUM
+  if (isDragging && !leftMouseButtonIsDown) {
+    isDragging = false
   }
 }
 
