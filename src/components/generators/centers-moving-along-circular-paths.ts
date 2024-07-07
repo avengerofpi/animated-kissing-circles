@@ -1,7 +1,10 @@
 import { ref, watch } from 'vue'
 import type { Ref } from 'vue'
 
-import { Coor } from './../../models/coor'
+import { Coor, dist } from '@/models/coor'
+import { Circle } from '@/models/circle'
+import { MovingCoorOnACircle } from '@/models/moving-coor-on-a-circle'
+import { CircleWithRadiusLine } from '@/models/circle-with-radius-line'
 
 const title = "Centers Moving Along Circular Paths"
 
@@ -58,99 +61,6 @@ watch(animationCyclesPerMinuteRef, (newSpeed: number, oldSpeed: number) => {
 
 function regenerateCircles() {
   resetCanvasWithNewCircles()
-}
-
-class MovingCoorOnACircle {
-  /** Center of the circle the coor is on */
-  routeCircle: Circle
-  /** Radian position of Coor on the circle */
-  initialTheta: number
-  /** +1 for clockwise (default), -1 for counter-clockwise, zero for no movement */
-  direction: number
-  /** Speed of animation movement for this point, must be non-negative.
-   * Default is `1.0` for normal speed */
-  speed: number
-
-  public constructor(routeCircle: Circle, initialTheta: number, direction: number = 1, speed: number = 1.0) {
-    this.routeCircle = routeCircle
-    this.initialTheta = initialTheta
-
-    if (![-1, 0, 1].includes(direction)) {
-      throw Error(`Direction must be -1, 0, or 1, but was ${direction}`)
-    }
-    this.direction = direction
-
-    if (speed < 0) {
-      throw Error(`Speed must be non-negative, but was ${speed}`)
-    }
-    this.speed = speed
-  }
-
-  public copy() {
-    return new MovingCoorOnACircle(
-      this.routeCircle,
-      this.initialTheta,
-      this.direction,
-      this.speed,
-    )
-  }
-}
-
-class Circle {
-  center: Coor
-  radius: number | undefined
-
-  public constructor(x: number, y: number, radius: number | undefined = undefined) {
-    this.center = new Coor(x, y)
-    this.radius = radius
-  }
-}
-
-class LineSegment {
-  src: Coor
-  dst: Coor
-
-  public constructor(src: Coor, dst: Coor) {
-    this.src = src
-    this.dst = dst
-  }
-
-  public static fromXYXY(srcX: number, srcY: number, dstX: number, dstY: number) {
-    return new LineSegment(new Coor(srcX, srcY), new Coor(dstX, dstY))
-  }
-
-  public static fromCoorXY(src: Coor, dstX: number, dstY: number) {
-    return new LineSegment(src, new Coor(dstX, dstY))
-  }
-
-  public static fromXYCoor(srcX: number, srcY: number, dst: Coor) {
-    return new LineSegment(new Coor(srcX, srcY), dst)
-  }
-
-  public length(): number {
-    return dist(this.src, this.dst)
-  }
-}
-
-class CircleWithRadiusLine {
-  center: Coor
-  radius: number
-  radiusLine: LineSegment | undefined
-
-  public constructor(center: Coor, radiusLineDst: Coor | undefined = undefined) {
-    this.center = center
-    if (radiusLineDst) {
-      this.radiusLine = new LineSegment(this.center, radiusLineDst)
-    } else {
-      this.radiusLine = new LineSegment(this.center, this.center)
-    }
-    this.radius = this.radiusLine.length()
-  }
-
-  public setRadiusLineDst(radiusLineDst: Coor) {
-    this.radiusLine = new LineSegment(this.center, radiusLineDst)
-    this.radius = this.radiusLine.length()
-  }
 }
 
 function initCanvas(ctx: CanvasRenderingContext2D, timestamp: number) {
@@ -327,10 +237,6 @@ function renderRouteCircles(ctx: CanvasRenderingContext2D) {
 
 function addDebugShapes(ctx: CanvasRenderingContext2D) {
   renderRouteCircles(ctx)
-}
-
-function dist(a: Coor, b: Coor): number {
-  return Math.sqrt((a.x - b.x)**2 + (a.y - b.y)**2)
 }
 
 function animate() {

@@ -14,5 +14,8 @@ class Coor {
   }
 }
 
-export { Coor }
+function dist(a: Coor, b: Coor): number {
+  return Math.sqrt((a.x - b.x)**2 + (a.y - b.y)**2)
+}
 
+export { Coor, dist }
