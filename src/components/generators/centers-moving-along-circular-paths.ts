@@ -263,19 +263,9 @@ function _addShapes(ctx: CanvasRenderingContext2D, timestamp: number) {
   // Loop animation, instead of stop animation after an animation cycle
   const numCycles = elapsed * animationCyclesPerMinuteRef.value / 60000
 
-  const kissingCircleCenters: Coor[] = []
-  for (let i=0; i<numCirclesRef.value; i++) {
-    const movingCoorOnCircle = movingCoorsOnCircles.value[i]
-    const routeCircle = movingCoorOnCircle.routeCircle
-    const radius = routeCircle.radius as number
-    const thetaOffset = (2 * Math.PI) * (movingCoorOnCircle.direction * movingCoorOnCircle.speed) * numCycles
-    const theta = movingCoorOnCircle.initialTheta + thetaOffset
-    const x = routeCircle.center.x + (radius * Math.cos(theta))
-    const y = routeCircle.center.y + (radius * Math.sin(theta))
-
-    const kissingCircleCenter: Coor = new Coor(x, y)
-    kissingCircleCenters.push(kissingCircleCenter)
-  }
+  const kissingCircleCenters: Coor[] = movingCoorsOnCircles.value.map(movingCoorOnCircle => {
+    return movingCoorOnCircle.getCoorAfterCycles(numCycles)
+  })
 
   renderKissingCircles(kissingCircleCenters, ctx)
 
