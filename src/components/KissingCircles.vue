@@ -37,7 +37,8 @@
   </div>
   <!-- Canvas -->
   <BaseCanvas
-    :animating="animating"
+    v-model:animating="animating"
+    v-model:toggle-animating="toggleAnimating"
     v-model:add-shapes="addShapes"
     v-model:add-debug-shapes="addDebugShapes"
     v-model:step-at-least-once="stepAtLeastOnce"
@@ -49,7 +50,8 @@
 // https://vuejs.org/guide/typescript/composition-api
 // defineProps<{}>()
 
-import { onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
+import type { Ref } from 'vue'
 
 import BaseCanvas from './BaseCanvas.vue';
 import {
@@ -65,6 +67,8 @@ import {
   addShapes,
   addDebugShapes,
 } from './generators/centers-moving-along-circular-paths'
+
+const toggleAnimating: Ref<Function> = ref(_toggleAnimating)
 
 onMounted(() => {
 })
@@ -99,6 +103,14 @@ function decrementAnimationSpeed() {
     }
   }
   animationCyclesPerMinuteRef.value = Math.max(animationSpeedStepSizes[numAnimationSpeedStepSizes-1], animationCyclesPerMinuteRef.value)
+}
+
+function _toggleAnimating() {
+  if (animating.value) {
+    stopAnimationAfterCurrentStep()
+  } else {
+    animate()
+  }
 }
 
 

@@ -21,7 +21,7 @@
   </div>
   <!-- Canvas -->
   <div>
-    <canvas ref="canvasRef" width="900" height="600" style="border:1px solid #d3d3d3;"></canvas>
+    <canvas ref="canvasRef" tabindex=1 width="900" height="600" style="border:1px solid #d3d3d3;"></canvas>
   </div>
 </template>
 
@@ -37,6 +37,7 @@ import { Coor } from '../models/coor'
 import { Dimensions } from '../models/dimensions'
 import { debounce } from 'lodash'
 
+const toggleAnimating: Ref<Function> = defineModel<Function>("toggleAnimating", { required: true, default: () => {} })
 const addShapes: Ref<Function> = defineModel<Function>("addShapes", { required: true, default: (ctx, timestamp) => {} })
 const addDebugShapes: Ref<Function> = defineModel<Function>("addDebugShapes", { required: true, default: (ctx) => {} })
 const stepAtLeastOnce: Ref<boolean> = defineModel<boolean>("stepAtLeastOnce", { required: true, default: true })
@@ -106,6 +107,7 @@ onMounted(() => {
     canvasRef.value.addEventListener('mouseover', onPointerOver)
     canvasRef.value.addEventListener('wheel', adjustZoom, {passive: false} )
     canvasRef.value.addEventListener('dblclick', zoomInOneLevel)
+    canvasRef.value.addEventListener('keyup', onKeyUp)
     addEventListener("resize", debouncedHandleResize);
 
     updateCanvasSize()
@@ -362,6 +364,12 @@ function onPointerOver(e: MouseEvent) {
   const leftMouseButtonIsDown = e.buttons & LEFT_MOUSEBUTTONS_NUM
   if (isDragging && !leftMouseButtonIsDown) {
     isDragging = false
+  }
+}
+
+function onKeyUp(e: KeyboardEvent) {
+  if (e.key === "SpaceBar" || e.key === " ") {
+    toggleAnimating.value()
   }
 }
 
