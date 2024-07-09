@@ -29,6 +29,7 @@ let canvasCenter: Coor
 // Circle style props
 let colorHueOffset: number = 0
 const colorHueOffsetStepsize: number = 0.3
+let elipseRotationOffset: number = 0
 
 watch(numCirclesRef, (newNumCircles: number, oldNumCircles: number) => {
   stepAtLeastOnce.value = true
@@ -187,11 +188,22 @@ function renderKissingCircles(centers: Coor[], ctx: CanvasRenderingContext2D) {
     ctx.fillStyle = "hsl(0 0% 0% / 0%)"
     // ctx.strokeText(`(${center.x.toFixed(1)}, ${center.y.toFixed(1)}), ${radius.toFixed(1)}`, center.x-5, center.y)
 
-    // // Add line segment pointing to nearest neighbor
-    // const radiusLine = circlesWithRadiusLine.radiusLine as LineSegment
-    // ctx.moveTo(radiusLine.src.x, radiusLine.src.y);
-    // ctx.lineTo(radiusLine.dst.x, radiusLine.dst.y)
-    // ctx.stroke();
+    // Add line segment pointing to nearest neighbor
+    const radiusLine = circlesWithRadiusLine.radiusLine as LineSegment
+    ctx.moveTo(radiusLine.src.x, radiusLine.src.y);
+    ctx.lineTo(radiusLine.dst.x, radiusLine.dst.y)
+    ctx.stroke();
+
+    // Ellipse!
+    ctx.beginPath();
+    const diffY = (radiusLine.dst.y - radiusLine.src.y)
+    const diffX = (radiusLine.dst.x - radiusLine.src.x)
+    const ellipseTheta = Math.atan(diffY / diffX) + elipseRotationOffset
+    ctx.ellipse(center.x, center.y, radius, (1/3)*radius, ellipseTheta, 0,2*Math.PI)
+    ctx.fillStyle = `hsl(${(index / numCirclesRef.value) * 360 + colorHueOffset} 100% 50% / 40%)`
+    ctx.fill()
+    ctx.fillStyle = "hsl(0 0% 0% / 0%)"
+    ctx.stroke()
 
     // Draw center dot
     const dotRadius = 5
@@ -208,6 +220,7 @@ function renderKissingCircles(centers: Coor[], ctx: CanvasRenderingContext2D) {
   // due to a mouse event or param change)
   if (animating.value) {
     colorHueOffset += colorHueOffsetStepsize
+    elipseRotationOffset += Math.PI / 30
   }
 }
 
