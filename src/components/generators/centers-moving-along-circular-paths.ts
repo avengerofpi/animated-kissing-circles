@@ -3,13 +3,14 @@ import type { Ref } from 'vue'
 
 import { Coor, dist } from '@/models/coor'
 import { Circle } from '@/models/circle'
+import { Ellipse } from '@/models/ellipse'
 import { MovingCoorOnACircle } from '@/models/moving-coor-on-a-circle'
 import { CircleWithRadiusLine } from '@/models/circle-with-radius-line'
 
 const title = "Centers Moving Along Circular Paths"
 
-const numCirclesRef: Ref<number> = ref(180)
-const animationCyclesPerMinuteRef: Ref<number> = ref(6)
+const numCirclesRef: Ref<number> = ref(4)
+const animationCyclesPerMinuteRef: Ref<number> = ref(3)
 const numArms = 6
 
 const movingCoorsOnCircles: Ref<MovingCoorOnACircle[]> = ref([])
@@ -29,7 +30,7 @@ let canvasCenter: Coor
 // Circle style props
 let colorHueOffset: number = 0
 const colorHueOffsetStepsize: number = 0.3
-let elipseRotationOffset: number = 0
+let ellipseRotationOffset: number = 0
 
 watch(numCirclesRef, (newNumCircles: number, oldNumCircles: number) => {
   stepAtLeastOnce.value = true
@@ -85,8 +86,8 @@ function resetCanvasWithNewCircles() {
 
 function generateRouteCircles(n: number, existingRouteCircles: Circle[] = []): Circle[] {
   const m = existingRouteCircles.length
-  const xStep: number = width / (10 * numArms)
-  const yStep: number = height / (10 * numArms)
+  const xStep: number = width / (2 * numArms)
+  const yStep: number = height / (2 * numArms)
   const thetaStep = (2 * Math.PI) / numArms
 
   const circles: Circle[] = []
@@ -105,8 +106,8 @@ function generateRouteCircles(n: number, existingRouteCircles: Circle[] = []): C
     circles.push(new Circle(x, y, radius))
   }
 
-  console.log(`generateRouteCircles`)
-  console.dir(circles)
+  // console.log(`generateRouteCircles`)
+  // console.dir(circles)
 
   return circles
 }
@@ -130,83 +131,142 @@ function generateMovingCoorsOnCircles(routeCircles: Circle[]): MovingCoorOnACirc
   return movingCoorsOnCircles
 }
 
-function computeRadii(centers: Coor[]): CircleWithRadiusLine[] {
+function computeEllipses(centers: Coor[], ctx: CanvasRenderingContext2D): Ellipse[] {
   // is there a better way to copy this array?
   const unprocessedCenters: Coor[] = new Array(...centers).reverse()
-  const circlesWithRadiusLine: CircleWithRadiusLine[] = []
+  const ellipses: Ellipse[] = []
 
+  // TODO: deal with `centers` having 0 or 1 entries
   while (unprocessedCenters.length) {
     const center = unprocessedCenters.pop() as Coor
-    let r: number = Number.MAX_VALUE
-    let dstCenter: Coor = center
-    let radiusLineEndpoint: Coor = new Coor(0,0)
-    // First circle will be 1/3 distance between first point and nearest point.
-    if (circlesWithRadiusLine.length === 0) {
+    let distToNearestNeighbor: number = Number.MAX_VALUE
+    // let nearestNeighborCenter: Coor = center
+    let radiusX: number = 0
+    let radiusY: number = 0
+    let rotation: number = 0
+    // First ellipse will be 1/3 distance between first point and nearest point.
+    if (ellipses.length === 0) {
+      let nearestNeighborCenter: Coor = center
       unprocessedCenters.forEach((B) => {
-        const rNext = dist(center, B)
-        if (rNext < r) {
-          r = rNext
-          dstCenter = B
-          radiusLineEndpoint = new Coor(
-            center.x + (dstCenter.x - center.x) / 3,
-            center.y + (dstCenter.y - center.y) / 3
-          )
+        const distToB = dist(center, B)
+        if (distToB < distToNearestNeighbor) {
+          nearestNeighborCenter = B
+          distToNearestNeighbor = distToB
         }
       })
+      const diffX = nearestNeighborCenter.x - center.x
+      const diffY = nearestNeighborCenter.y - center.y
+      if (diffY === 0) {
+        if (diffX === 0) {
+          console.warn(`The current point ${JSON.stringify(center)} is the same as another point`)
+        } else if (diffX > 0) {
+          rotation = 0.5 * Math.PI
+        } else {
+          rotation = 1.5 * Math.PI
+        } 
+      } else {
+        rotation = Math.atan(diffY/diffX)
+      }
+      radiusX = distToNearestNeighbor * (2/3)
+      radiusY = (1/3) * radiusX
     }
-    // Remaining circles will generate based on nearest existing circle
+    // Remaining ellipses will generate based on nearest existing ellipse
     else {
-      circlesWithRadiusLine.forEach((c) => {
-        const rNext = Math.abs(dist(center, c.center) - c.radius)
-        if (rNext < r) {
-          r = rNext
-          dstCenter = c.center
-          const scale = r / dist(center, c.center)
-          radiusLineEndpoint = new Coor(
-            center.x + (dstCenter.x - center.x) * scale,
-            center.y + (dstCenter.y - center.y) * scale
-          )
+      let nearestNeighborEllipse: Ellipse = ellipses[0]
+      ellipses.forEach((otherEllipse) => {
+        const [distToOtherEllipse, pointOnOtherEllipse] = otherEllipse.distToPoint(center, ctx)
+        if (distToOtherEllipse < distToNearestNeighbor) {
+          distToNearestNeighbor = distToOtherEllipse
+          nearestNeighborEllipse = otherEllipse
+
+          // draw pointOnOtherEllipse
+          const origLineWidth = ctx.lineWidth
+          const pointOnEllipse = otherEllipse.getPointAtAngle(ellipseRotationOffset)
+          const dotRadius = 1
+          ctx.beginPath();
+          ctx.arc(pointOnOtherEllipse.x, pointOnOtherEllipse.y, dotRadius, 0,2*Math.PI);
+          ctx.fillStyle = `hsl(${(unprocessedCenters.length / numCirclesRef.value) * 360 + colorHueOffset} 100% 50% / 40%)`
+          ctx.fill()
+          ctx.stroke()
+          ctx.fillStyle = "hsl(0 0% 0% / 0%)"
+          ctx.lineWidth = origLineWidth
         }
       })
+      const diffX = nearestNeighborEllipse.center.x - center.x
+      const diffY = nearestNeighborEllipse.center.y - center.y
+      if (diffY === 0) {
+        if (diffX === 0) {
+          console.warn(`The current point ${JSON.stringify(center)} is the same as another point`)
+        } else if (diffX > 0) {
+          rotation = 0.5 * Math.PI
+        } else {
+          rotation = 1.5 * Math.PI
+        } 
+      } else {
+        rotation = Math.atan(diffY/diffX)
+      }
+      radiusX = distToNearestNeighbor
+      radiusY = (2/3) * radiusX
     }
-    const circle: Circle = new Circle(center.x, center.y, r)
-    circlesWithRadiusLine.push(new CircleWithRadiusLine(circle.center, radiusLineEndpoint))
+    const ellipse: Ellipse = new Ellipse(center.x, center.y, radiusX, radiusY, rotation)
+    ellipses.push(ellipse)
   }
 
-  return circlesWithRadiusLine
+  // console.log(`${ellipses.length} ellipses:`)
+  // console.dir(ellipses)
+
+  return ellipses
 }
 
 function renderKissingCircles(centers: Coor[], ctx: CanvasRenderingContext2D) {
-  const circlesWithRadiusLines = computeRadii(centers)
-  circlesWithRadiusLines.forEach((circlesWithRadiusLine, index) => {
-    const center = circlesWithRadiusLine.center
-    const radius = circlesWithRadiusLine.radius
+  // console.log(`running renderKissingCircles`)
+  const ellipses = computeEllipses(centers, ctx)
+  ellipses.forEach((ellipse, index) => {
+    const center = ellipse.center
     ctx.beginPath();
-    ctx.arc(center.x, center.y, radius, 0,2*Math.PI);
+    ctx.ellipse(center.x, center.y, ellipse.radiusX, ellipse.radiusY, ellipse.rotation, 0, 2*Math.PI);
     ctx.fillStyle = `hsl(${(index / numCirclesRef.value) * 360 + colorHueOffset} 100% 50% / 40%)`
     ctx.fill()
     ctx.fillStyle = "hsl(0 0% 0% / 0%)"
-    // ctx.strokeText(`(${center.x.toFixed(1)}, ${center.y.toFixed(1)}), ${radius.toFixed(1)}`, center.x-5, center.y)
+    ctx.strokeText(index.toString(), center.x+10, center.y+10)
 
     // Add line segment pointing to nearest neighbor
-    const radiusLine = circlesWithRadiusLine.radiusLine as LineSegment
-    ctx.moveTo(radiusLine.src.x, radiusLine.src.y);
-    ctx.lineTo(radiusLine.dst.x, radiusLine.dst.y)
-    ctx.stroke();
-
-    // Ellipse!
+    const origLineWidth = ctx.lineWidth
+    ctx.lineWidth = origLineWidth * 0.5
     ctx.beginPath();
-    const diffY = (radiusLine.dst.y - radiusLine.src.y)
-    const diffX = (radiusLine.dst.x - radiusLine.src.x)
-    const ellipseTheta = Math.atan(diffY / diffX) + elipseRotationOffset
-    ctx.ellipse(center.x, center.y, radius, (1/3)*radius, ellipseTheta, 0,2*Math.PI)
+    ctx.setLineDash([1,1]);
+    ctx.moveTo(ellipse.center.x, ellipse.center.y);
+    const scaledVertex = ellipse.center.add(ellipse.vertices[0].scale(-1))
+    ctx.lineTo(ellipse.vertices[0].x, ellipse.vertices[0].y)
+    ctx.moveTo(ellipse.center.x, ellipse.center.y);
+    ctx.lineTo(ellipse.coVertices[0].x, ellipse.coVertices[0].y)
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Draw a dot at angle `ellipseRotationOffset` from major axis
+    const pointOnEllipse = ellipse.getPointAtAngle(ellipseRotationOffset)
+    const dotRadius = 1
+    ctx.beginPath();
+    ctx.arc(pointOnEllipse.x, pointOnEllipse.y, dotRadius, 0,2*Math.PI);
     ctx.fillStyle = `hsl(${(index / numCirclesRef.value) * 360 + colorHueOffset} 100% 50% / 40%)`
     ctx.fill()
-    ctx.fillStyle = "hsl(0 0% 0% / 0%)"
     ctx.stroke()
+    ctx.fillStyle = "hsl(0 0% 0% / 0%)"
+    ctx.lineWidth = origLineWidth
+
+    // Ellipse!
+    // ctx.beginPath();
+    // const diffY = (radiusLine.dst.y - radiusLine.src.y)
+    // const diffX = (radiusLine.dst.x - radiusLine.src.x)
+    // const ellipseTheta = Math.atan(diffY / diffX) + elipseRotationOffset
+    // ctx.ellipse(center.x, center.y, radius, (2/3)*radius, ellipseTheta, 0,2*Math.PI)
+    // ctx.fillStyle = `hsl(${(index / numCirclesRef.value) * 360 + colorHueOffset} 100% 50% / 40%)`
+    // ctx.fill()
+    // ctx.fillStyle = "hsl(0 0% 0% / 0%)"
+    // ctx.stroke()
 
     // Draw center dot
-    const dotRadius = 5
+    // const dotRadius = 2
     ctx.beginPath();
     ctx.arc(center.x, center.y, dotRadius, 0,2*Math.PI);
     ctx.fillStyle = `hsl(${(index / numCirclesRef.value) * 360 + colorHueOffset} 100% 50% / 40%)`
@@ -220,7 +280,8 @@ function renderKissingCircles(centers: Coor[], ctx: CanvasRenderingContext2D) {
   // due to a mouse event or param change)
   if (animating.value) {
     colorHueOffset += colorHueOffsetStepsize
-    elipseRotationOffset += Math.PI / 30
+    // elipseRotationOffset += Math.PI / 60
+    ellipseRotationOffset += Math.PI / 60
   }
 }
 
@@ -237,10 +298,10 @@ function renderRouteCircles(ctx: CanvasRenderingContext2D) {
     ctx.setLineDash([]);
 
     // Draw center dot
-    const dotRadius = 3
+    const dotRadius = 2
     ctx.beginPath();
     ctx.arc(center.x, center.y, dotRadius, 0,2*Math.PI);
-    ctx.fillStyle = `hsl(${(index / numCirclesRef.value) * 360 + colorHueOffset} 100% 50% / 100%)`
+    ctx.fillStyle = `hsl(1 100% 0% / 100%)`
     ctx.fill()
     ctx.fillStyle = "hsl(0 0% 0% / 0%)"
   })
@@ -261,6 +322,7 @@ function animate() {
 }
 
 function _addShapes(ctx: CanvasRenderingContext2D, timestamp: number) {
+  // console.log(`running _addShapes`)
   initialized || initCanvas(ctx, timestamp)
 
   let elapsed: number
@@ -276,8 +338,13 @@ function _addShapes(ctx: CanvasRenderingContext2D, timestamp: number) {
   // Loop animation, instead of stop animation after an animation cycle
   const numCycles = elapsed * animationCyclesPerMinuteRef.value / 60000
 
+  // const kissingCircleCenters: Coor[] = movingCoorsOnCircles.value.map(movingCoorOnCircle => {
+  //   return movingCoorOnCircle.getCoorAfterCycles(numCycles)
+  // })
+  // renderKissingCircles(kissingCircleCenters, ctx)
+
   const kissingCircleCenters: Coor[] = movingCoorsOnCircles.value.map(movingCoorOnCircle => {
-    return movingCoorOnCircle.getCoorAfterCycles(numCycles)
+    return movingCoorOnCircle.initialCoor
   })
 
   renderKissingCircles(kissingCircleCenters, ctx)

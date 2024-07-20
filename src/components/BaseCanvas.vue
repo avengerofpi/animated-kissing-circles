@@ -18,6 +18,7 @@
     <div>Canvas Scale: {{ canvasScaleRef.toFixed(3) }}</div>
     <div>Canvas Offset: ({{ canvasOffsetRef.x.toFixed(1) }}, {{ canvasOffsetRef.y.toFixed(1) }})</div>
     <div>Scaled Canvas Dimensions: ({{ canvasScaledDimensionsRef.x.toFixed(1) }}, {{ canvasScaledDimensionsRef.y.toFixed(1) }})</div>
+    <div>Canvas Line Width: ({{ canvasLineWidthRef.toFixed(4) }})</div>
   </div>
   <!-- Canvas -->
   <div>
@@ -133,6 +134,7 @@ function initAndAnimate() {
 function resetCanvas() {
   ctx.reset()
   ctx.scale(canvasScaleRef.value, canvasScaleRef.value)
+  ctx.lineWidth = canvasLineWidthRef.value
   ctx.translate(canvasOffsetRef.value.x, canvasOffsetRef.value.y)
 
   ctx.fillStyle = "white"
@@ -190,8 +192,10 @@ function addCirclesAtCornersOfCanvas(radius: number, scaledWidth: number, scaled
 }
 
 function addCrosshairsAtOrigin() {
-  const crosshairWidth = 264 // 26 * (4 + 6) + 4
-  const crosshairHeight = 164 // 16 * (4 + 6) + 4
+  // const crosshairWidth = 264 // 26 * (4 + 6) + 4
+  // const crosshairHeight = 164 // 16 * (4 + 6) + 4
+  const crosshairWidth = initialWidth - (initialWidth % 20) + 24
+  const crosshairHeight = initialHeight - (initialHeight % 20) + 24
 
   ctx.beginPath();
   ctx.setLineDash([4, 6]);
@@ -288,6 +292,7 @@ const MAX_ZOOM_LEVEL = 20
 const ZOOM_SCALE_STEP_SIZE = 2 ** (1/4)
 
 let canvasScaleRef = ref(ZOOM_SCALE_STEP_SIZE ** canvasZoomLevelRef.value)
+let canvasLineWidthRef = ref(1)
 
 let isDragging = false
 let dragStart = new Coor(0, 0)
@@ -383,6 +388,14 @@ function zoomToLevelAtCoor(newZoomLevel: number, scaledPointerCoor: Coor) {
   const newCanvasScale = ZOOM_SCALE_STEP_SIZE ** newZoomLevel
   canvasScaleRef.value = newCanvasScale
 
+  // Update line width
+  let lineWidth = 1
+  if (canvasScaleRef.value > 1) {
+    lineWidth = 0.95**canvasScaleRef.value
+  }
+  canvasLineWidthRef.value = lineWidth
+
+  // Update offset
   const newOffset = computeOffsetChangeFromZoomChange(oldCanvasScale, newCanvasScale, scaledPointerCoor, canvasOffsetRef.value)
   canvasOffsetRef.value = newOffset
 

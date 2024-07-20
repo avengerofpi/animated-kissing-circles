@@ -17,7 +17,6 @@ class MovingCoorOnACircle {
   public constructor(routeCircle: Circle, initialTheta: number, direction: number = 1, speed: number = 1.0) {
     this.routeCircle = routeCircle
     this.initialTheta = initialTheta
-    this.initialCoor = this.getCoorAfterCycles(0)
 
     if (![-1, 0, 1].includes(direction)) {
       throw Error(`Direction must be -1, 0, or 1, but was ${direction}`)
@@ -28,6 +27,8 @@ class MovingCoorOnACircle {
       throw Error(`Speed must be non-negative, but was ${speed}`)
     }
     this.speed = speed
+
+    this.initialCoor = this.getCoorAfterCycles(0)
   }
 
   public copy() {
