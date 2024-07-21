@@ -174,22 +174,10 @@ function computeEllipses(centers: Coor[], ctx: CanvasRenderingContext2D): Ellips
     else {
       let nearestNeighborEllipse: Ellipse = ellipses[0]
       ellipses.forEach((otherEllipse) => {
-        const [distToOtherEllipse, pointOnOtherEllipse] = otherEllipse.distToPoint(center, ctx)
+        const [distToOtherEllipse, pointOnOtherEllipse] = otherEllipse.distToPoint(center)
         if (distToOtherEllipse < distToNearestNeighbor) {
           distToNearestNeighbor = distToOtherEllipse
           nearestNeighborEllipse = otherEllipse
-
-          // draw pointOnOtherEllipse
-          const origLineWidth = ctx.lineWidth
-          const pointOnEllipse = otherEllipse.getPointAtAngle(ellipseRotationOffset)
-          const dotRadius = 1
-          ctx.beginPath();
-          ctx.arc(pointOnOtherEllipse.x, pointOnOtherEllipse.y, dotRadius, 0,2*Math.PI);
-          ctx.fillStyle = `hsl(${(unprocessedCenters.length / numCirclesRef.value) * 360 + colorHueOffset} 100% 50% / 40%)`
-          ctx.fill()
-          ctx.stroke()
-          ctx.fillStyle = "hsl(0 0% 0% / 0%)"
-          ctx.lineWidth = origLineWidth
         }
       })
       const diffX = nearestNeighborEllipse.center.x - center.x
@@ -212,9 +200,6 @@ function computeEllipses(centers: Coor[], ctx: CanvasRenderingContext2D): Ellips
     ellipses.push(ellipse)
   }
 
-  // console.log(`${ellipses.length} ellipses:`)
-  // console.dir(ellipses)
-
   return ellipses
 }
 
@@ -230,43 +215,32 @@ function renderKissingCircles(centers: Coor[], ctx: CanvasRenderingContext2D) {
     ctx.fillStyle = "hsl(0 0% 0% / 0%)"
     ctx.strokeText(index.toString(), center.x+10, center.y+10)
 
-    // Add line segment pointing to nearest neighbor
-    const origLineWidth = ctx.lineWidth
-    ctx.lineWidth = origLineWidth * 0.5
-    ctx.beginPath();
-    ctx.setLineDash([1,1]);
-    ctx.moveTo(ellipse.center.x, ellipse.center.y);
-    const scaledVertex = ellipse.center.add(ellipse.vertices[0].scale(-1))
-    ctx.lineTo(ellipse.vertices[0].x, ellipse.vertices[0].y)
-    ctx.moveTo(ellipse.center.x, ellipse.center.y);
-    ctx.lineTo(ellipse.coVertices[0].x, ellipse.coVertices[0].y)
-    ctx.stroke();
-    ctx.setLineDash([]);
-
-    // Draw a dot at angle `ellipseRotationOffset` from major axis
-    const pointOnEllipse = ellipse.getPointAtAngle(ellipseRotationOffset)
-    const dotRadius = 1
-    ctx.beginPath();
-    ctx.arc(pointOnEllipse.x, pointOnEllipse.y, dotRadius, 0,2*Math.PI);
-    ctx.fillStyle = `hsl(${(index / numCirclesRef.value) * 360 + colorHueOffset} 100% 50% / 40%)`
-    ctx.fill()
-    ctx.stroke()
-    ctx.fillStyle = "hsl(0 0% 0% / 0%)"
-    ctx.lineWidth = origLineWidth
-
-    // Ellipse!
+    // // Add line segment pointing to nearest neighbor
+    // const origLineWidth = ctx.lineWidth
+    // ctx.lineWidth = origLineWidth * 0.5
     // ctx.beginPath();
-    // const diffY = (radiusLine.dst.y - radiusLine.src.y)
-    // const diffX = (radiusLine.dst.x - radiusLine.src.x)
-    // const ellipseTheta = Math.atan(diffY / diffX) + elipseRotationOffset
-    // ctx.ellipse(center.x, center.y, radius, (2/3)*radius, ellipseTheta, 0,2*Math.PI)
+    // ctx.setLineDash([1,1]);
+    // ctx.moveTo(ellipse.center.x, ellipse.center.y);
+    // const scaledVertex = ellipse.center.add(ellipse.vertices[0].scale(-1))
+    // ctx.lineTo(ellipse.vertices[0].x, ellipse.vertices[0].y)
+    // ctx.moveTo(ellipse.center.x, ellipse.center.y);
+    // ctx.lineTo(ellipse.coVertices[0].x, ellipse.coVertices[0].y)
+    // ctx.stroke();
+    // ctx.setLineDash([]);
+
+    // // Draw a dot at angle `ellipseRotationOffset` from major axis
+    // const pointOnEllipse = ellipse.getPointAtAngle(ellipseRotationOffset)
+    // const dotRadius = 1
+    // ctx.beginPath();
+    // ctx.arc(pointOnEllipse.x, pointOnEllipse.y, dotRadius, 0,2*Math.PI);
     // ctx.fillStyle = `hsl(${(index / numCirclesRef.value) * 360 + colorHueOffset} 100% 50% / 40%)`
     // ctx.fill()
-    // ctx.fillStyle = "hsl(0 0% 0% / 0%)"
     // ctx.stroke()
+    // ctx.fillStyle = "hsl(0 0% 0% / 0%)"
+    // ctx.lineWidth = origLineWidth
 
     // Draw center dot
-    // const dotRadius = 2
+    const dotRadius = 2
     ctx.beginPath();
     ctx.arc(center.x, center.y, dotRadius, 0,2*Math.PI);
     ctx.fillStyle = `hsl(${(index / numCirclesRef.value) * 360 + colorHueOffset} 100% 50% / 40%)`
@@ -280,7 +254,6 @@ function renderKissingCircles(centers: Coor[], ctx: CanvasRenderingContext2D) {
   // due to a mouse event or param change)
   if (animating.value) {
     colorHueOffset += colorHueOffsetStepsize
-    // elipseRotationOffset += Math.PI / 60
     ellipseRotationOffset += Math.PI / 60
   }
 }
@@ -338,14 +311,14 @@ function _addShapes(ctx: CanvasRenderingContext2D, timestamp: number) {
   // Loop animation, instead of stop animation after an animation cycle
   const numCycles = elapsed * animationCyclesPerMinuteRef.value / 60000
 
-  // const kissingCircleCenters: Coor[] = movingCoorsOnCircles.value.map(movingCoorOnCircle => {
-  //   return movingCoorOnCircle.getCoorAfterCycles(numCycles)
-  // })
-  // renderKissingCircles(kissingCircleCenters, ctx)
-
   const kissingCircleCenters: Coor[] = movingCoorsOnCircles.value.map(movingCoorOnCircle => {
-    return movingCoorOnCircle.initialCoor
+    return movingCoorOnCircle.getCoorAfterCycles(numCycles)
   })
+  renderKissingCircles(kissingCircleCenters, ctx)
+
+  // const kissingCircleCenters: Coor[] = movingCoorsOnCircles.value.map(movingCoorOnCircle => {
+  //   return movingCoorOnCircle.initialCoor
+  // })
 
   renderKissingCircles(kissingCircleCenters, ctx)
 

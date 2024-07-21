@@ -116,7 +116,7 @@ class Ellipse {
     return new Coor(x, y)
   }
   public isPointOnShape(point: Coor): boolean {
-    return this.distToPoint(point, null)[0] === 0
+    return this.distToPoint(point)[0] === 0
   }
 
   // /**
@@ -146,7 +146,7 @@ class Ellipse {
    *
    * @param point point to compute distance-from-ellipse for
    */
-  public distToPoint(point: Coor, ctx: CanvasRenderingContext2D | null): [number, Coor] {
+  public distToPoint(point: Coor): [number, Coor] {
     const baseEllipse = this.toBaseEllipse()
     const adjustedPoint = point.subtract(this.center).rotate(-this.rotation)
     // const projAdjustedPointOntoBaseMajorAxis = baseEllipse.vertices[0].projection(adjustedPoint)
@@ -164,22 +164,14 @@ class Ellipse {
         initialTheta = 1.5 * Math.PI
       }
     } else {
-      initialTheta = Math.atan(adjustedPoint.y / adjustedPoint.y)
+      initialTheta = Math.atan2(adjustedPoint.y, adjustedPoint.x)
     }
 
     const thetaStepSize = 1e-2
-    let theta = initialTheta
-    // const pointOnBaseEllipse = baseEllipse.getPointAtAngle(theta)
-    // const pointOnEllipse = pointOnBaseEllipse.rotate(this.rotation).add(this.center)
-    const pointOnEllipse = this.getPointAtAngle(theta)
-    ctx && baseEllipse.draw(ctx)
+    let nearestTheta = initialTheta
+    const pointOnOrigEllipse = this.getPointAtAngle(nearestTheta)
 
-    console.log(`adjustedPoint: ${adjustedPoint}`)
-    console.log(`initialTheta: ${initialTheta}`)
-    console.log(`pointOnEllipse: ${pointOnEllipse}`)
-
-    // return [dist(pointOnBaseEllipse, adjustedPoint), pointOnEllipse]
-    return [dist(pointOnEllipse, point), pointOnEllipse]
+    return [dist(pointOnOrigEllipse, point), pointOnOrigEllipse]
   }
 
   public draw(ctx: CanvasRenderingContext2D, fillStyle: string | CanvasGradient | CanvasPattern = `hsl(50 100% 50% / 40%)`) {
@@ -190,7 +182,6 @@ class Ellipse {
     ctx.fillStyle = fillStyle
     ctx.fill()
     ctx.fillStyle = origFillStyle
-    // ctx.strokeText(index.toString(), center.x+10, center.y+10)
   }
 }
 
