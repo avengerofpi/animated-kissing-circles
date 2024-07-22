@@ -22,6 +22,21 @@ class LineSegment {
   public static fromXYCoor(srcX: number, srcY: number, dst: Coor) {
     return new LineSegment(new Coor(srcX, srcY), dst)
   }
+
+  public draw(ctx: CanvasRenderingContext2D) {
+    // Add line segment pointing to nearest neighbor
+    const origLineWidth = ctx.lineWidth
+    const origLineDash = ctx.getLineDash()
+    ctx.lineWidth = origLineWidth * 0.5
+    ctx.setLineDash([1,1]);
+    ctx.beginPath();
+    ctx.moveTo(this.src.x, this.src.y);
+    ctx.lineTo(this.dst.x, this.dst.y)
+    ctx.stroke();
+
+    ctx.lineWidth = origLineWidth
+    ctx.setLineDash(origLineDash);
+  }
 }
 
 export { LineSegment }

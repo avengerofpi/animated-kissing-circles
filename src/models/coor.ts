@@ -81,6 +81,22 @@ class Coor {
   toString(precision=3) {
     return `(${this.x.toFixed(precision)}, ${this.y.toFixed(precision)})`
   }
+
+  /** Draw the point on a canvas context */
+  public draw(
+    ctx: CanvasRenderingContext2D,
+    dotRadius: number = 5,
+    fillStyle: string | CanvasGradient | CanvasPattern | null = null
+  ) {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, dotRadius, 0,2*Math.PI);
+    const origFillStyle = ctx.fillStyle
+    if (fillStyle) { ctx.fillStyle = fillStyle }
+    // ctx.fillStyle = `hsl(${(index / numCirclesRef.value) * 360 + colorHueOffset} 100% 50% / 40%)`
+    ctx.fill()
+    ctx.fillStyle = origFillStyle
+    ctx.stroke();
+  }
 }
 
 function dist(a: Coor, b: Coor): number {

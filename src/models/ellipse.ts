@@ -16,7 +16,7 @@ class Ellipse {
   rotation: number
 
   /** Radius along the major axis. */
-  radiusMajorAxis: number
+  radiusMajor: number
   /** Radius along the minor axis. */
   radiusMinorAxis: number
 
@@ -70,9 +70,9 @@ class Ellipse {
     this.radiusY = radiusY
     this.rotation = rotation
 
-    this.radiusMajorAxis = Math.max(radiusX, radiusY)
+    this.radiusMajor = Math.max(radiusX, radiusY)
     this.radiusMinorAxis = Math.min(radiusX, radiusY)
-    this.radiusFoci = Math.sqrt(this.radiusMajorAxis**2 - this.radiusMinorAxis**2)
+    this.radiusFoci = Math.sqrt(this.radiusMajor**2 - this.radiusMinorAxis**2)
 
     let baseVertex, baseCoVertex, baseFocalPoint
 
@@ -101,13 +101,17 @@ class Ellipse {
     this.isCircle = (radiusX === radiusY)
   }
 
-  /** Compute and return the point on this ellipse at angle `alpha` from the major axis. */
+  /**
+   * Compute and return the point on this ellipse at angle `alpha` from the major axis.
+   * Remember that in HTML canvas, the positive y-axis is downward, not upward, so angles
+   * are measured clockwise rather than counterclockwise.
+   */
   public getPointAtAngle(alpha: number): Coor {
     const theta = this.rotation
-    const sinTheta = Math.sin(theta) // 0
-    const cosTheta = Math.cos(theta) // 1
-    const sinAlpha = Math.sin(alpha) // 1
-    const cosAlpha = Math.cos(alpha) // 1
+    const sinTheta = Math.sin(theta)
+    const cosTheta = Math.cos(theta)
+    const sinAlpha = Math.sin(alpha)
+    const cosAlpha = Math.cos(alpha)
     const rx = this.radiusX
     const ry = this.radiusY
     const x = this.center.x + rx*cosAlpha*cosTheta - ry*sinAlpha*sinTheta
@@ -147,29 +151,39 @@ class Ellipse {
    * @param point point to compute distance-from-ellipse for
    */
   public distToPoint(point: Coor): [number, Coor] {
-    const baseEllipse = this.toBaseEllipse()
-    const adjustedPoint = point.subtract(this.center).rotate(-this.rotation)
-    // const projAdjustedPointOntoBaseMajorAxis = baseEllipse.vertices[0].projection(adjustedPoint)
-    // const projAdjustedPointOntoBaseMinorAxis = baseEllipse.coVertices[0].projection(adjustedPoint)
-    // const majorAxisScale = projAdjustedPointOntoBaseMajorAxis.magnitude() / this.radiusMajorAxis
-    // const minorAxisScale = projAdjustedPointOntoBaseMinorAxis.magnitude() / this.radiusMinorAxis
+    // const baseEllipse = this.toBaseEllipse()
+    // const adjustedPoint = point.subtract(this.center).rotate(-this.rotation)
+    // // const projAdjustedPointOntoBaseMajorAxis = baseEllipse.vertices[0].projection(adjustedPoint)
+    // // const projAdjustedPointOntoBaseMinorAxis = baseEllipse.coVertices[0].projection(adjustedPoint)
+    // // const majorAxisScale = projAdjustedPointOntoBaseMajorAxis.magnitude() / this.radiusMajorAxis
+    // // const minorAxisScale = projAdjustedPointOntoBaseMinorAxis.magnitude() / this.radiusMinorAxis
 
-    let initialTheta = 0
-    if (adjustedPoint.x === 0) {
-      if (adjustedPoint.y === 0) {
-        console.warn(`The current point ${JSON.stringify(point)} is at the center of the ellipse`)
-      } else if (adjustedPoint.y > 0) {
-        initialTheta = 0.5 * Math.PI
-      } else {
-        initialTheta = 1.5 * Math.PI
-      }
-    } else {
-      initialTheta = Math.atan2(adjustedPoint.y, adjustedPoint.x)
-    }
+    // let initialTheta = 0
+    // if (adjustedPoint.x === 0) {
+    //   if (adjustedPoint.y === 0) {
+    //     console.warn(`The current point ${JSON.stringify(point)} is at the center of the ellipse`)
+    //   } else if (adjustedPoint.y > 0) {
+    //     initialTheta = 0.5 * Math.PI
+    //   } else {
+    //     initialTheta = 1.5 * Math.PI
+    //   }
+    // } else {
+    //   initialTheta = Math.atan2(adjustedPoint.y, adjustedPoint.x)
+    // }
 
-    const thetaStepSize = 1e-2
-    let nearestTheta = initialTheta
-    const pointOnOrigEllipse = this.getPointAtAngle(nearestTheta)
+    const adjustedPoint = point.subtract(this.center)
+    const thetaFromCenterToPoint = Math.atan2(adjustedPoint.y, adjustedPoint.x)
+    const thetaBeforeEllipseRotation = thetaFromCenterToPoint - this.rotation
+
+    // const thetaStepSize = 1e-2
+    // let nearestTheta = initialTheta
+    const pointOnOrigEllipse = this.getPointAtAngle(thetaBeforeEllipseRotation)
+
+    console.log(`point:                      ${point}`)
+    console.log(`adjustedPoint:              ${adjustedPoint}`)
+    console.log(`thetaFromCenterToPoint:     ${thetaFromCenterToPoint.toFixed(3)} (${(thetaFromCenterToPoint*180/Math.PI).toFixed(3)})`)
+    console.log(`thetaBeforeEllipseRotation: ${thetaBeforeEllipseRotation.toFixed(3)} (${(thetaBeforeEllipseRotation*180/Math.PI).toFixed(3)})`)
+    console.log(`pointOnEllipse:             ${pointOnOrigEllipse}`)
 
     return [dist(pointOnOrigEllipse, point), pointOnOrigEllipse]
   }
