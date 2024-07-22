@@ -146,8 +146,9 @@ function computeEllipses(centers: Coor[], ctx: CanvasRenderingContext2D): Ellips
     let radiusX: number = 0
     let radiusY: number = 0
     let rotation: number = 0
-    // First ellipse will be 1/3 distance between first point and nearest point.
+
     if (ellipses.length === 0) {
+      // First ellipse will be 1/3 distance between first point and nearest point.
       let nearestNeighborCenter: Coor = center
       unprocessedCenters.forEach((B) => {
         const distToB = dist(center, B)
@@ -171,22 +172,27 @@ function computeEllipses(centers: Coor[], ctx: CanvasRenderingContext2D): Ellips
       }
       radiusX = distToNearestNeighbor * (2/3)
       radiusY = (1/3) * radiusX
-    }
-    // Remaining ellipses will generate based on nearest existing ellipse
-    else {
-      let nearestNeighborEllipse: Ellipse = ellipses[0]
-      ellipses.forEach((otherEllipse) => {
+    } else {
+      // Remaining ellipses will generate based on nearest existing ellipse
+      console.log(`Processing ellipse #${ellipses.length}`)
+      ellipses.forEach((otherEllipse, index) => {
         const [distToOtherEllipse, pointOnOtherEllipse] = otherEllipse.distToPoint(center)
         if (distToOtherEllipse < distToNearestNeighbor) {
           distToNearestNeighbor = distToOtherEllipse
           nearestPointOnNeighbor = pointOnOtherEllipse
-          nearestNeighborEllipse = otherEllipse
         }
+        // Draw demo/debug stuff
+        pointOnOtherEllipse.draw(ctx, 1)
+        const segment = new LineSegment(center, pointOnOtherEllipse)
+        segment.draw(ctx)
+        const extendedPoint = pointOnOtherEllipse.add(pointOnOtherEllipse.subtract(center).scale(1.5).add(center))
+        const longerSegment = new LineSegment(center, extendedPoint)
+        longerSegment.draw(ctx)
+        console.log(`  distance to ellipse ${index} = ${distToOtherEllipse}`)
       })
+
       const diffX = nearestPointOnNeighbor.x - center.x
       const diffY = nearestPointOnNeighbor.y - center.y
-      // const diffX = nearestNeighborEllipse.center.x - center.x
-      // const diffY = nearestNeighborEllipse.center.y - center.y
       if (diffY === 0) {
         if (diffX === 0) {
           console.warn(`The current point ${JSON.stringify(center)} is the same as another point`)
@@ -200,16 +206,17 @@ function computeEllipses(centers: Coor[], ctx: CanvasRenderingContext2D): Ellips
       }
       radiusX = distToNearestNeighbor
       radiusY = (2/3) * radiusX
+      console.log(`-----------------------------`)
     }
 
     const ellipse: Ellipse = new Ellipse(center.x, center.y, radiusX, radiusY, rotation)
     ellipses.push(ellipse)
 
-    // Draw demo/debug stuff
-    if (nearestPointOnNeighbor) {
-      const segment = new LineSegment(center, nearestPointOnNeighbor)
-      segment.draw(ctx)
-    }
+    // // Draw demo/debug stuff
+    // if (nearestPointOnNeighbor) {
+    //   const segment = new LineSegment(center, nearestPointOnNeighbor)
+    //   segment.draw(ctx)
+    // }
   }
 
   return ellipses
@@ -232,29 +239,29 @@ function renderKissingCircles(centers: Coor[], ctx: CanvasRenderingContext2D) {
     ctx.fill()
     // ctx.fillStyle = "hsl(0 0% 0% / 0%)"
     ctx.strokeText(index.toString(), ellipse.center.x+10, ellipse.center.y+10)
-    // add circle with same center and radius = ellipse.radiusMajor
+    // // add circle with same center and radius = ellipse.radiusMajor
     ctx.beginPath();
     ctx.arc(ellipse.center.x, ellipse.center.y, ellipse.radiusMajor, 0, 2*Math.PI)
     ctx.stroke()
 
     // Draw major and minor axes
     // major axis
-    ctx.beginPath();
-    ctx.setLineDash([15,15]);
-    ctx.moveTo(ellipse.vertices[0].x, ellipse.vertices[0].y);
-    ctx.lineTo(ellipse.center.x, ellipse.center.y);
-    ctx.stroke();
+    // ctx.beginPath();
+    // ctx.setLineDash([15,15]);
+    // ctx.moveTo(ellipse.vertices[0].x, ellipse.vertices[0].y);
+    // ctx.lineTo(ellipse.center.x, ellipse.center.y);
+    // ctx.stroke();
     ctx.beginPath();
     ctx.setLineDash([3,2]);
     ctx.moveTo(ellipse.center.x, ellipse.center.y);
     ctx.lineTo(ellipse.vertices[1].x, ellipse.vertices[1].y)
     ctx.stroke();
     // minor axis
-    ctx.beginPath();
-    ctx.setLineDash([15,15]);
-    ctx.moveTo(ellipse.coVertices[0].x, ellipse.coVertices[0].y);
-    ctx.lineTo(ellipse.center.x, ellipse.center.y);
-    ctx.stroke();
+    // ctx.beginPath();
+    // ctx.setLineDash([15,15]);
+    // ctx.moveTo(ellipse.coVertices[0].x, ellipse.coVertices[0].y);
+    // ctx.lineTo(ellipse.center.x, ellipse.center.y);
+    // ctx.stroke();
     ctx.beginPath();
     ctx.setLineDash([3,2]);
     ctx.moveTo(ellipse.center.x, ellipse.center.y);

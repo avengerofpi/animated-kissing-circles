@@ -178,14 +178,26 @@ class Ellipse {
     // const thetaStepSize = 1e-2
     // let nearestTheta = initialTheta
     const pointOnOrigEllipse = this.getPointAtAngle(thetaBeforeEllipseRotation)
+    const opposingPointOnOrigEllipse = this.getPointAtAngle(thetaBeforeEllipseRotation + Math.PI)
 
-    console.log(`point:                      ${point}`)
-    console.log(`adjustedPoint:              ${adjustedPoint}`)
-    console.log(`thetaFromCenterToPoint:     ${thetaFromCenterToPoint.toFixed(3)} (${(thetaFromCenterToPoint*180/Math.PI).toFixed(3)})`)
-    console.log(`thetaBeforeEllipseRotation: ${thetaBeforeEllipseRotation.toFixed(3)} (${(thetaBeforeEllipseRotation*180/Math.PI).toFixed(3)})`)
-    console.log(`pointOnEllipse:             ${pointOnOrigEllipse}`)
+    const distToPointOnOrigEllipse = dist(point, pointOnOrigEllipse)
+    const distToOpposingPointOnOrigEllipse = dist(point, opposingPointOnOrigEllipse)
+    let closestPoint, closestDist
+    if (distToPointOnOrigEllipse < distToOpposingPointOnOrigEllipse) {
+      closestPoint = pointOnOrigEllipse
+      closestDist = distToPointOnOrigEllipse
+    } else {
+      closestPoint = opposingPointOnOrigEllipse
+      closestDist = distToOpposingPointOnOrigEllipse
+    }
 
-    return [dist(pointOnOrigEllipse, point), pointOnOrigEllipse]
+    // console.log(`point:                      ${point}`)
+    // console.log(`adjustedPoint:              ${adjustedPoint}`)
+    // console.log(`thetaFromCenterToPoint:     ${thetaFromCenterToPoint.toFixed(3)} (${(thetaFromCenterToPoint*180/Math.PI).toFixed(3)})`)
+    // console.log(`thetaBeforeEllipseRotation: ${thetaBeforeEllipseRotation.toFixed(3)} (${(thetaBeforeEllipseRotation*180/Math.PI).toFixed(3)})`)
+    // console.log(`pointOnEllipse:             ${pointOnOrigEllipse}`)
+
+    return [closestDist, closestPoint]
   }
 
   public draw(ctx: CanvasRenderingContext2D, fillStyle: string | CanvasGradient | CanvasPattern = `hsl(50 100% 50% / 40%)`) {
