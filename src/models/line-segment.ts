@@ -39,4 +39,17 @@ class LineSegment {
   }
 }
 
-export { LineSegment }
+class LineSegmentExtended extends LineSegment {
+  dstOrig: Coor
+  scale: number
+
+  public constructor(src: Coor, dst: Coor, scale: number) {
+    const dstExtended = dst.add(dst.subtract(src).scale(scale).add(src))
+    super(src, dstExtended)
+
+    this.dstOrig = dst
+    this.scale = scale
+  }
+}
+
+export { LineSegment, LineSegmentExtended }

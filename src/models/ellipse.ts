@@ -61,42 +61,32 @@ class Ellipse {
     if (errorMsgs.length > 0) {
       errorMsgs.forEach(msg => console.error(msg))
       throw Error(`Could not instantiate Ellipse: ${JSON.stringify(errorMsgs)}`)
-    } else {
-      // console.log(`all is well: radiusX = ${radiusX} (${errorMsgs.length} error messages)`)
     }
 
+    // Basic params
     this.center = new Coor(x, y)
     this.radiusX = radiusX
     this.radiusY = radiusY
     this.rotation = rotation
 
+    // Interpreted params
     this.radiusMajor = Math.max(radiusX, radiusY)
     this.radiusMinorAxis = Math.min(radiusX, radiusY)
     this.radiusFoci = Math.sqrt(this.radiusMajor**2 - this.radiusMinorAxis**2)
 
     let baseVertex, baseCoVertex, baseFocalPoint
-
     if (radiusX >= radiusY) {
       baseVertex = new Coor(-radiusX, 0)
       baseCoVertex = new Coor(0, -radiusY)
       baseFocalPoint = new Coor(-this.radiusFoci, 0)
-      // this.vertices = [new Coor(-radiusX, 0), new Coor(radiusX, 0)].map(v => v.applyRotationAndOffset(rotation, this.center))
-      // this.coVertices = [new Coor(0, -radiusY), new Coor(0, radiusY)].map(v => v.applyRotationAndOffset(rotation, this.center))
-      // this.foci = [new Coor(0, -this.radiusFoci), new Coor(0, this.radiusFoci)].map(v => v.applyRotationAndOffset(rotation, this.center))
     } else {
       baseVertex = new Coor(0, -radiusY)
       baseCoVertex = new Coor(-radiusX, 0)
       baseFocalPoint = new Coor(0, -this.radiusFoci)
-      // this.radiusFoci = radiusY**2 - radiusX**2
-      // this.vertices = [new Coor(0, -radiusY), new Coor(0, radiusY)].map(v => v.applyRotationAndOffset(rotation, this.center))
-      // this.coVertices = [new Coor(-radiusX, 0), new Coor(radiusX, 0)].map(v => v.applyRotationAndOffset(rotation, this.center))
     }
     this.vertices = [baseVertex, baseVertex.scale(-1)].map(v => v.applyRotationAndOffset(rotation, this.center))
     this.coVertices = [baseCoVertex, baseCoVertex.scale(-1)].map(v => v.applyRotationAndOffset(rotation, this.center))
     this.foci = [baseFocalPoint, baseFocalPoint.scale(-1)].map(v => v.applyRotationAndOffset(rotation, this.center))
-    // this.vertices = [new Coor(-radiusX, 0), new Coor(radiusX, 0)].map(v => v.applyRotationAndOffset(rotation, this.center))
-    // this.coVertices = [new Coor(0, -radiusY), new Coor(0, radiusY)].map(v => v.applyRotationAndOffset(rotation, this.center))
-    // this.foci = [new Coor(0, -this.radiusFoci), new Coor(0, this.radiusFoci)].map(v => v.applyRotationAndOffset(rotation, this.center))
 
     this.isCircle = (radiusX === radiusY)
   }
@@ -120,7 +110,7 @@ class Ellipse {
     return new Coor(x, y)
   }
   public isPointOnShape(point: Coor): boolean {
-    return this.distToPoint(point)[0] === 0
+    return this.pointOnEllipseInDirectionOfAnotherPoint(point)[0] === 0
   }
 
   // /**
@@ -150,7 +140,7 @@ class Ellipse {
    *
    * @param point point to compute distance-from-ellipse for
    */
-  public distToPoint(point: Coor): [number, Coor] {
+  public pointOnEllipseInDirectionOfAnotherPoint(point: Coor): [number, Coor] {
     // const baseEllipse = this.toBaseEllipse()
     // const adjustedPoint = point.subtract(this.center).rotate(-this.rotation)
     // // const projAdjustedPointOntoBaseMajorAxis = baseEllipse.vertices[0].projection(adjustedPoint)
@@ -174,6 +164,7 @@ class Ellipse {
     const adjustedPoint = point.subtract(this.center)
     const thetaFromCenterToPoint = Math.atan2(adjustedPoint.y, adjustedPoint.x)
     const thetaBeforeEllipseRotation = thetaFromCenterToPoint - this.rotation
+    // const thetaBeforeEllipseRotation = thetaFromCenterToPoint
 
     // const thetaStepSize = 1e-2
     // let nearestTheta = initialTheta
@@ -191,11 +182,11 @@ class Ellipse {
       closestDist = distToOpposingPointOnOrigEllipse
     }
 
-    // console.log(`point:                      ${point}`)
-    // console.log(`adjustedPoint:              ${adjustedPoint}`)
-    // console.log(`thetaFromCenterToPoint:     ${thetaFromCenterToPoint.toFixed(3)} (${(thetaFromCenterToPoint*180/Math.PI).toFixed(3)})`)
-    // console.log(`thetaBeforeEllipseRotation: ${thetaBeforeEllipseRotation.toFixed(3)} (${(thetaBeforeEllipseRotation*180/Math.PI).toFixed(3)})`)
-    // console.log(`pointOnEllipse:             ${pointOnOrigEllipse}`)
+    console.log(`point:                      ${point}`)
+    console.log(`adjustedPoint:              ${adjustedPoint}`)
+    console.log(`thetaFromCenterToPoint:     ${thetaFromCenterToPoint.toFixed(3)} (${(thetaFromCenterToPoint*180/Math.PI).toFixed(3)})`)
+    console.log(`thetaBeforeEllipseRotation: ${thetaBeforeEllipseRotation.toFixed(3)} (${(thetaBeforeEllipseRotation*180/Math.PI).toFixed(3)})`)
+    console.log(`pointOnEllipse:             ${pointOnOrigEllipse}`)
 
     return [closestDist, closestPoint]
   }

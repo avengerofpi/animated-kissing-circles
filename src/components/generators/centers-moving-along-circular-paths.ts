@@ -6,7 +6,7 @@ import { Circle } from '@/models/circle'
 import { Ellipse } from '@/models/ellipse'
 import { MovingCoorOnACircle } from '@/models/moving-coor-on-a-circle'
 import { CircleWithRadiusLine } from '@/models/circle-with-radius-line'
-import { LineSegment } from '@/models/line-segment'
+import { LineSegment, LineSegmentExtended } from '@/models/line-segment'
 
 const title = "Centers Moving Along Circular Paths"
 
@@ -176,18 +176,25 @@ function computeEllipses(centers: Coor[], ctx: CanvasRenderingContext2D): Ellips
       // Remaining ellipses will generate based on nearest existing ellipse
       console.log(`Processing ellipse #${ellipses.length}`)
       ellipses.forEach((otherEllipse, index) => {
-        const [distToOtherEllipse, pointOnOtherEllipse] = otherEllipse.distToPoint(center)
+        const [distToOtherEllipse, pointOnOtherEllipse] = otherEllipse.pointOnEllipseInDirectionOfAnotherPoint(center)
         if (distToOtherEllipse < distToNearestNeighbor) {
           distToNearestNeighbor = distToOtherEllipse
           nearestPointOnNeighbor = pointOnOtherEllipse
         }
+
         // Draw demo/debug stuff
         pointOnOtherEllipse.draw(ctx, 1)
         const segment = new LineSegment(center, pointOnOtherEllipse)
         segment.draw(ctx)
-        const extendedPoint = pointOnOtherEllipse.add(pointOnOtherEllipse.subtract(center).scale(1.5).add(center))
-        const longerSegment = new LineSegment(center, extendedPoint)
+
+        // const extendedPoint = pointOnOtherEllipse.add(pointOnOtherEllipse.subtract(center).scale(1.5).add(center))
+        // const longerSegment1 = new LineSegment(center, extendedPoint)
+        // longerSegment1.draw(ctx)
+
+        const longerSegment = new LineSegmentExtended(center, pointOnOtherEllipse, 1.5)
+        pointOnOtherEllipse.draw(ctx)
         longerSegment.draw(ctx)
+
         console.log(`  distance to ellipse ${index} = ${distToOtherEllipse}`)
       })
 
@@ -225,7 +232,12 @@ function computeEllipses(centers: Coor[], ctx: CanvasRenderingContext2D): Ellips
 function renderKissingCircles(centers: Coor[], ctx: CanvasRenderingContext2D) {
   // console.log(`running renderKissingCircles`)
   const ellipses = computeEllipses(centers, ctx)
-  // const ellipses = [new Ellipse(100, 200, 500, 300, Math.PI / 4)]
+  // const ellipses = [
+  //   new Ellipse( 100,  200, 200, 100, Math.PI * 0.25),
+  //   new Ellipse( 100, -200, 200, 100, Math.PI * 0.50),
+  //   new Ellipse(-100,  200, 200, 100, Math.PI * 0.25),
+  //   new Ellipse(-100, -200, 200, 100, Math.PI * 1.00),
+  // ]
   const origLineWidth = ctx.lineWidth
   ctx.lineWidth = origLineWidth * 0.75
 
@@ -275,14 +287,14 @@ function renderKissingCircles(centers: Coor[], ctx: CanvasRenderingContext2D) {
     // Draw center dot
     ellipse.center.draw(ctx, 3)
 
-    // // Draw target point
-    // // Compute distToEllipse and draw line from point to it
-    // const point = new Coor(0, 1000)
-    // const [d, pointOnEllipse] = ellipse.distToPoint(point)
-    // const pointToPointOnEllipse = new LineSegment(point, pointOnEllipse)
-    // point.draw(ctx, 3)
-    // pointOnEllipse.draw(ctx, 3)
-    // pointToPointOnEllipse.draw(ctx)
+    // Draw target point
+    // Compute distToEllipse and draw line from point to it
+    const point = new Coor(0, 1000)
+    const [d, pointOnEllipse] = ellipse.pointOnEllipseInDirectionOfAnotherPoint(point)
+    const pointToPointOnEllipse = new LineSegment(point, pointOnEllipse)
+    point.draw(ctx, 3)
+    pointOnEllipse.draw(ctx, 3)
+    pointToPointOnEllipse.draw(ctx)
   })
 
   // cleanup
