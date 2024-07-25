@@ -231,13 +231,13 @@ function computeEllipses(centers: Coor[], ctx: CanvasRenderingContext2D): Ellips
 
 function renderKissingCircles(centers: Coor[], ctx: CanvasRenderingContext2D) {
   // console.log(`running renderKissingCircles`)
-  const ellipses = computeEllipses(centers, ctx)
-  // const ellipses = [
-  //   new Ellipse( 100,  200, 200, 100, Math.PI * 0.25),
-  //   new Ellipse( 100, -200, 200, 100, Math.PI * 0.50),
-  //   new Ellipse(-100,  200, 200, 100, Math.PI * 0.25),
-  //   new Ellipse(-100, -200, 200, 100, Math.PI * 1.00),
-  // ]
+  // const ellipses = computeEllipses(centers, ctx)
+  const ellipses = [
+    // new Ellipse( 100,  200, 200, 100, Math.PI * 0.25),
+    // new Ellipse( 100, -200, 200, 100, Math.PI * 0.50),
+    // new Ellipse(-100,  200, 200, 100, Math.PI * 0.25),
+    new Ellipse(-100, -200, 200, 100, Math.PI * 1.00),
+  ]
   const origLineWidth = ctx.lineWidth
   ctx.lineWidth = origLineWidth * 0.75
 
@@ -290,11 +290,24 @@ function renderKissingCircles(centers: Coor[], ctx: CanvasRenderingContext2D) {
     // Draw target point
     // Compute distToEllipse and draw line from point to it
     const point = new Coor(0, 1000)
-    const [d, pointOnEllipse] = ellipse.pointOnEllipseInDirectionOfAnotherPoint(point)
-    const pointToPointOnEllipse = new LineSegment(point, pointOnEllipse)
-    point.draw(ctx, 3)
-    pointOnEllipse.draw(ctx, 3)
-    pointToPointOnEllipse.draw(ctx)
+    const points = [
+      new Coor(-100,  400),
+      new Coor( -50,  400),
+      new Coor(   0,  400),
+      new Coor(  50,  400),
+    ]
+    points.forEach(point => {
+      point.draw(ctx, 3)
+
+      const [d, pointOnEllipse] = ellipse.pointOnEllipseInDirectionOfAnotherPoint(point)
+      pointOnEllipse.draw(ctx, 3)
+
+      const pointToPointOnEllipseExtended = new LineSegmentExtended(point, pointOnEllipse, 1.5)
+      pointToPointOnEllipseExtended.draw(ctx)
+
+      const pointToPointOnEllipse = new LineSegment(point, pointOnEllipse)
+      pointToPointOnEllipse.draw(ctx)
+    })
   })
 
   // cleanup

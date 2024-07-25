@@ -44,7 +44,7 @@ class LineSegmentExtended extends LineSegment {
   scale: number
 
   public constructor(src: Coor, dst: Coor, scale: number) {
-    const dstExtended = dst.add(dst.subtract(src).scale(scale).add(src))
+    const dstExtended = src.add(dst.subtract(src).scale(scale))
     super(src, dstExtended)
 
     this.dstOrig = dst
