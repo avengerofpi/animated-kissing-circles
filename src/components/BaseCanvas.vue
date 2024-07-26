@@ -143,7 +143,6 @@ function resetCanvas() {
     canvasRef.value.width/canvasScaleRef.value, canvasRef.value.height/canvasScaleRef.value
   )
   addShadedBorder()
-  addCrosshairsAtOrigin()
 }
 
 function addShadedBorder() {
@@ -192,19 +191,24 @@ function addCirclesAtCornersOfCanvas(radius: number, scaledWidth: number, scaled
 }
 
 function addCrosshairsAtOrigin() {
-  // const crosshairWidth = 264 // 26 * (4 + 6) + 4
-  // const crosshairHeight = 164 // 16 * (4 + 6) + 4
-  const crosshairWidth = initialWidth - (initialWidth % 20) + 24
-  const crosshairHeight = initialHeight - (initialHeight % 20) + 24
+  const origLineWidth = ctx.lineWidth
+  const origLineDash = ctx.getLineDash()
+
+  ctx.lineWidth = origLineWidth * 0.25
+  ctx.setLineDash([4, 6]);
+
+  const crosshairWidth = initialWidth*3 - ((initialWidth*3) % 20) + 24
+  const crosshairHeight = initialHeight*3 - ((initialHeight*3) % 20) + 24
 
   ctx.beginPath();
-  ctx.setLineDash([4, 6]);
   ctx.moveTo(-crosshairWidth / 2, 0)
   ctx.lineTo(crosshairWidth / 2, 0)
   ctx.moveTo(0, -crosshairHeight / 2)
   ctx.lineTo(0, crosshairHeight / 2)
   ctx.stroke()
-  ctx.setLineDash([]);
+
+  ctx.lineWidth = origLineWidth
+  ctx.setLineDash(origLineDash)
 }
 
 function addPointerDownCoor(radius: number) {
@@ -251,6 +255,7 @@ function step(timestamp: number) {
     stepAtLeastOnce.value = false
 }
   window.requestAnimationFrame(step);
+  addCrosshairsAtOrigin()
 }
 
 function handleResize(e: Event) {
