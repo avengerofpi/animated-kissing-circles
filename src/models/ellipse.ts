@@ -141,24 +141,21 @@ class Ellipse {
    * @param point point to compute distance-from-ellipse for
    */
   public pointOnEllipseInDirectionOfAnotherPoint(point: Coor, ctx: CanvasRenderingContext2D | null = null): [number, Coor] {
-    const adjustedPoint = point.subtract(this.center)
+    const adjustedPoint = point.subtract(this.center).rotate(-this.rotation)
     ctx && adjustedPoint.draw(ctx)
-    // const thetaFromCenterToPoint = Math.atan2(adjustedPoint.y, adjustedPoint.x)
-    // const tanAlpha2 = Math.atan2(adjustedPoint.y, adjustedPoint.x)
+    // TODO: deal with adjustedPoint.x == 0
     const tanAlpha2 = adjustedPoint.y / adjustedPoint.x
     const tanAlpha = (this.radiusX / this.radiusY) * tanAlpha2
     const alpha = Math.atan(tanAlpha)
     const thetaFromCenterToPoint = alpha
-    const thetaBeforeEllipseRotation = thetaFromCenterToPoint + this.rotation //+ (Math.PI/180 * 15)
-    // const thetaBeforeEllipseRotation = thetaFromCenterToPoint
 
-    const angleDegrees = (thetaBeforeEllipseRotation * 180/Math.PI).toFixed(2)
+    const angleDegrees = (thetaFromCenterToPoint * 180/Math.PI).toFixed(2)
     ctx && ctx.strokeText(angleDegrees, point.x+5, point.y+5)
 
     // const thetaStepSize = 1e-2
     // let nearestTheta = initialTheta
-    const pointOnOrigEllipse = this.getPointAtAngle(thetaBeforeEllipseRotation)
-    const opposingPointOnOrigEllipse = this.getPointAtAngle(thetaBeforeEllipseRotation + Math.PI)
+    const pointOnOrigEllipse = this.getPointAtAngle(thetaFromCenterToPoint)
+    const opposingPointOnOrigEllipse = this.getPointAtAngle(thetaFromCenterToPoint + Math.PI)
 
     const distToPointOnOrigEllipse = dist(point, pointOnOrigEllipse)
     const distToOpposingPointOnOrigEllipse = dist(point, opposingPointOnOrigEllipse)
@@ -173,8 +170,7 @@ class Ellipse {
 
     console.log(`point:                      ${point}`)
     console.log(`adjustedPoint:              ${adjustedPoint}`)
-    console.log(`thetaFromCenterToPoint:     ${thetaFromCenterToPoint.toFixed(3)} (${(thetaFromCenterToPoint*180/Math.PI).toFixed(3)})`)
-    console.log(`thetaBeforeEllipseRotation: ${thetaBeforeEllipseRotation.toFixed(3)} (${(thetaBeforeEllipseRotation*180/Math.PI).toFixed(3)})`)
+    console.log(`thetaBeforeEllipseRotation: ${thetaFromCenterToPoint.toFixed(3)} (${(thetaFromCenterToPoint*180/Math.PI).toFixed(3)})`)
     console.log(`pointOnEllipse:             ${pointOnOrigEllipse}`)
 
     return [closestDist, closestPoint]
