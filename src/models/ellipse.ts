@@ -18,7 +18,7 @@ class Ellipse {
   /** Radius along the major axis. */
   radiusMajor: number
   /** Radius along the minor axis. */
-  radiusMinorAxis: number
+  radiusMinor: number
 
   /**
    * Vertex points (endpoints on the major axis). Order is determined by the cananonical version of this ellipse
@@ -71,8 +71,8 @@ class Ellipse {
 
     // Interpreted params
     this.radiusMajor = Math.max(radiusX, radiusY)
-    this.radiusMinorAxis = Math.min(radiusX, radiusY)
-    this.radiusFoci = Math.sqrt(this.radiusMajor**2 - this.radiusMinorAxis**2)
+    this.radiusMinor = Math.min(radiusX, radiusY)
+    this.radiusFoci = Math.sqrt(this.radiusMajor**2 - this.radiusMinor**2)
 
     let baseVertex, baseCoVertex, baseFocalPoint
     if (radiusX >= radiusY) {
@@ -140,31 +140,20 @@ class Ellipse {
    *
    * @param point point to compute distance-from-ellipse for
    */
-  public pointOnEllipseInDirectionOfAnotherPoint(point: Coor): [number, Coor] {
-    // const baseEllipse = this.toBaseEllipse()
-    // const adjustedPoint = point.subtract(this.center).rotate(-this.rotation)
-    // // const projAdjustedPointOntoBaseMajorAxis = baseEllipse.vertices[0].projection(adjustedPoint)
-    // // const projAdjustedPointOntoBaseMinorAxis = baseEllipse.coVertices[0].projection(adjustedPoint)
-    // // const majorAxisScale = projAdjustedPointOntoBaseMajorAxis.magnitude() / this.radiusMajorAxis
-    // // const minorAxisScale = projAdjustedPointOntoBaseMinorAxis.magnitude() / this.radiusMinorAxis
-
-    // let initialTheta = 0
-    // if (adjustedPoint.x === 0) {
-    //   if (adjustedPoint.y === 0) {
-    //     console.warn(`The current point ${JSON.stringify(point)} is at the center of the ellipse`)
-    //   } else if (adjustedPoint.y > 0) {
-    //     initialTheta = 0.5 * Math.PI
-    //   } else {
-    //     initialTheta = 1.5 * Math.PI
-    //   }
-    // } else {
-    //   initialTheta = Math.atan2(adjustedPoint.y, adjustedPoint.x)
-    // }
-
+  public pointOnEllipseInDirectionOfAnotherPoint(point: Coor, ctx: CanvasRenderingContext2D | null = null): [number, Coor] {
     const adjustedPoint = point.subtract(this.center)
-    const thetaFromCenterToPoint = Math.atan2(adjustedPoint.y, adjustedPoint.x)
-    const thetaBeforeEllipseRotation = thetaFromCenterToPoint - this.rotation
+    ctx && adjustedPoint.draw(ctx)
+    // const thetaFromCenterToPoint = Math.atan2(adjustedPoint.y, adjustedPoint.x)
+    // const tanAlpha2 = Math.atan2(adjustedPoint.y, adjustedPoint.x)
+    const tanAlpha2 = adjustedPoint.y / adjustedPoint.x
+    const tanAlpha = (this.radiusX / this.radiusY) * tanAlpha2
+    const alpha = Math.atan(tanAlpha)
+    const thetaFromCenterToPoint = alpha
+    const thetaBeforeEllipseRotation = thetaFromCenterToPoint + this.rotation //+ (Math.PI/180 * 15)
     // const thetaBeforeEllipseRotation = thetaFromCenterToPoint
+
+    const angleDegrees = (thetaBeforeEllipseRotation * 180/Math.PI).toFixed(2)
+    ctx && ctx.strokeText(angleDegrees, point.x+5, point.y+5)
 
     // const thetaStepSize = 1e-2
     // let nearestTheta = initialTheta

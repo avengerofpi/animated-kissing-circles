@@ -17,7 +17,7 @@ describe('Ellipse', () => {
       expect.soft(ellipse.radiusY).toEqual(5)
       expect.soft(ellipse.rotation).toEqual(0)
       expect.soft(ellipse.radiusMajor).toEqual(5)
-      expect.soft(ellipse.radiusMinorAxis).toEqual(3)
+      expect.soft(ellipse.radiusMinor).toEqual(3)
       expect.soft(ellipse.radiusFoci).toEqual(4)
       expect.soft(ellipse.vertices).toEqual([new Coor(0, -5), new Coor(0, 5)])
       expect.soft(ellipse.coVertices).toEqual([new Coor(-3, 0), new Coor(3, 0)])
@@ -41,7 +41,7 @@ describe('Ellipse', () => {
       expect.soft(ellipse.radiusY).toEqual(3)
       expect.soft(ellipse.rotation).toEqual(Math.PI / 2)
       expect.soft(ellipse.radiusMajor).toEqual(5)
-      expect.soft(ellipse.radiusMinorAxis).toEqual(3)
+      expect.soft(ellipse.radiusMinor).toEqual(3)
       expect.soft(ellipse.radiusFoci).toEqual(4)
 
       expect.soft(dist(ellipse.vertices[0], new Coor(0, -5))).lessThan(distTolerance)
@@ -63,7 +63,7 @@ describe('Ellipse', () => {
       expect.soft(ellipse.radiusY).toEqual(3)
       expect.soft(ellipse.rotation).toEqual(-Math.PI / 4)
       expect.soft(ellipse.radiusMajor).toEqual(5)
-      expect.soft(ellipse.radiusMinorAxis).toEqual(3)
+      expect.soft(ellipse.radiusMinor).toEqual(3)
       expect.soft(ellipse.radiusFoci).toEqual(4)
 
       expect.soft(dist(ellipse.vertices[0], new Coor(1-2.5*Math.sqrt(2), 2+2.5*Math.sqrt(2)))).lessThan(distTolerance)

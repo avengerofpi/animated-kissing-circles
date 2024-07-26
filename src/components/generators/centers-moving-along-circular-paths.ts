@@ -233,10 +233,26 @@ function renderKissingCircles(centers: Coor[], ctx: CanvasRenderingContext2D) {
   // console.log(`running renderKissingCircles`)
   // const ellipses = computeEllipses(centers, ctx)
   const ellipses = [
-    // new Ellipse( 100,  200, 200, 100, Math.PI * 0.25),
-    // new Ellipse( 100, -200, 200, 100, Math.PI * 0.50),
-    // new Ellipse(-100,  200, 200, 100, Math.PI * 0.25),
-    new Ellipse(-100, -200, 200, 100, Math.PI * 1.00),
+    // new Ellipse(0, 0, 200,  50, Math.PI * 0.00),
+    // new Ellipse(0, 0, 200, 100, Math.PI * 0.00),
+    // new Ellipse(0, 0, 200, 150, Math.PI * 0.00),
+    // new Ellipse(0, 0, 200, 200, Math.PI * 0.00),
+    // new Ellipse(0, 0, 200, 175, Math.PI * 0.00),
+
+    // new Ellipse(-300, -200, 200, 100, Math.PI * 0.00),
+    // new Ellipse( 300, -200, 200, 100, Math.PI * 0.00),
+    // new Ellipse(-300,  200, 200, 100, Math.PI * 0.00),
+    new Ellipse( 300,  350, 200, 100, Math.PI * 0.00),
+    // new Ellipse(100, 200, 300, 125, Math.PI * 0.00),
+    // //
+    // new Ellipse(-100, -200, 200, 100, Math.PI * 0.25),
+    // new Ellipse(-100, -200, 200, 100, Math.PI * 0.25),
+    // new Ellipse(-100, -200, 200, 100, Math.PI * 0.50),
+    // new Ellipse(-100, -200, 200, 100, Math.PI * 0.25),
+    // new Ellipse(-100, -200, 200, 100, Math.PI * 1.00),
+    // //
+    // circle
+    // new Ellipse(-100, -200, 200, 200, Math.PI * 0.25),
   ]
   const origLineWidth = ctx.lineWidth
   ctx.lineWidth = origLineWidth * 0.75
@@ -287,26 +303,49 @@ function renderKissingCircles(centers: Coor[], ctx: CanvasRenderingContext2D) {
     // Draw center dot
     ellipse.center.draw(ctx, 3)
 
+    // Draw points around the permieter
+    const numPointsOnPerimeter = 16
+    for (let i=0; i<numPointsOnPerimeter; i++) {
+      const angle = i * (2*Math.PI / numPointsOnPerimeter)
+      const p = ellipse.getPointAtAngle(angle)
+      p.draw(ctx, 1)
+      const angleDegrees = (angle * 180/Math.PI).toFixed(2)
+      ctx.strokeText(angleDegrees, p.x+5, p.y+5)
+    }
+
     // Draw target point
     // Compute distToEllipse and draw line from point to it
-    const point = new Coor(0, 1000)
-    const points = [
-      new Coor(-100,  400),
-      new Coor( -50,  400),
-      new Coor(   0,  400),
-      new Coor(  50,  400),
-    ]
+    // const points = [
+    //   new Coor(-250,  400),
+    //   new Coor(-200,  400),
+    //   new Coor(-150,  400),
+    //   new Coor(-100,  400),
+    //   new Coor( -50,  400),
+    //   new Coor(   0,  400),
+    //   new Coor(  50,  400),
+    //   new Coor( 100,  400),
+    //   new Coor( 150,  400),
+    //   new Coor( 200,  400),
+    // ]
+    const numNeighborPoints = 50
+    const ellipseForPoints = new Ellipse(200, 340, 50, 250, 0)
+    const points = []
+    for (let i=1; i<=numNeighborPoints; i++) {
+      const angle = i * (2*Math.PI / (numNeighborPoints+1))
+      points.push(ellipseForPoints.getPointAtAngle(angle))
+    }
     points.forEach(point => {
-      point.draw(ctx, 3)
+      point.draw(ctx, 3, "green")
 
-      const [d, pointOnEllipse] = ellipse.pointOnEllipseInDirectionOfAnotherPoint(point)
+      const [d, pointOnEllipse] = ellipse.pointOnEllipseInDirectionOfAnotherPoint(point, ctx)
       pointOnEllipse.draw(ctx, 3)
-
-      const pointToPointOnEllipseExtended = new LineSegmentExtended(point, pointOnEllipse, 1.5)
-      pointToPointOnEllipseExtended.draw(ctx)
 
       const pointToPointOnEllipse = new LineSegment(point, pointOnEllipse)
       pointToPointOnEllipse.draw(ctx)
+
+      const pointToPointOnEllipseExtended = new LineSegmentExtended(point, pointOnEllipse, 2)
+      pointToPointOnEllipseExtended.draw(ctx)
+      pointToPointOnEllipseExtended.dst.draw(ctx)
     })
   })
 
