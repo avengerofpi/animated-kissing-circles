@@ -140,7 +140,7 @@ class Ellipse {
    *
    * @param point point to compute distance-from-ellipse for
    */
-  public pointOnEllipseInDirectionOfAnotherPoint(point: Coor, ctx: CanvasRenderingContext2D | null = null): [number, Coor] {
+  public pointOnEllipseInDirectionOfAnotherPoint(point: Coor): [number, Coor] {
     const adjustedPoint = point.subtract(this.center).rotate(-this.rotation)
 
     const thetaFromCenterToPoint = Math.atan2(this.radiusX * adjustedPoint.y, this.radiusY * adjustedPoint.x)
