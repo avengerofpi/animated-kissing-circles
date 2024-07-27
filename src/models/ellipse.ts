@@ -142,36 +142,15 @@ class Ellipse {
    */
   public pointOnEllipseInDirectionOfAnotherPoint(point: Coor, ctx: CanvasRenderingContext2D | null = null): [number, Coor] {
     const adjustedPoint = point.subtract(this.center).rotate(-this.rotation)
-    ctx && adjustedPoint.draw(ctx)
-    // TODO: deal with adjustedPoint.x == 0
-    const tanAlpha2 = adjustedPoint.y / adjustedPoint.x
-    const tanAlpha = (this.radiusX / this.radiusY) * tanAlpha2
-    const alpha = Math.atan(tanAlpha)
-    const thetaFromCenterToPoint = alpha
 
-    const angleDegrees = (thetaFromCenterToPoint * 180/Math.PI).toFixed(2)
-    ctx && ctx.strokeText(angleDegrees, point.x+5, point.y+5)
+    const thetaFromCenterToPoint = Math.atan2(this.radiusX * adjustedPoint.y, this.radiusY * adjustedPoint.x)
 
     // const thetaStepSize = 1e-2
     // let nearestTheta = initialTheta
     const pointOnOrigEllipse = this.getPointAtAngle(thetaFromCenterToPoint)
-    const opposingPointOnOrigEllipse = this.getPointAtAngle(thetaFromCenterToPoint + Math.PI)
-
     const distToPointOnOrigEllipse = dist(point, pointOnOrigEllipse)
-    const distToOpposingPointOnOrigEllipse = dist(point, opposingPointOnOrigEllipse)
-    let closestPoint, closestDist
-    if (distToPointOnOrigEllipse < distToOpposingPointOnOrigEllipse) {
-      closestPoint = pointOnOrigEllipse
-      closestDist = distToPointOnOrigEllipse
-    } else {
-      closestPoint = opposingPointOnOrigEllipse
-      closestDist = distToOpposingPointOnOrigEllipse
-    }
-
-    console.log(`point:                      ${point}`)
-    console.log(`adjustedPoint:              ${adjustedPoint}`)
-    console.log(`thetaBeforeEllipseRotation: ${thetaFromCenterToPoint.toFixed(3)} (${(thetaFromCenterToPoint*180/Math.PI).toFixed(3)})`)
-    console.log(`pointOnEllipse:             ${pointOnOrigEllipse}`)
+    const closestPoint = pointOnOrigEllipse
+    const closestDist = distToPointOnOrigEllipse
 
     return [closestDist, closestPoint]
   }
