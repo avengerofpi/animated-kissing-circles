@@ -247,8 +247,19 @@ function debugModeAnimations() {
   }
 }
 
+let startTimeMillis, currentTimeMillis, timeDiffMillis, frameRate, numSteps = 0
 function step(timestamp: number) {
+  if (props.animating) {
+    currentTimeMillis = (document.timeline.currentTime as number)
+    startTimeMillis = startTimeMillis || currentTimeMillis
+    timeDiffMillis = currentTimeMillis - startTimeMillis
+    numSteps += 1
+    frameRate = numSteps / (timeDiffMillis / 1000)
+    console.log(`avg framerate: ${frameRate}`)
+  }
+
   if (props.animating || stepAtLeastOnce.value) {
+
     resetCanvas()
     addShapes.value(ctx, timestamp)
     debugModeAnimations()

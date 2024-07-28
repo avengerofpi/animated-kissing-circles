@@ -10,7 +10,7 @@ import { LineSegment, LineSegmentExtended } from '@/models/line-segment'
 
 const title = "Centers Moving Along Circular Paths"
 
-const numCirclesRef: Ref<number> = ref(4)
+const numCirclesRef: Ref<number> = ref(500)
 const animationCyclesPerMinuteRef: Ref<number> = ref(3)
 const numArms = 6
 
@@ -174,7 +174,7 @@ function computeEllipses(centers: Coor[]): Ellipse[] {
       radiusY = (1/3) * radiusX
     } else {
       // Remaining ellipses will generate based on nearest existing ellipse
-      console.log(`Processing ellipse #${ellipses.length}`)
+      // console.log(`Processing ellipse #${ellipses.length}`)
       ellipses.forEach((otherEllipse, index) => {
         const [distToOtherEllipse, pointOnOtherEllipse] = otherEllipse.pointOnEllipseInDirectionOfAnotherPoint(center)
         if (distToOtherEllipse < distToNearestNeighbor) {
@@ -182,14 +182,14 @@ function computeEllipses(centers: Coor[]): Ellipse[] {
           nearestPointOnNeighbor = pointOnOtherEllipse
         }
 
-        console.log(`  distance to ellipse ${index} = ${distToOtherEllipse}`)
+        // console.log(`  distance to ellipse ${index} = ${distToOtherEllipse}`)
       })
 
       const diffX = nearestPointOnNeighbor.x - center.x
       const diffY = nearestPointOnNeighbor.y - center.y
       if (diffY === 0) {
         if (diffX === 0) {
-          console.warn(`The current point ${JSON.stringify(center)} is the same as another point`)
+          // console.warn(`The current point ${JSON.stringify(center)} is the same as another point`)
         } else if (diffX > 0) {
           rotation = 0.5 * Math.PI
         } else {
@@ -200,7 +200,7 @@ function computeEllipses(centers: Coor[]): Ellipse[] {
       }
       radiusX = distToNearestNeighbor
       radiusY = (2/3) * radiusX
-      console.log(`-----------------------------`)
+      // console.log(`-----------------------------`)
     }
 
     const ellipse: Ellipse = new Ellipse(center.x, center.y, radiusX, radiusY, rotation)
