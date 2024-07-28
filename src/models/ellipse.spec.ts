@@ -90,39 +90,39 @@ describe('Ellipse', () => {
 
   describe('computes accurate pointOnEllipseInDirectionOfAnotherPoint', () => {
     it('for non-rotated ellipse at origin', () => {
-      expect.soft(new Ellipse(0, 0, 3, 5, 0).pointOnEllipseInDirectionOfAnotherPoint(new Coor( 10,   0))[0]).toEqual(7)
-      expect.soft(new Ellipse(0, 0, 3, 5, 0).pointOnEllipseInDirectionOfAnotherPoint(new Coor(  0,  10))[0]).toEqual(5)
-      expect.soft(new Ellipse(0, 0, 3, 5, 0).pointOnEllipseInDirectionOfAnotherPoint(new Coor(-10,   0))[0]).toEqual(7)
-      expect.soft(new Ellipse(0, 0, 3, 5, 0).pointOnEllipseInDirectionOfAnotherPoint(new Coor(  0, -10))[0]).toEqual(5)
+      expect.soft(new Ellipse(0, 0, 3, 5, 0).pointOnEllipseInDirectionOfAnotherPoint(new Coor( 10,   0))[1]).toEqual(7**2)
+      expect.soft(new Ellipse(0, 0, 3, 5, 0).pointOnEllipseInDirectionOfAnotherPoint(new Coor(  0,  10))[1]).toEqual(5**2)
+      expect.soft(new Ellipse(0, 0, 3, 5, 0).pointOnEllipseInDirectionOfAnotherPoint(new Coor(-10,   0))[1]).toEqual(7**2)
+      expect.soft(new Ellipse(0, 0, 3, 5, 0).pointOnEllipseInDirectionOfAnotherPoint(new Coor(  0, -10))[1]).toEqual(5**2)
     })
 
     it('for a rotated ellipse at origin (1)', () => {
-      expect.soft(new Ellipse(0, 0, 3, 5, Math.PI * 0.5).pointOnEllipseInDirectionOfAnotherPoint(new Coor(0, 10))[0]).toEqual(7)
-      expect.soft(new Ellipse(0, 0, 3, 5, Math.PI * 1.0).pointOnEllipseInDirectionOfAnotherPoint(new Coor(0, 10))[0]).toEqual(5)
-      expect.soft(new Ellipse(0, 0, 3, 5, Math.PI * 1.5).pointOnEllipseInDirectionOfAnotherPoint(new Coor(0, 10))[0]).toEqual(7)
-      expect.soft(new Ellipse(0, 0, 3, 5, Math.PI * 2.0).pointOnEllipseInDirectionOfAnotherPoint(new Coor(0, 10))[0]).toEqual(5)
+      expect.soft(new Ellipse(0, 0, 3, 5, Math.PI * 0.5).pointOnEllipseInDirectionOfAnotherPoint(new Coor(0, 10))[1]).toEqual(7**2)
+      expect.soft(new Ellipse(0, 0, 3, 5, Math.PI * 1.0).pointOnEllipseInDirectionOfAnotherPoint(new Coor(0, 10))[1]).toEqual(5**2)
+      expect.soft(new Ellipse(0, 0, 3, 5, Math.PI * 1.5).pointOnEllipseInDirectionOfAnotherPoint(new Coor(0, 10))[1]).toEqual(7**2)
+      expect.soft(new Ellipse(0, 0, 3, 5, Math.PI * 2.0).pointOnEllipseInDirectionOfAnotherPoint(new Coor(0, 10))[1]).toEqual(5**2)
     })
 
     it('for a rotated ellipse at origin (2)', () => {
-      expect.soft(new Ellipse(0, 0, 5, 3, Math.PI * 0.5).pointOnEllipseInDirectionOfAnotherPoint(new Coor(0, 10))[0]).toEqual(5)
-      expect.soft(new Ellipse(0, 0, 5, 3, Math.PI * 1.0).pointOnEllipseInDirectionOfAnotherPoint(new Coor(0, 10))[0]).toEqual(7)
-      expect.soft(new Ellipse(0, 0, 5, 3, Math.PI * 1.5).pointOnEllipseInDirectionOfAnotherPoint(new Coor(0, 10))[0]).toEqual(5)
-      expect.soft(new Ellipse(0, 0, 5, 3, Math.PI * 2.0).pointOnEllipseInDirectionOfAnotherPoint(new Coor(0, 10))[0]).toEqual(7)
+      expect.soft(new Ellipse(0, 0, 5, 3, Math.PI * 0.5).pointOnEllipseInDirectionOfAnotherPoint(new Coor(0, 10))[1]).toEqual(5**2)
+      expect.soft(new Ellipse(0, 0, 5, 3, Math.PI * 1.0).pointOnEllipseInDirectionOfAnotherPoint(new Coor(0, 10))[1]).toEqual(7**2)
+      expect.soft(new Ellipse(0, 0, 5, 3, Math.PI * 1.5).pointOnEllipseInDirectionOfAnotherPoint(new Coor(0, 10))[1]).toEqual(5**2)
+      expect.soft(new Ellipse(0, 0, 5, 3, Math.PI * 2.0).pointOnEllipseInDirectionOfAnotherPoint(new Coor(0, 10))[1]).toEqual(7**2)
     })
 
     it('for a non-rotated ellipse NOT at origin (1)', () => {
-      expect.soft(new Ellipse(1, 2, 5, 3, 0).pointOnEllipseInDirectionOfAnotherPoint(new Coor(11,  2))[0]).toEqual(5)
-      expect.soft(new Ellipse(1, 2, 5, 3, 0).pointOnEllipseInDirectionOfAnotherPoint(new Coor( 1, 12))[0]).toEqual(7)
-      expect.soft(new Ellipse(1, 2, 5, 3, 0).pointOnEllipseInDirectionOfAnotherPoint(new Coor(-9,  2))[0]).toEqual(5)
-      expect.soft(new Ellipse(1, 2, 5, 3, 0).pointOnEllipseInDirectionOfAnotherPoint(new Coor( 1,  -8))[0]).toEqual(7)
+      expect.soft(new Ellipse(1, 2, 5, 3, 0).pointOnEllipseInDirectionOfAnotherPoint(new Coor(11,  2))[1]).toEqual(5**2)
+      expect.soft(new Ellipse(1, 2, 5, 3, 0).pointOnEllipseInDirectionOfAnotherPoint(new Coor( 1, 12))[1]).toEqual(7**2)
+      expect.soft(new Ellipse(1, 2, 5, 3, 0).pointOnEllipseInDirectionOfAnotherPoint(new Coor(-9,  2))[1]).toEqual(5**2)
+      expect.soft(new Ellipse(1, 2, 5, 3, 0).pointOnEllipseInDirectionOfAnotherPoint(new Coor( 1,  -8))[1]).toEqual(7**2)
     })
 
     it('for a rotated ellipse NOT at origin (2)', () => {
       // expect.soft(Math.abs(new Ellipse(1, 2, 5, 3, -Math.PI / 4).distToPoint(new Coor(1+3.0*Math.sqrt(2), 2-3.0*Math.sqrt(2)))[0] - 1)).lessThan(distTolerance)
-      expect.soft(new Ellipse(1, 2, 5, 3, -Math.PI / 4).pointOnEllipseInDirectionOfAnotherPoint(new Coor(1+3.0*Math.sqrt(2), 2-3.0*Math.sqrt(2)))[0].toFixed(9)).toEqual('1.000000000')
-      expect.soft(new Ellipse(1, 2, 5, 3, -Math.PI / 4).pointOnEllipseInDirectionOfAnotherPoint(new Coor(1+2.0*Math.sqrt(2), 2-2.0*Math.sqrt(2)))[0].toFixed(9)).toEqual('1.000000000')
+      expect.soft(new Ellipse(1, 2, 5, 3, -Math.PI / 4).pointOnEllipseInDirectionOfAnotherPoint(new Coor(1+3.0*Math.sqrt(2), 2-3.0*Math.sqrt(2)))[1].toFixed(9)).toEqual('1.000000000')
+      expect.soft(new Ellipse(1, 2, 5, 3, -Math.PI / 4).pointOnEllipseInDirectionOfAnotherPoint(new Coor(1+2.0*Math.sqrt(2), 2-2.0*Math.sqrt(2)))[1].toFixed(9)).toEqual('1.000000000')
       // expect.soft(new Ellipse(1, 2, 5, 3, -Math.PI / 4).distToPoint(new Coor(1+3.0*Math.sqrt(2), 2-3.0*Math.sqrt(2)))[0]).toEqual(1)
-      expect.soft(new Ellipse(1, 2, 5, 3, -Math.PI / 4).pointOnEllipseInDirectionOfAnotherPoint(new Coor(1+3.0*Math.sqrt(2), 2-3.0*Math.sqrt(2)))[0].toFixed(9)).toEqual('1.000000000')
+      expect.soft(new Ellipse(1, 2, 5, 3, -Math.PI / 4).pointOnEllipseInDirectionOfAnotherPoint(new Coor(1+3.0*Math.sqrt(2), 2-3.0*Math.sqrt(2)))[1].toFixed(9)).toEqual('1.000000000')
     })
 
     it('for an ellipse that is the unit circle at origin', () => {
@@ -131,8 +131,8 @@ describe('Ellipse', () => {
         const ellipse = new Ellipse(0, 0, 1, 1, rotation)
 
         const point = new Coor(2, 2)
-        const [distToEllipse, pointOnEllipse] = ellipse.pointOnEllipseInDirectionOfAnotherPoint(point)
-        expect.soft(distToEllipse - (Math.sqrt(9-4*Math.sqrt(2)))).toBeLessThan(distTolerance)
+        const [pointOnEllipse, distSquaredToEllipse] = ellipse.pointOnEllipseInDirectionOfAnotherPoint(point)
+        expect.soft(distSquaredToEllipse - (Math.sqrt(9-4*Math.sqrt(2)))**2).toBeLessThan(distTolerance)
         expect.soft(dist(pointOnEllipse, new Coor(Math.sqrt(2)/2, Math.sqrt(2)/2))).toBeLessThan(distTolerance)
       })
     })
@@ -143,8 +143,8 @@ describe('Ellipse', () => {
         const ellipse = new Ellipse(1, 2, 1, 1, rotation)
 
         const point = new Coor(3, 4)
-        const [distToEllipse, pointOnEllipse] = ellipse.pointOnEllipseInDirectionOfAnotherPoint(point)
-        expect.soft(distToEllipse - (Math.sqrt(9-4*Math.sqrt(2)))).toBeLessThan(distTolerance)
+        const [pointOnEllipse, distSquaredToEllipse] = ellipse.pointOnEllipseInDirectionOfAnotherPoint(point)
+        expect.soft(distSquaredToEllipse - (Math.sqrt(9-4*Math.sqrt(2)))**2).toBeLessThan(distTolerance)
         expect.soft(dist(pointOnEllipse, new Coor(1+Math.sqrt(2)/2, 2+Math.sqrt(2)/2))).toBeLessThan(distTolerance)
       })
     })
@@ -156,23 +156,6 @@ describe('Ellipse', () => {
     const expectedBaseEllipse = new Ellipse(0, 0, 3, 5, 0)
 
     expect.soft(baseEllipse).toEqual(expectedBaseEllipse)
-
-    // expect.soft(baseEllipse.center).toEqual(new Coor(0, 0))
-    // expect.soft(baseEllipse.radiusX).toEqual(3)
-    // expect.soft(baseEllipse.radiusY).toEqual(5)
-    // expect.soft(baseEllipse.rotation).toEqual(0)
-    // expect.soft(baseEllipse.radiusMajorAxis).toEqual(5)
-    // expect.soft(baseEllipse.radiusMinorAxis).toEqual(3)
-    // expect.soft(baseEllipse.radiusFoci).toEqual(4)
-
-    // const distTolerance = 1e-10
-    // expect.soft(dist(baseEllipse.vertices[0], new Coor(0, -5))).lessThan(distTolerance)
-    // expect.soft(dist(baseEllipse.vertices[1], new Coor(0,  5))).lessThan(distTolerance)
-    // expect.soft(dist(baseEllipse.coVertices[0], new Coor(-3, 0))).lessThan(distTolerance)
-    // expect.soft(dist(baseEllipse.coVertices[1], new Coor( 3, 0))).lessThan(distTolerance)
-    // expect.soft(dist(baseEllipse.foci[0], new Coor(0, -4))).lessThan(distTolerance)
-    // expect.soft(dist(baseEllipse.foci[1], new Coor(0,  4))).lessThan(distTolerance)
-    // expect.soft(baseEllipse.isCircle).toEqual(false)
   })
 
   it('compute correct getPointAtAngle', () => {
