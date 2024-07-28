@@ -48,4 +48,14 @@ describe('Coor', () => {
     expect.soft(a.scale(1.5)).toEqual(new Coor(1.5, 13.5))
     expect.soft(a.scale(0)).toEqual(new Coor(0, 0))
   })
+
+  // it('scales correctly', () => {
+  //   const a = new Coor(1, 9)
+  // })
+  // const c = new Coor(0, 0)
+  // c.applyRotationAndOffset
+  // c.dotProduct
+  // c.magnitude
+  // c.projection
+  // c.rotate_90_degrees
 })

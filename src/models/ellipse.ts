@@ -1,4 +1,4 @@
-import { Coor, dist } from './coor'
+import { Coor, dist, distSquared } from './coor'
 
 /**
  * Class to capture ellipse shapes.
@@ -140,7 +140,7 @@ class Ellipse {
    *
    * @param point point to compute distance-from-ellipse for
    */
-  public pointOnEllipseInDirectionOfAnotherPoint(point: Coor): [number, Coor] {
+  public pointOnEllipseInDirectionOfAnotherPoint(point: Coor): [Coor, number] {
     const adjustedPoint = point.subtract(this.center).rotate(-this.rotation)
 
     const thetaFromCenterToPoint = Math.atan2(this.radiusX * adjustedPoint.y, this.radiusY * adjustedPoint.x)
@@ -148,11 +148,11 @@ class Ellipse {
     // const thetaStepSize = 1e-2
     // let nearestTheta = initialTheta
     const pointOnOrigEllipse = this.getPointAtAngle(thetaFromCenterToPoint)
-    const distToPointOnOrigEllipse = dist(point, pointOnOrigEllipse)
+    const squaredDistToPointOnOrigEllipse = distSquared(point, pointOnOrigEllipse)
     const closestPoint = pointOnOrigEllipse
-    const closestDist = distToPointOnOrigEllipse
+    const closestDistSquared = squaredDistToPointOnOrigEllipse
 
-    return [closestDist, closestPoint]
+    return [closestPoint, closestDistSquared]
   }
 
   public draw(ctx: CanvasRenderingContext2D, fillStyle: string | CanvasGradient | CanvasPattern = `hsl(50 100% 50% / 40%)`) {

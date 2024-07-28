@@ -100,7 +100,17 @@ class Coor {
 }
 
 function dist(a: Coor, b: Coor): number {
-  return Math.sqrt((a.x - b.x)**2 + (a.y - b.y)**2)
+  return Math.sqrt(distSquared(a, b))
 }
 
-export { Coor, dist }
+/** Square of distance between two points.
+ * 
+ * Almost compute distance, just abstain from taking the final square root.
+ * Useful, for example, when you don't need precise distance, just a method
+ * that maintains the same sort order as distance.
+ */
+function distSquared(a: Coor, b: Coor): number {
+  return (a.x - b.x)**2 + (a.y - b.y)**2
+}
+
+export { Coor, dist, distSquared }

@@ -88,7 +88,7 @@ describe('Ellipse', () => {
     })
   })
 
-  describe('computes accurate distToPoint', () => {
+  describe('computes accurate pointOnEllipseInDirectionOfAnotherPoint', () => {
     it('for non-rotated ellipse at origin', () => {
       expect.soft(new Ellipse(0, 0, 3, 5, 0).pointOnEllipseInDirectionOfAnotherPoint(new Coor( 10,   0))[0]).toEqual(7)
       expect.soft(new Ellipse(0, 0, 3, 5, 0).pointOnEllipseInDirectionOfAnotherPoint(new Coor(  0,  10))[0]).toEqual(5)

@@ -39,7 +39,7 @@ import { Dimensions } from '../models/dimensions'
 import { debounce } from 'lodash'
 
 const toggleAnimating: Ref<Function> = defineModel<Function>("toggleAnimating", { required: true, default: () => {} })
-const addShapes: Ref<Function> = defineModel<Function>("addShapes", { required: true, default: (ctx, timestamp) => {} })
+const addShapes: Ref<Function> = defineModel<Function>("addShapes", { required: true, default: (ctx: CanvasRenderingContext2D, timestamp: number) => {} })
 const addDebugShapes: Ref<Function> = defineModel<Function>("addDebugShapes", { required: true, default: (ctx) => {} })
 const stepAtLeastOnce: Ref<boolean> = defineModel<boolean>("stepAtLeastOnce", { required: true, default: true })
 

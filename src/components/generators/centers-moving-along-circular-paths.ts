@@ -1,7 +1,7 @@
 import { ref, watch } from 'vue'
 import type { Ref } from 'vue'
 
-import { Coor, dist } from '@/models/coor'
+import { Coor, dist, distSquared } from '@/models/coor'
 import { Circle } from '@/models/circle'
 import { Ellipse } from '@/models/ellipse'
 import { MovingCoorOnACircle } from '@/models/moving-coor-on-a-circle'
@@ -140,7 +140,7 @@ function computeEllipses(centers: Coor[]): Ellipse[] {
   // TODO: deal with `centers` having 0 or 1 entries
   while (unprocessedCenters.length) {
     const center = unprocessedCenters.pop() as Coor
-    let distToNearestNeighbor: number = Number.MAX_VALUE
+    let distSquaredToNearestNeighbor: number = Number.MAX_VALUE
     let nearestPointOnNeighbor: Coor = new Coor(0, 0) // should get replaced before use
     // let nearestNeighborCenter: Coor = center
     let radiusX: number = 0
@@ -151,10 +151,10 @@ function computeEllipses(centers: Coor[]): Ellipse[] {
       // First ellipse will be 1/3 distance between first point and nearest point.
       let nearestNeighborCenter: Coor = center
       unprocessedCenters.forEach((B) => {
-        const distToB = dist(center, B)
-        if (distToB < distToNearestNeighbor) {
+        const distSquaredToB = distSquared(center, B)
+        if (distSquaredToB < distSquaredToNearestNeighbor) {
           nearestNeighborCenter = B
-          distToNearestNeighbor = distToB
+          distSquaredToNearestNeighbor = distSquaredToB
         }
       })
       const diffX = nearestNeighborCenter.x - center.x
@@ -170,19 +170,19 @@ function computeEllipses(centers: Coor[]): Ellipse[] {
       } else {
         rotation = Math.atan(diffY/diffX)
       }
-      radiusX = distToNearestNeighbor * (2/3)
+      radiusX = Math.sqrt(distSquaredToNearestNeighbor) * (2/3)
       radiusY = (1/3) * radiusX
     } else {
       // Remaining ellipses will generate based on nearest existing ellipse
       // console.log(`Processing ellipse #${ellipses.length}`)
       ellipses.forEach((otherEllipse, index) => {
-        const [distToOtherEllipse, pointOnOtherEllipse] = otherEllipse.pointOnEllipseInDirectionOfAnotherPoint(center)
-        if (distToOtherEllipse < distToNearestNeighbor) {
-          distToNearestNeighbor = distToOtherEllipse
+        const [pointOnOtherEllipse, distSquaredToOtherEllipse] = otherEllipse.pointOnEllipseInDirectionOfAnotherPoint(center)
+        if (distSquaredToOtherEllipse < distSquaredToNearestNeighbor) {
+          distSquaredToNearestNeighbor = distSquaredToOtherEllipse
           nearestPointOnNeighbor = pointOnOtherEllipse
         }
 
-        // console.log(`  distance to ellipse ${index} = ${distToOtherEllipse}`)
+        // console.log(`  distance to ellipse ${index} = ${distSquaredToOtherEllipse}`)
       })
 
       const diffX = nearestPointOnNeighbor.x - center.x
@@ -198,7 +198,7 @@ function computeEllipses(centers: Coor[]): Ellipse[] {
       } else {
         rotation = Math.atan2(diffY, diffX)
       }
-      radiusX = distToNearestNeighbor
+      radiusX = Math.sqrt(distSquaredToNearestNeighbor)
       radiusY = (2/3) * radiusX
       // console.log(`-----------------------------`)
     }
