@@ -4,6 +4,12 @@ import { Coor, dist, distSquared } from './coor'
  * Class to capture ellipse shapes.
  */
 class Ellipse {
+  /** How close a point has to be to be considered a point on the ellipse.
+   *
+   * Used for `Ellipse.arithmeticDistance`.
+   */
+  static distanceThreshold = 1e-8
+
   /** Center of the ellipse */
   center: Coor
 
@@ -109,8 +115,28 @@ class Ellipse {
 
     return new Coor(x, y)
   }
+
+  /** Determine whether a point is close enough to the ellipse to be considered on it.
+   *
+   * Uses `arithmeticDistance`, which might not actually be a good metric. I
+   * haven't learned enough about it to know for sure, though.
+  */
   public isPointOnShape(point: Coor): boolean {
-    return this.pointOnEllipseInDirectionOfAnotherPoint(point)[0] === 0
+    return this.arithmeticDistance(point) < Ellipse.distanceThreshold
+  }
+
+  /** Compute the "arithmetic distance" between a point and the ellipse.
+   *
+   * The arithmetic distance is derived from the ellipse equation
+   * ```
+   *  (x/radiusX)**2 + (y/radiusY)**2 -1 = 0
+   * ```
+   * For a point truly on the ellipse, this equation holds true (by definition).
+   * To accomodate floating point imprecission, we use an inquality with a small positive bound,
+   * `Ellipse.distanceThreshold`.
+   */
+  public arithmeticDistance(point: Coor): number {
+    return (point.x/this.radiusX)**2 + (point.y/this.radiusY)**2 - 1
   }
 
   // /**

@@ -182,4 +182,8 @@ describe('Ellipse', () => {
     expect.soft(dist(ellipseC.getPointAtAngle(Math.PI*1.5), new Coor(1.5*sqrt2+1, -1.5*sqrt2+2))).lessThan(distTolerance)
 
   })
+
+  // const a = new Ellipse(0, 0, 1, 1, 1)
+  // a.isPointOnShape
+  // a.arithmeticDistance
 })
