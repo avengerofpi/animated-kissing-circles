@@ -10,7 +10,7 @@ import { LineSegment, LineSegmentExtended } from '@/models/line-segment'
 
 const title = "Centers Moving Along Circular Paths"
 
-const numCirclesRef: Ref<number> = ref(500)
+const numCirclesRef: Ref<number> = ref(100)
 const animationCyclesPerMinuteRef: Ref<number> = ref(3)
 const numArms = 6
 
@@ -141,7 +141,6 @@ function computeEllipses(centers: Coor[]): Ellipse[] {
   while (unprocessedCenters.length) {
     const center = unprocessedCenters.pop() as Coor
     let distSquaredToNearestNeighbor: number = Number.MAX_VALUE
-    let nearestPointOnNeighbor: Coor = new Coor(0, 0) // should get replaced before use
     // let nearestNeighborCenter: Coor = center
     let radiusX: number = 0
     let radiusY: number = 0
@@ -175,31 +174,28 @@ function computeEllipses(centers: Coor[]): Ellipse[] {
     } else {
       // Remaining ellipses will generate based on nearest existing ellipse
       // console.log(`Processing ellipse #${ellipses.length}`)
-      ellipses.forEach((otherEllipse, index) => {
-        const [pointOnOtherEllipse, distSquaredToOtherEllipse] = otherEllipse.pointOnEllipseInDirectionOfAnotherPoint(center)
-        if (distSquaredToOtherEllipse < distSquaredToNearestNeighbor) {
-          distSquaredToNearestNeighbor = distSquaredToOtherEllipse
-          nearestPointOnNeighbor = pointOnOtherEllipse
-        }
+      let radiusYscale = 1/3
+      const distSquaredAndPointsOnOtherEllipses: Array<[Coor, number]> = ellipses
+        .map((otherEllipse, index) => otherEllipse.pointOnEllipseInDirectionOfAnotherPoint(center))
+      distSquaredAndPointsOnOtherEllipses.sort(([p1, d1], [p2, d2]) => (d1 < d2) ? -1 : ((d1 === d2) ? 0 : 1))
 
-        // console.log(`  distance to ellipse ${index} = ${distSquaredToOtherEllipse}`)
-      })
+      let nearestPointOnNeighbor: Coor
+      [nearestPointOnNeighbor, distSquaredToNearestNeighbor] = distSquaredAndPointsOnOtherEllipses[0]
+      if (ellipses.length > 1) {
+        const nextNearestDistSuared = distSquaredAndPointsOnOtherEllipses[1][1]
+        radiusYscale = (Math.sqrt(distSquaredToNearestNeighbor)+1000) / (Math.sqrt(nextNearestDistSuared) + 1000)
+      }
 
       const diffX = nearestPointOnNeighbor.x - center.x
       const diffY = nearestPointOnNeighbor.y - center.y
-      if (diffY === 0) {
-        if (diffX === 0) {
-          // console.warn(`The current point ${JSON.stringify(center)} is the same as another point`)
-        } else if (diffX > 0) {
-          rotation = 0.5 * Math.PI
-        } else {
-          rotation = 1.5 * Math.PI
-        } 
+      if (distSquaredToNearestNeighbor == 0) {
+        console.warn(`The current point ${JSON.stringify(center)} is the same as another point`)
       } else {
         rotation = Math.atan2(diffY, diffX)
       }
       radiusX = Math.sqrt(distSquaredToNearestNeighbor)
-      radiusY = (2/3) * radiusX
+      radiusY = radiusX * radiusYscale
+      // console.log(`radiusY / radiusX = ${radiusYscale.toFixed(3)}`)
       // console.log(`-----------------------------`)
     }
 
