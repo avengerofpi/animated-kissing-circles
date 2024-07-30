@@ -311,8 +311,8 @@ function updateCanvasScaledDimensions() {
 // ************************* PANNING/SCALING *************************
 // Panning and zooming. See https://codepen.io/chengarda/pen/wRxoyB for open source example
 
-let canvasOffsetRef = ref(new Coor(0, 0))
-let canvasScaledDimensionsRef = ref(new Coor(0, 0))
+let canvasOffsetRef: Ref<Coor> = ref(new Coor(0, 0))
+let canvasScaledDimensionsRef: Ref<Coor> = ref(new Coor(0, 0))
 
 let canvasZoomLevelRef: Ref<number> = ref(0)
 const MIN_ZOOM_LEVEL = -40
