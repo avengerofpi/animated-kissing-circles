@@ -333,12 +333,6 @@ function _addShapes(ctx: CanvasRenderingContext2D, timestamp: number) {
   })
   renderKissingEllipses(kissingEllipseCenters, ctx)
 
-  // const kissingCircleCenters: Coor[] = movingCoorsOnCircles.value.map(movingCoorOnCircle => {
-  //   return movingCoorOnCircle.initialCoor
-  // })
-
-  renderKissingEllipses(kissingEllipseCenters, ctx)
-
   if (stopAnimationFlag.value) {
     stopAnimationFlag.value = false
     animating.value = false
