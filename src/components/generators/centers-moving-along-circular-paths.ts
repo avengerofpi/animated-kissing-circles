@@ -5,10 +5,8 @@ import { Coor, dist, distSquared } from '@/models/coor'
 import { Circle } from '@/models/circle'
 import { Ellipse } from '@/models/ellipse'
 import { MovingCoorOnACircle } from '@/models/moving-coor-on-a-circle'
-import { CircleWithRadiusLine } from '@/models/circle-with-radius-line'
-import { LineSegment, LineSegmentExtended } from '@/models/line-segment'
 
-const title = "Centers Moving Along Circular Paths"
+const title = "Ellipses with Centers Moving Along Circular Paths"
 
 const numCirclesRef: Ref<number> = ref(100)
 const animationCyclesPerMinuteRef: Ref<number> = ref(3)
@@ -212,7 +210,7 @@ function computeEllipses(centers: Coor[]): Ellipse[] {
   return ellipses
 }
 
-function renderKissingCircles(centers: Coor[], ctx: CanvasRenderingContext2D) {
+function renderKissingEllipses(centers: Coor[], ctx: CanvasRenderingContext2D) {
   // console.log(`running renderKissingCircles`)
   const ellipses = computeEllipses(centers)
   const origLineWidth = ctx.lineWidth
@@ -330,16 +328,16 @@ function _addShapes(ctx: CanvasRenderingContext2D, timestamp: number) {
   // Loop animation, instead of stop animation after an animation cycle
   const numCycles = elapsed * animationCyclesPerMinuteRef.value / 60000
 
-  const kissingCircleCenters: Coor[] = movingCoorsOnCircles.value.map(movingCoorOnCircle => {
+  const kissingEllipseCenters: Coor[] = movingCoorsOnCircles.value.map(movingCoorOnCircle => {
     return movingCoorOnCircle.getCoorAfterCycles(numCycles)
   })
-  renderKissingCircles(kissingCircleCenters, ctx)
+  renderKissingEllipses(kissingEllipseCenters, ctx)
 
   // const kissingCircleCenters: Coor[] = movingCoorsOnCircles.value.map(movingCoorOnCircle => {
   //   return movingCoorOnCircle.initialCoor
   // })
 
-  renderKissingCircles(kissingCircleCenters, ctx)
+  renderKissingEllipses(kissingEllipseCenters, ctx)
 
   if (stopAnimationFlag.value) {
     stopAnimationFlag.value = false
