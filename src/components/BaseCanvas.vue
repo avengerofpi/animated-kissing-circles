@@ -171,7 +171,10 @@ function addShadedBorder() {
   ctx.fillStyle = currentFillStyle
 }
 
-function addCirclesAtCornersOfCanvas(radius: number, scaledWidth: number, scaledHeight: number) {
+function addCirclesAtCornersOfCanvas() {
+  const scaledWidth = canvasScaledDimensionsRef.value.x
+  const scaledHeight = canvasScaledDimensionsRef.value.y
+  const radius = Math.min(scaledWidth, scaledHeight) / 20
   const offset = canvasOffsetRef.value
 
   ctx.beginPath();
@@ -211,7 +214,11 @@ function addCrosshairsAtOrigin() {
   ctx.setLineDash(origLineDash)
 }
 
-function addPointerDownCoor(radius: number) {
+function addPointerDownCoor() {
+  const scaledWidth = canvasScaledDimensionsRef.value.x
+  const scaledHeight = canvasScaledDimensionsRef.value.y
+  const radius = Math.min(scaledWidth, scaledHeight) / 20
+
   ctx.beginPath()
   ctx.arc(lastPointerDownCoor.x, lastPointerDownCoor.y, radius, 0, 2*Math.PI)
   ctx.stroke()
@@ -222,7 +229,11 @@ function addPointerDownCoor(radius: number) {
   )
 }
 
-function addZoomChangeCoor(radius: number) {
+function addZoomChangeCoor() {
+  const scaledWidth = canvasScaledDimensionsRef.value.x
+  const scaledHeight = canvasScaledDimensionsRef.value.y
+  const radius = Math.min(scaledWidth, scaledHeight) / 20
+
   ctx.beginPath()
   ctx.arc(lastZoomChangeCoor.x, lastZoomChangeCoor.y, radius, 0, 2*Math.PI)
   ctx.stroke()
@@ -237,13 +248,9 @@ function debugModeAnimations() {
   if (debug.value) {
     addDebugShapes.value(ctx)
 
-    const scaledWidth = canvasScaledDimensionsRef.value.x
-    const scaledHeight = canvasScaledDimensionsRef.value.y
-    const radius = Math.min(scaledWidth, scaledHeight) / 20
-
-    addCirclesAtCornersOfCanvas(radius, scaledWidth, scaledHeight)
-    lastPointerDownCoor && addPointerDownCoor(radius)
-    lastZoomChangeCoor  && addZoomChangeCoor(radius)
+    addCirclesAtCornersOfCanvas()
+    lastPointerDownCoor && addPointerDownCoor()
+    lastZoomChangeCoor  && addZoomChangeCoor()
   }
 }
 
