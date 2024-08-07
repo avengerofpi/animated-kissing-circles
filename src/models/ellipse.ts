@@ -166,7 +166,7 @@ class Ellipse {
    *
    * @param point point to compute distance-from-ellipse for
    */
-  public pointOnEllipseInDirectionOfAnotherPoint(point: Coor): [Coor, number] {
+  public pointOnEllipseInDirectionOfAnotherPoint(point: Coor): [Coor, number, number] {
     const adjustedPoint = point.subtract(this.center).rotate(-this.rotation)
 
     const thetaFromCenterToPoint = Math.atan2(this.radiusX * adjustedPoint.y, this.radiusY * adjustedPoint.x)
@@ -178,7 +178,43 @@ class Ellipse {
     const closestPoint = pointOnOrigEllipse
     const closestDistSquared = squaredDistToPointOnOrigEllipse
 
-    return [closestPoint, closestDistSquared]
+    return [closestPoint, closestDistSquared, thetaFromCenterToPoint]
+  }
+
+  /**
+   * Compute approimate point on an ellipse closest to another point.
+   *
+   * @param point point to try to get closest to
+   */
+  public nearestPointToAnotherPoint(point: Coor): [Coor, number, number] {
+    const [initialPoint, initDistSquared, initTheta] = this.pointOnEllipseInDirectionOfAnotherPoint(point)
+
+    let thetaStepSize = Math.PI / 180
+    const stepForwardDist = dist(point, this.getPointAtAngle(initTheta + thetaStepSize))
+    const stepBackwardDist = dist(point, this.getPointAtAngle(initTheta - thetaStepSize))
+
+    // Return early if initial point is best
+    if (initDistSquared <= Math.min(stepForwardDist, stepBackwardDist)) {
+      return [initialPoint, initDistSquared, initTheta]
+    }
+
+    // Ensure thetaStepSize is in correct direction
+    if (stepBackwardDist < stepForwardDist) {
+      thetaStepSize = -thetaStepSize
+    }
+
+    // Iterate till we find closest point
+    let [currPoint, currDistSquared, currTheta] = [initialPoint, initDistSquared, initTheta]
+    let [nextPoint, nextDistSquared, nextTheta] = [initialPoint, initDistSquared, initTheta]
+    do {
+      [currPoint, currDistSquared, currTheta] = [nextPoint, nextDistSquared, nextTheta]
+
+      nextTheta = currTheta + thetaStepSize
+      nextPoint = this.getPointAtAngle(nextTheta)
+      nextDistSquared = distSquared(point, nextPoint)
+    } while (nextDistSquared < currDistSquared)
+
+      return [currPoint, currDistSquared, currTheta]
   }
 
   public draw(ctx: CanvasRenderingContext2D, fillStyle: string | CanvasGradient | CanvasPattern = `hsl(50 100% 50% / 40%)`) {
