@@ -138,22 +138,27 @@ function computeEllipses(centers: Coor[]): Ellipse[] {
   // TODO: deal with `centers` having 0 or 1 entries
   while (unprocessedCenters.length) {
     const center = unprocessedCenters.pop() as Coor
-    let distSquaredToNearestNeighbor: number = Number.MAX_VALUE
-    // let nearestNeighborCenter: Coor = center
     let radiusX: number = 0
     let radiusY: number = 0
     let rotation: number = 0
 
     if (ellipses.length === 0) {
       // First ellipse will be 1/3 distance between first point and nearest point.
-      let nearestNeighborCenter: Coor = center
-      unprocessedCenters.forEach((B) => {
-        const distSquaredToB = distSquared(center, B)
-        if (distSquaredToB < distSquaredToNearestNeighbor) {
-          nearestNeighborCenter = B
-          distSquaredToNearestNeighbor = distSquaredToB
-        }
-      })
+      console.debug(`Processing ellipse #0`)
+      const distSquaredAndOtherCenters: Array<[number, Coor]> = unprocessedCenters.map(
+        otherCenter => [distSquared(center, otherCenter), otherCenter]
+      )
+      console.debug(`distSquaredAndOtherCenters: ${JSON.stringify(distSquaredAndOtherCenters.map(([d, p]) => d.toFixed(1)))}`)
+      distSquaredAndOtherCenters.sort(([d1, p1], [d2, p2]) => d1 - d2)
+      console.debug(`distSquaredAndOtherCenters: ${JSON.stringify(distSquaredAndOtherCenters.map(([d, p]) => d.toFixed(1)))} (sorted)`)
+
+      const [distSquaredToNearestNeighbor, nearestNeighborCenter] = distSquaredAndOtherCenters[0]
+      let radiusYscale = 1/3
+      if (distSquaredAndOtherCenters.length > 1) {
+        const nextNearestDistSquared = distSquaredAndOtherCenters[1][0]
+        radiusYscale = (Math.sqrt(distSquaredToNearestNeighbor)+1000) / (Math.sqrt(nextNearestDistSquared) + 1000)
+      }
+
       const diffX = nearestNeighborCenter.x - center.x
       const diffY = nearestNeighborCenter.y - center.y
       if (diffY === 0) {
@@ -165,23 +170,24 @@ function computeEllipses(centers: Coor[]): Ellipse[] {
           rotation = 1.5 * Math.PI
         } 
       } else {
-        rotation = Math.atan(diffY/diffX)
+        rotation = Math.atan2(diffY, diffX)
       }
       radiusX = Math.sqrt(distSquaredToNearestNeighbor) * (2/3)
-      radiusY = (1/3) * radiusX
+      radiusY = radiusX * radiusYscale
     } else {
       // Remaining ellipses will generate based on nearest existing ellipse
-      // console.log(`Processing ellipse #${ellipses.length}`)
-      let radiusYscale = 1/3
-      const distSquaredAndPointsOnOtherEllipses: Array<[Coor, number]> = ellipses
-        .map((otherEllipse, index) => otherEllipse.pointOnEllipseInDirectionOfAnotherPoint(center))
-      distSquaredAndPointsOnOtherEllipses.sort(([p1, d1], [p2, d2]) => (d1 < d2) ? -1 : ((d1 === d2) ? 0 : 1))
+      console.debug(`Processing ellipse #${ellipses.length}`)
+      const distSquaredAndPointsOnOtherEllipses: Array<[number, Coor]> = ellipses
+        .map((otherEllipse) => otherEllipse.pointOnEllipseInDirectionOfAnotherPoint(center).reverse() as [number, Coor])
+        console.debug(`distSquaredAndPointsOnOtherEllipses: ${JSON.stringify(distSquaredAndPointsOnOtherEllipses.map(([d, p]) => d.toFixed(1)))}`)
+        distSquaredAndPointsOnOtherEllipses.sort(([d1, p1], [d2, p2]) => d1 - d2)
+      console.debug(`distSquaredAndPointsOnOtherEllipses: ${JSON.stringify(distSquaredAndPointsOnOtherEllipses.map(([d, p]) => d.toFixed(1)))} (sorted)`)
 
-      let nearestPointOnNeighbor: Coor
-      [nearestPointOnNeighbor, distSquaredToNearestNeighbor] = distSquaredAndPointsOnOtherEllipses[0]
+      const [distSquaredToNearestNeighbor, nearestPointOnNeighbor] = distSquaredAndPointsOnOtherEllipses[0]
+      let radiusYscale = 1/3
       if (ellipses.length > 1) {
-        const nextNearestDistSuared = distSquaredAndPointsOnOtherEllipses[1][1]
-        radiusYscale = (Math.sqrt(distSquaredToNearestNeighbor)+1000) / (Math.sqrt(nextNearestDistSuared) + 1000)
+        const nextNearestDistSquared = distSquaredAndPointsOnOtherEllipses[1][0]
+        radiusYscale = (Math.sqrt(distSquaredToNearestNeighbor)+1000) / (Math.sqrt(nextNearestDistSquared) + 1000)
       }
 
       const diffX = nearestPointOnNeighbor.x - center.x
@@ -193,9 +199,9 @@ function computeEllipses(centers: Coor[]): Ellipse[] {
       }
       radiusX = Math.sqrt(distSquaredToNearestNeighbor)
       radiusY = radiusX * radiusYscale
-      // console.log(`radiusY / radiusX = ${radiusYscale.toFixed(3)}`)
-      // console.log(`-----------------------------`)
+      console.debug(`radiusY / radiusX = ${radiusYscale.toFixed(3)}`)
     }
+    console.debug(`-----------------------------`)
 
     const ellipse: Ellipse = new Ellipse(center.x, center.y, radiusX, radiusY, rotation)
     ellipses.push(ellipse)
@@ -206,6 +212,7 @@ function computeEllipses(centers: Coor[]): Ellipse[] {
     //   segment.draw(ctx)
     // }
   }
+  console.debug(`----------------------------------------------------------`)
 
   return ellipses
 }
