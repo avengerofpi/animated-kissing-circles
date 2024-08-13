@@ -186,10 +186,10 @@ class Ellipse {
    *
    * @param point point to try to get closest to
    */
-  public nearestPointToAnotherPoint(point: Coor): [Coor, number, number] {
+  public nearestPointToAnotherPointApproximatation(point: Coor): [Coor, number, number] {
     const [initialPoint, initDistSquared, initTheta] = this.pointOnEllipseInDirectionOfAnotherPoint(point)
 
-    let thetaStepSize = Math.PI / 180
+    let thetaStepSize = Math.PI / 2880
     const stepForwardDist = dist(point, this.getPointAtAngle(initTheta + thetaStepSize))
     const stepBackwardDist = dist(point, this.getPointAtAngle(initTheta - thetaStepSize))
 
@@ -206,15 +206,21 @@ class Ellipse {
     // Iterate till we find closest point
     let [currPoint, currDistSquared, currTheta] = [initialPoint, initDistSquared, initTheta]
     let [nextPoint, nextDistSquared, nextTheta] = [initialPoint, initDistSquared, initTheta]
+    let numSteps = 0
     do {
       [currPoint, currDistSquared, currTheta] = [nextPoint, nextDistSquared, nextTheta]
 
       nextTheta = currTheta + thetaStepSize
       nextPoint = this.getPointAtAngle(nextTheta)
       nextDistSquared = distSquared(point, nextPoint)
+      numSteps++
     } while (nextDistSquared < currDistSquared)
 
-      return [currPoint, currDistSquared, currTheta]
+    const thetaStepSizeDegree = thetaStepSize * 180 / Math.PI
+    const initThetaDegree = initTheta * 180 / Math.PI
+    console.debug(`initTheta (${initThetaDegree.toFixed(2)}) -> ${numSteps} steps of size ${thetaStepSizeDegree.toFixed(3)}`)
+
+    return [currPoint, currDistSquared, currTheta]
   }
 
   public draw(ctx: CanvasRenderingContext2D, fillStyle: string | CanvasGradient | CanvasPattern = `hsl(50 100% 50% / 40%)`) {

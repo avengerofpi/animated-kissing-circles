@@ -178,8 +178,8 @@ function computeEllipses(centers: Coor[]): Ellipse[] {
       // Remaining ellipses will generate based on nearest existing ellipse
       console.debug(`Processing ellipse #${ellipses.length}`)
       const distSquaredAndPointsOnOtherEllipses: Array<[number, number, Coor]> = ellipses
-        .map((otherEllipse) => otherEllipse.nearestPointToAnotherPoint(center).reverse() as [number, number, Coor])
-        console.debug(`distSquaredAndPointsOnOtherEllipses: ${JSON.stringify(distSquaredAndPointsOnOtherEllipses.map(([d, t, p]) => d.toFixed(1)))}`)
+        .map((otherEllipse) => otherEllipse.nearestPointToAnotherPointApproximatation(center).reverse() as [number, number, Coor])
+      console.debug(`distSquaredAndPointsOnOtherEllipses: ${JSON.stringify(distSquaredAndPointsOnOtherEllipses.map(([d, t, p]) => d.toFixed(1)))}`)
       distSquaredAndPointsOnOtherEllipses.sort(([theta1, d1, p1], [theta2, d2, p2]) => d1 - d2)
       console.debug(`distSquaredAndPointsOnOtherEllipses: ${JSON.stringify(distSquaredAndPointsOnOtherEllipses.map(([d, t, p]) => d.toFixed(1)))} (sorted)`)
 

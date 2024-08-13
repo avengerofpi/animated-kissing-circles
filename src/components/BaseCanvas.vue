@@ -34,8 +34,8 @@ const props = defineProps<{
 
 import { ref, onMounted, watch } from 'vue'
 import type { Ref } from 'vue'
-import { Coor } from '../models/coor'
-import { Dimensions } from '../models/dimensions'
+import { Coor } from '@/models/coor'
+import { Dimensions } from '@/models/dimensions'
 import { debounce } from 'lodash'
 
 const toggleAnimating: Ref<Function> = defineModel<Function>("toggleAnimating", { required: true, default: () => {} })
