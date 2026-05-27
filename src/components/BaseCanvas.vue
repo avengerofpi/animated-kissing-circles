@@ -256,6 +256,7 @@ function debugModeAnimations() {
 
 let startTimeMillis, currentTimeMillis, timeDiffMillis, frameRate, numSteps = 0
 let startTimeMillisAnimating, timeDiffMillisAnimating, frameRateAnimating, numStepsAnimating = 0
+
 function step(timestamp: number) {
   currentTimeMillis = (document.timeline.currentTime as number)
   startTimeMillis = startTimeMillis || currentTimeMillis
@@ -276,7 +277,7 @@ function step(timestamp: number) {
     addShapes.value(ctx, timestamp)
     debugModeAnimations()
     stepAtLeastOnce.value = false
-}
+  }
   window.requestAnimationFrame(step);
   addCrosshairsAtOrigin()
 }
