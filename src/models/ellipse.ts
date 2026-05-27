@@ -223,6 +223,44 @@ class Ellipse {
     return [currPoint, currDistSquared, currTheta]
   }
 
+  /**
+   * Compute approximate point on an ellipse closest to another point.
+   *
+   * @param point point to try to get closest to
+   */
+  public ___bad_math__nearestPointToAnotherPoint(point: Coor): [Coor, number, number] {
+    const [u, v] = [point.x, point.y]
+    const a = this.radiusX
+    const b = this.radiusY
+
+    const A = 1
+    const B = a**2*(u-1) + b**2*(v-1)
+    const C = a**2*b**2*(1-u-v)
+
+    // Solve the quadratic
+    const t1 = (-B + Math.sqrt(B**2 - 4*A*C)) / (2*a)
+    const t2 = (-B - Math.sqrt(B**2 - 4*A*C)) / (2*a)
+
+    const p1 = new Coor(a**2*u/(a**2 - t1), b**2*v/(b**2 - t1))
+    const p2 = new Coor(a**2*u/(a**2 - t2), b**2*v/(b**2 - t2))
+
+    const d1 = distSquared(point, p1)
+    const d2 = distSquared(point, p2)
+
+    let nearestPoint, nearestDistSquared, nearestTheta
+    if (d1 < d2) {
+      nearestPoint = p1
+      nearestDistSquared = d1
+    } else {
+      nearestPoint = p2
+      nearestDistSquared = d2
+    }
+
+    nearestTheta = Math.atan2(this.center.x-nearestPoint.x, this.center.y-nearestPoint.y)
+
+    return [nearestPoint, nearestDistSquared, nearestTheta]
+  }
+
   public draw(ctx: CanvasRenderingContext2D, fillStyle: string | CanvasGradient | CanvasPattern = `hsl(50 100% 50% / 40%)`) {
     const center = this.center
     ctx.beginPath();
