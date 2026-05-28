@@ -258,28 +258,28 @@ let startTimeMillis, currentTimeMillis, timeDiffMillis, frameRate, numSteps = 0
 let startTimeMillisAnimating, timeDiffMillisAnimating, frameRateAnimating, numStepsAnimating = 0
 
 function step(timestamp: number) {
-  currentTimeMillis = (document.timeline.currentTime as number)
-  startTimeMillis = startTimeMillis || currentTimeMillis
-  numSteps += 1
   if (props.animating) {
+    currentTimeMillis = (document.timeline.currentTime as number)
+    startTimeMillis = startTimeMillis || currentTimeMillis
+    numSteps += 1
+
     startTimeMillisAnimating = startTimeMillisAnimating || currentTimeMillis
     timeDiffMillis = currentTimeMillis - startTimeMillis
     timeDiffMillisAnimating = currentTimeMillis - startTimeMillisAnimating
     numStepsAnimating += 1
     frameRate = numSteps / (timeDiffMillis / 1000)
     frameRateAnimating = numStepsAnimating / (timeDiffMillisAnimating / 1000)
-    console.log(`avg framerate: ${frameRate.toFixed(2)} (animating: ${frameRateAnimating.toFixed(2)})`)
+    // console.log(`avg framerate: ${frameRate.toFixed(2)} (animating: ${frameRateAnimating.toFixed(2)})`)
   }
 
   if (props.animating || stepAtLeastOnce.value) {
-
     resetCanvas()
     addShapes.value(ctx, timestamp)
     debugModeAnimations()
     stepAtLeastOnce.value = false
+    addCrosshairsAtOrigin()
   }
   window.requestAnimationFrame(step);
-  addCrosshairsAtOrigin()
 }
 
 function handleResize(e: Event) {
