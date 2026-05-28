@@ -318,6 +318,7 @@ function animate() {
   startTimestamp = (document.timeline.currentTime as number) - ellapsedOffset;
 }
 
+let frameNum = 0
 function _addShapes(ctx: CanvasRenderingContext2D, timestamp: number) {
   // console.log(`running _addShapes`)
   initialized || initCanvas(ctx, timestamp)
@@ -326,19 +327,22 @@ function _addShapes(ctx: CanvasRenderingContext2D, timestamp: number) {
   if (animating.value) {
     pauseTimestamp = timestamp
     elapsed = timestamp - startTimestamp
+    frameNum++
   } else if (stepAtLeastOnce.value) {
     elapsed = pauseTimestamp - startTimestamp
   } else {
     throw new Error(`_addShapes should not have been called`)
   }
 
-  // Loop animation, instead of stop animation after an animation cycle
-  const numCycles = elapsed * animationCyclesPerMinuteRef.value / 60000
-
-  const kissingEllipseCenters: Coor[] = movingCoorsOnCircles.value.map(movingCoorOnCircle => {
-    return movingCoorOnCircle.getCoorAfterCycles(numCycles)
-  })
-  renderKissingEllipses(kissingEllipseCenters, ctx)
+  // // Loop animation, instead of stop animation after an animation cycle
+  // const numCycles = elapsed * animationCyclesPerMinuteRef.value / 60000
+  //
+  // const kissingEllipseCenters: Coor[] = movingCoorsOnCircles.value.map(movingCoorOnCircle => {
+  //   return movingCoorOnCircle.getCoorAfterCycles(numCycles)
+  // })
+  // renderKissingEllipses(kissingEllipseCenters, ctx)
+  renderShapeFrame(frameNum, ctx)
+  // console.log(frameNum)
 
   if (stopAnimationFlag.value) {
     stopAnimationFlag.value = false
