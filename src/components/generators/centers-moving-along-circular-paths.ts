@@ -5,6 +5,7 @@ import { Coor, dist, distSquared } from '@/models/coor'
 import { Circle } from '@/models/circle'
 import { Ellipse } from '@/models/ellipse'
 import { MovingCoorOnACircle } from '@/models/moving-coor-on-a-circle'
+import { renderShapeFrame } from '@/components/generators/generate-nearest-point-data'
 
 const title = "Ellipses with Centers Moving Along Circular Paths"
 
@@ -72,6 +73,37 @@ function initCanvas(ctx: CanvasRenderingContext2D, timestamp: number) {
   canvasCenter = new Coor(0, 0)
 
   resetCanvasWithNewCircles()
+
+  const el = new Ellipse(0, 0, 2, 1, 0)
+
+  console.log(el)
+  let d
+  d = Number(el.nearestPointToAnotherPointApproximatation(new Coor(3, 0))[1].toFixed(4));
+  console.log(`(3, 0): Python 1.0 | JavaScript: ${d} | Diff: ${(Math.abs(1.0 - d)).toFixed(4)}`)
+  d = Number(el.nearestPointToAnotherPointApproximatation(new Coor(0, 2))[1].toFixed(4));
+  console.log(`(0, 2): Python 1.0 | JavaScript: ${d} | Diff: ${(Math.abs(1.0 - d)).toFixed(4)}`)
+  d = Number(el.nearestPointToAnotherPointApproximatation(new Coor(2.0, 2))[1].toFixed(4));
+  console.log(`(2.0, 2): Python 2.014 | JavaScript: ${d} | Diff: ${(Math.abs(2.014 - d)).toFixed(4)}`)
+  d = Number(el.nearestPointToAnotherPointApproximatation(new Coor(1.8, 2))[1].toFixed(4));
+  console.log(`(1.8, 2): Python 1.788 | JavaScript: ${d} | Diff: ${(Math.abs(1.788 - d)).toFixed(4)}`)
+  d = Number(el.nearestPointToAnotherPointApproximatation(new Coor(1.6, 2))[1].toFixed(4));
+  console.log(`(1.6, 2): Python 1.599 | JavaScript: ${d} | Diff: ${(Math.abs(1.599 - d)).toFixed(4)}`)
+  d = Number(el.nearestPointToAnotherPointApproximatation(new Coor(1.4, 2))[1].toFixed(4));
+  console.log(`(1.4, 2): Python 1.443 | JavaScript: ${d} | Diff: ${(Math.abs(1.443 - d)).toFixed(4)}`)
+  d = Number(el.nearestPointToAnotherPointApproximatation(new Coor(1.2, 2))[1].toFixed(4));
+  console.log(`(1.2, 2): Python 1.315 | JavaScript: ${d} | Diff: ${(Math.abs(1.315 - d)).toFixed(4)}`)
+  d = Number(el.nearestPointToAnotherPointApproximatation(new Coor(1.0, 2))[1].toFixed(4));
+  console.log(`(1.0, 2): Python 1.213 | JavaScript: ${d} | Diff: ${(Math.abs(1.213 - d)).toFixed(4)}`)
+  d = Number(el.nearestPointToAnotherPointApproximatation(new Coor(0.8, 2))[1].toFixed(4));
+  console.log(`(0.8, 2): Python 1.133 | JavaScript: ${d} | Diff: ${(Math.abs(1.133 - d)).toFixed(4)}`)
+  d = Number(el.nearestPointToAnotherPointApproximatation(new Coor(0.6, 2))[1].toFixed(4));
+  console.log(`(0.6, 2): Python 1.074 | JavaScript: ${d} | Diff: ${(Math.abs(1.074 - d)).toFixed(4)}`)
+  d = Number(el.nearestPointToAnotherPointApproximatation(new Coor(0.4, 2))[1].toFixed(4));
+  console.log(`(0.4, 2): Python 1.032 | JavaScript: ${d} | Diff: ${(Math.abs(1.032 - d)).toFixed(4)}`)
+  d = Number(el.nearestPointToAnotherPointApproximatation(new Coor(0.2, 2))[1].toFixed(4));
+  console.log(`(0.2, 2): Python 1.008 | JavaScript: ${d} | Diff: ${(Math.abs(1.008 - d)).toFixed(4)}`)
+  d = Number(el.nearestPointToAnotherPointApproximatation(new Coor(0.0, 2))[1].toFixed(4));
+  console.log(`(0.0, 2): Python 1.0 | JavaScript: ${d} | Diff: ${(Math.abs(1.0 - d)).toFixed(4)}`)
 }
 
 function resetCanvasWithNewCircles() {
