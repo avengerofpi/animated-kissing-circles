@@ -94,6 +94,7 @@ function incrementAnimationSpeed() {
   }
   animationCyclesPerMinuteRef.value = Math.max(animationSpeedStepSizes[numAnimationSpeedStepSizes-1], animationCyclesPerMinuteRef.value)
   animationCyclesPerMinuteRef.value = Number(animationCyclesPerMinuteRef.value.toFixed(4))
+  // animationCyclesPerMinuteRef.value = animationCyclesPerMinuteRef.value.toFixed(4) as number
 }
 
 function decrementAnimationSpeed() {

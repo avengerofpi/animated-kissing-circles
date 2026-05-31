@@ -171,6 +171,8 @@ class Ellipse {
 
     const thetaFromCenterToPoint = Math.atan2(this.radiusX * adjustedPoint.y, this.radiusY * adjustedPoint.x)
 
+    // TODO: try computing slope (adjusted.y / adjusted.x) and using line equation to compute point on ellipse...
+
     // const thetaStepSize = 1e-2
     // let nearestTheta = initialTheta
     const pointOnOrigEllipse = this.getPointAtAngle(thetaFromCenterToPoint)
@@ -218,7 +220,7 @@ class Ellipse {
 
     const thetaStepSizeDegree = thetaStepSize * 180 / Math.PI
     const initThetaDegree = initTheta * 180 / Math.PI
-    console.debug(`initTheta (${initThetaDegree.toFixed(2)}) -> ${numSteps} steps of size ${thetaStepSizeDegree.toFixed(3)}`)
+    // console.log(`initTheta (${initThetaDegree.toFixed(2)}) -> ${numSteps} steps of size ${thetaStepSizeDegree.toFixed(2)}`)
 
     return [currPoint, currDistSquared, currTheta]
   }

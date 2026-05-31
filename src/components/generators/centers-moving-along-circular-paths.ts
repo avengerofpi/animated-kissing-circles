@@ -176,13 +176,13 @@ function computeEllipses(centers: Coor[]): Ellipse[] {
 
     if (ellipses.length === 0) {
       // First ellipse will be 1/3 distance between first point and nearest point.
-      console.debug(`Processing ellipse #0`)
+      // console.debug(`Processing ellipse #0`)
       const distSquaredAndOtherCenters: Array<[number, Coor]> = unprocessedCenters.map(
         otherCenter => [distSquared(center, otherCenter), otherCenter]
       )
-      console.debug(`distSquaredAndOtherCenters: ${JSON.stringify(distSquaredAndOtherCenters.map(([d, p]) => d.toFixed(1)))}`)
+      // console.debug(`distSquaredAndOtherCenters: ${JSON.stringify(distSquaredAndOtherCenters.map(([d, p]) => d.toFixed(1)))}`)
       distSquaredAndOtherCenters.sort(([d1, p1], [d2, p2]) => d1 - d2)
-      console.debug(`distSquaredAndOtherCenters: ${JSON.stringify(distSquaredAndOtherCenters.map(([d, p]) => d.toFixed(1)))} (sorted)`)
+      // console.debug(`distSquaredAndOtherCenters: ${JSON.stringify(distSquaredAndOtherCenters.map(([d, p]) => d.toFixed(1)))} (sorted)`)
 
       const [distSquaredToNearestNeighbor, nearestNeighborCenter] = distSquaredAndOtherCenters[0]
       let radiusYscale = 1/3
@@ -208,12 +208,12 @@ function computeEllipses(centers: Coor[]): Ellipse[] {
       radiusY = radiusX * radiusYscale
     } else {
       // Remaining ellipses will generate based on nearest existing ellipse
-      console.debug(`Processing ellipse #${ellipses.length}`)
+      // console.debug(`Processing ellipse #${ellipses.length}`)
       const distSquaredAndPointsOnOtherEllipses: Array<[number, number, Coor]> = ellipses
         .map((otherEllipse) => otherEllipse.nearestPointToAnotherPointApproximatation(center).reverse() as [number, number, Coor])
-      console.debug(`distSquaredAndPointsOnOtherEllipses: ${JSON.stringify(distSquaredAndPointsOnOtherEllipses.map(([d, t, p]) => d.toFixed(1)))}`)
+      // console.debug(`distSquaredAndPointsOnOtherEllipses: ${JSON.stringify(distSquaredAndPointsOnOtherEllipses.map(([d, t, p]) => d.toFixed(1)))}`)
       distSquaredAndPointsOnOtherEllipses.sort(([theta1, d1, p1], [theta2, d2, p2]) => d1 - d2)
-      console.debug(`distSquaredAndPointsOnOtherEllipses: ${JSON.stringify(distSquaredAndPointsOnOtherEllipses.map(([d, t, p]) => d.toFixed(1)))} (sorted)`)
+      // console.debug(`distSquaredAndPointsOnOtherEllipses: ${JSON.stringify(distSquaredAndPointsOnOtherEllipses.map(([d, t, p]) => d.toFixed(1)))} (sorted)`)
 
       const [_t1, distSquaredToNearestNeighbor, nearestPointOnNeighbor] = distSquaredAndPointsOnOtherEllipses[0]
       let radiusYscale = 1/3
@@ -231,9 +231,9 @@ function computeEllipses(centers: Coor[]): Ellipse[] {
       }
       radiusX = Math.sqrt(distSquaredToNearestNeighbor)
       radiusY = radiusX * radiusYscale
-      console.debug(`radiusY / radiusX = ${radiusYscale.toFixed(3)}`)
+      // console.debug(`radiusY / radiusX = ${radiusYscale.toFixed(3)}`)
     }
-    console.debug(`-----------------------------`)
+    // console.debug(`-----------------------------`)
 
     const ellipse: Ellipse = new Ellipse(center.x, center.y, radiusX, radiusY, rotation)
     ellipses.push(ellipse)
@@ -245,6 +245,7 @@ function computeEllipses(centers: Coor[]): Ellipse[] {
     // }
   }
   console.debug(`----------------------------------------------------------`)
+  console.info(`----------------------------------------------------------`)
 
   return ellipses
 }
