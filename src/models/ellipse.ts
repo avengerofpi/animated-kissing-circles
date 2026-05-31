@@ -184,7 +184,7 @@ class Ellipse {
   }
 
   /**
-   * Compute approimate point on an ellipse closest to another point.
+   * Compute approximate point on an ellipse closest to another point.
    *
    * @param point point to try to get closest to
    */
