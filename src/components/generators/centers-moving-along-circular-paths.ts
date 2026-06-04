@@ -367,9 +367,10 @@ function _addShapes(ctx: CanvasRenderingContext2D, timestamp: number) {
     throw new Error(`_addShapes should not have been called`)
   }
 
-  // // Loop animation, instead of stop animation after an animation cycle
-  // const numCycles = elapsed * animationCyclesPerMinuteRef.value / 60000
-  //
+  // Loop animation, instead of stop animation after an animation cycle
+  // const millisecondsPerMinute: number = 60000
+  // const numCycles = elapsed * animationCyclesPerMinuteRef.value / millisecondsPerMinute
+
   // const kissingEllipseCenters: Coor[] = movingCoorsOnCircles.value.map(movingCoorOnCircle => {
   //   return movingCoorOnCircle.getCoorAfterCycles(numCycles)
   // })

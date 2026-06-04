@@ -35,6 +35,7 @@
       </button>
     </div>
   </div>
+  <!-- Shapes/Generator Chooser -->
   <!-- Canvas -->
   <BaseCanvas
     v-model:animating="animating"
