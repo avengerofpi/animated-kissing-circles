@@ -60,14 +60,11 @@ import {
   numCirclesRef,
   regenerateCircles,
   animationCyclesPerMinuteRef,
-  animating,
-  stopAnimationFlag,
-  stopAnimationAfterCurrentStep,
-  stepAtLeastOnce,
   animate,
   addShapes,
   addDebugShapes,
 } from './generators/centers-moving-along-circular-paths'
+import { animating, stepAtLeastOnce, stopAnimationFlag, stopAnimationAfterCurrentStep } from '@/components/generators/animation-controller'
 
 const toggleAnimating: Ref<Function> = ref(_toggleAnimating)
 

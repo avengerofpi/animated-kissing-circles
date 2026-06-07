@@ -6,7 +6,7 @@ import { Circle } from '@/models/circle'
 import { Ellipse } from '@/models/ellipse'
 import { MovingCoorOnACircle } from '@/models/moving-coor-on-a-circle'
 import { renderShapeFrame } from '@/components/generators/generate-nearest-point-data'
-
+import { animating, stepAtLeastOnce, stopAnimationFlag } from '@/components/generators/animation-controller'
 const title = "Ellipses with Centers Moving Along Circular Paths"
 
 const numCirclesRef: Ref<number> = ref(100)
@@ -15,12 +15,9 @@ const numArms = 6
 
 const movingCoorsOnCircles: Ref<MovingCoorOnACircle[]> = ref([])
 const routeCircles: Ref<Circle[]> = ref([])
-const animating: Ref<boolean> = ref(false)
-const stopAnimationFlag: Ref<boolean> = ref(false)
 let startTimestamp: number
 let pauseTimestamp: number
 const addShapes: Ref<Function> = ref(_addShapes)
-const stepAtLeastOnce: Ref<boolean> = ref(true)
 
 let initialized = false
 let height: number
@@ -51,14 +48,6 @@ watch(numCirclesRef, (newNumCircles: number, oldNumCircles: number) => {
     }
     console.log(`${numAdditionalCircles} additional routeCircles`)
   }
-})
-
-watch(animationCyclesPerMinuteRef, (newSpeed: number, oldSpeed: number) => {
-  const numCyclesSinceStart = (pauseTimestamp - startTimestamp) * oldSpeed / 60000
-  const newStartTimestamp = pauseTimestamp - (numCyclesSinceStart * 60000) / newSpeed
-
-  startTimestamp = newStartTimestamp
-  stepAtLeastOnce.value = true
 })
 
 function regenerateCircles() {
@@ -386,20 +375,11 @@ function _addShapes(ctx: CanvasRenderingContext2D, timestamp: number) {
   return
 }
 
-function stopAnimationAfterCurrentStep() {
-  stopAnimationFlag.value = true
-}
-
-
 export {
   title,
   numCirclesRef,
   regenerateCircles,
   animationCyclesPerMinuteRef,
-  animating,
-  stopAnimationFlag,
-  stopAnimationAfterCurrentStep,
-  stepAtLeastOnce,
   animate,
   addShapes,
   addDebugShapes,
