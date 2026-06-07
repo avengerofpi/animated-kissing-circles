@@ -45,5 +45,9 @@
     "vite": "^8.0.16",
     "vitest": "^4.1.8",
     "vue-tsc": "^3.3.3"
+  },
+  "allowScripts": {
+    "canvas@3.2.3": true,
+    "cypress@15.16.0": true
   }
 }
