@@ -1,12 +1,34 @@
+<template>
+  <!-- Buttons -->
+  <div>
+    <button type="button" @click="circleGenerator.regenerateShapes" :disabled=animating>Regenerate Shapes</button>
+    <button type="button" @click="_toggleAnimating" :disabled="stopAnimationFlag">
+      <span v-if="!animating && !stopAnimationFlag">Animate Circles</span>
+      <span v-else-if="!stopAnimationFlag">Stop Animation</span>
+      <span v-else>Pending Stop...</span>
+    </button>
+  </div>
+  <div>
+    <!-- for each generator, do the generator's control element -->
+  </div>
+</template>
+
+<script setup lang="ts">
+// https://vuejs.org/guide/typescript/composition-api
+// defineProps<{}>()
+
 import { Coor } from '@/models/coor'
 import { ref, watch } from 'vue'
 import type { Ref } from 'vue'
 import { ConstellationGenerator } from '@/models/generator'
+import { generator } from '@/components/generators/centers-moving-along-circular-paths'
 
 const animating: Ref<boolean> = ref(false)
 const stopAnimationFlag: Ref<boolean> = ref(false)
 const stepAtLeastOnce: Ref<boolean> = ref(true)
-const generators: ConstellationGenerator[] = []
+// const generators: ConstellationGenerator[] = []
+// const generator: Ref<ConstellationGenerator | null> = ref(null)
+const animationCyclesPerMinuteRef: Ref<number> = ref(3)
 
 let startTimestamp: number
 let pauseTimestamp: number
@@ -25,29 +47,17 @@ watch(animationCyclesPerMinuteRef, (newSpeed: number, oldSpeed: number) => {
   stepAtLeastOnce.value = true
 })
 
-function regenerateShapes() {
-  for (const g of generators) {
-    g.regenerateShapes()
-  }
-}
-
 function initCanvas(ctx: CanvasRenderingContext2D, timestamp: number) {
   height = ctx.canvas.height;
   width = ctx.canvas.width;
   initialized = true;
 
   canvasCenter = new Coor(0, 0)
-  regenerateShapes()
-}
-
-function resetCanvas() {
-  for (const g of generators) {
-    g.regenerateShapes()
-  }
+  generator.regenerateShapes()
 }
 
 function addDebugShapes(ctx: CanvasRenderingContext2D) {
-  renderRouteCircles(ctx)
+  generator.addDebugShapes(ctx)
 }
 
 function animate() {
@@ -66,7 +76,6 @@ function _addShapes(ctx: CanvasRenderingContext2D, timestamp: number) {
   if (animating.value) {
     pauseTimestamp = timestamp
     elapsed = timestamp - startTimestamp
-    frameNum++
   } else if (stepAtLeastOnce.value) {
     elapsed = pauseTimestamp - startTimestamp
   } else {
@@ -75,12 +84,7 @@ function _addShapes(ctx: CanvasRenderingContext2D, timestamp: number) {
 
   // Loop animation, instead of stop animation after an animation cycle
   const millisecondsPerMinute: number = 60000
-  const numCycles = elapsed * animationCyclesPerMinuteRef.value / millisecondsPerMinute
-  
-  const kissingEllipseCenters: Coor[] = movingCoorsOnCircles.value.map(movingCoorOnCircle => {
-    return movingCoorOnCircle.getCoorAfterCycles(numCycles)
-  })
-  renderKissingEllipses(kissingEllipseCenters, ctx)
+  const numCycles = elapsed * generator.animationCyclesPerMinuteRef.value / millisecondsPerMinute
 
   if (stopAnimationFlag.value) {
     stopAnimationFlag.value = false
@@ -90,16 +94,13 @@ function _addShapes(ctx: CanvasRenderingContext2D, timestamp: number) {
   return
 }
 
-function stopAnimationAfterCurrentStep() {
-  stopAnimationFlag.value = true
-}
-
 export {
   animating,
   stopAnimationFlag,
-  stopAnimationAfterCurrentStep,
   stepAtLeastOnce,
   animate,
   addShapes,
   addDebugShapes,
 }
+
+</script>

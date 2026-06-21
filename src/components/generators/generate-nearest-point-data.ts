@@ -34,7 +34,7 @@ function generateNearestPointData(ctx: CanvasRenderingContext2D = null) {
       const innerRadiusY = interiorCircleRadius
       const innerRadiusX = radiusX - (radiusY-innerRadiusY)
       const circle = new Ellipse(0, 0, innerRadiusX, innerRadiusY, 0)
-      console.log(r)
+      // console.log(r)
       for (let j=0; j<numTestPoints; j++) {
         const theta = Math.PI * 2 * j / numTestPoints
         const pointOnCircle = circle.getPointAtAngle(theta)

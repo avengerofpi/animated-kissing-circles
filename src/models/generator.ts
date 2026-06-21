@@ -4,16 +4,18 @@ class ConstellationGenerator {
   // Universal attrs
   title: string
   display: boolean
-  regenerateShapes: CallableFunction
-  animating: boolean
-  stopAnimationFlag: boolean
-  stopAnimationAfterCurrentStep: boolean
-  stepAtLeastOnce: boolean
+  // animating: boolean
+  // stopAnimationFlag: boolean
+  // stopAnimationAfterCurrentStep: boolean
+  // stepAtLeastOnce: boolean
+
   // Constellation-specific attrs
-  numCirclesRef: Ref<number>
+  // numCirclesRef: Ref<number>
   animationCyclesPerMinuteRef: Ref<number>
+
   // Universal functions
-  animate: CallableFunction
+  // animate: CallableFunction
+  regenerateShapes: CallableFunction
   addShapes: CallableFunction
   addDebugShapes: CallableFunction
 
@@ -21,30 +23,36 @@ class ConstellationGenerator {
     // Universal attrs
     title: string,
     display: boolean,
-    regenerateShapes: CallableFunction,
-    animating: boolean,
-    stopAnimationFlag: boolean,
-    stopAnimationAfterCurrentStep: boolean,
-    stepAtLeastOnce: boolean,
+    // animating: boolean,
+    // stopAnimationFlag: boolean,
+    // stopAnimationAfterCurrentStep: boolean,
+    // stepAtLeastOnce: boolean,
+
     // Constellation-specific attrs
-    numCirclesRef: Ref<number>,
+    // numCirclesRef: Ref<number>,
     animationCyclesPerMinuteRef: Ref<number>,
   
     // Universal functions
-    animate: CallableFunction,
+    // animate: CallableFunction,
+    regenerateShapes: CallableFunction,
     addShapes: CallableFunction,
     addDebugShapes: CallableFunction,
   ) {
+    // Universal attrs
     this.title = title
     this.display = display
-    this.numCirclesRef = numCirclesRef
-    this.regenerateShapes = regenerateShapes
+    // this.animating = animating
+    // this.stopAnimationFlag = stopAnimationFlag
+    // this.stopAnimationAfterCurrentStep = stopAnimationAfterCurrentStep
+    // this.stepAtLeastOnce = stepAtLeastOnce
+
+    // Constellation-specific attrs
+    // this.numCirclesRef = numCirclesRef
     this.animationCyclesPerMinuteRef = animationCyclesPerMinuteRef
-    this.animating = animating
-    this.stopAnimationFlag = stopAnimationFlag
-    this.stopAnimationAfterCurrentStep = stopAnimationAfterCurrentStep
-    this.stepAtLeastOnce = stepAtLeastOnce
-    this.animate = animate
+
+    // Universal functions
+    // this.animate = animate
+    this.regenerateShapes = regenerateShapes
     this.addShapes = addShapes
     this.addDebugShapes = addDebugShapes
   }

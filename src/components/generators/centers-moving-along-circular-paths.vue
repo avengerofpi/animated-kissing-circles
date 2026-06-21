@@ -1,3 +1,35 @@
+<template>
+  <!-- Basic input -->
+  <div>
+    <!-- Number of circles -->
+    <div>
+      <label for="nInput">Number of Circles:</label>
+      <input id="nInput" v-model.number.lazy="numCirclesRef">
+      <button @click="decrementNumCircles()">
+        Decrement
+      </button>
+      <button @click="incrementNumCircles()">
+        Increment
+      </button>
+    </div>
+    <!-- Animation speed -->
+    <div>
+      <label for="animationTimeInput">Animation cycles per minute</label>
+      <input id="animationTimeInput" v-model.number.lazy="animationCyclesPerMinuteRef">
+      <button @click="decrementAnimationSpeed()">
+        Decrease speed
+      </button>
+      <button @click="incrementAnimationSpeed()">
+        Increase speed
+      </button>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+// https://vuejs.org/guide/typescript/composition-api
+// defineProps<{}>()
+
 import { ref, watch } from 'vue'
 import type { Ref } from 'vue'
 
@@ -6,18 +38,22 @@ import { Circle } from '@/models/circle'
 import { Ellipse } from '@/models/ellipse'
 import { MovingCoorOnACircle } from '@/models/moving-coor-on-a-circle'
 import { renderShapeFrame } from '@/components/generators/generate-nearest-point-data'
-import { animating, stepAtLeastOnce, stopAnimationFlag } from '@/components/generators/animation-controller'
-const title = "Ellipses with Centers Moving Along Circular Paths"
+import { animating, stepAtLeastOnce, stopAnimationFlag } from '@/components/generators/animation-controller.vue'
+import { ConstellationGenerator } from '@/models/generator'
 
-const numCirclesRef: Ref<number> = ref(100)
-const animationCyclesPerMinuteRef: Ref<number> = ref(3)
+const title = "Ellipses with Centers Moving Along Circular Paths"
+const shortTitle = "Ellipses Along Circles"
+const display = true
+
+// const numCirclesRef: Ref<number> = ref(100)
+// const animationCyclesPerMinuteRef: Ref<number> = ref(3)
 const numArms = 6
 
 const movingCoorsOnCircles: Ref<MovingCoorOnACircle[]> = ref([])
 const routeCircles: Ref<Circle[]> = ref([])
 let startTimestamp: number
 let pauseTimestamp: number
-const addShapes: Ref<Function> = ref(_addShapes)
+// const addShapes: Ref<Function> = ref(_addShapes)
 
 let initialized = false
 let height: number
@@ -28,6 +64,20 @@ let canvasCenter: Coor
 let colorHueOffset: number = 0
 const colorHueOffsetStepsize: number = 0.3
 let ellipseRotationOffset: number = 0
+const toggleAnimating: Ref<Function> = ref(_toggleAnimating)
+const numCirclesRef: Ref<number> = ref(100)
+
+onMounted(() => {
+})
+
+function incrementNumCircles() {
+  numCirclesRef.value++
+}
+
+function decrementNumCircles() {
+  numCirclesRef.value--
+  numCirclesRef.value = Math.max(0, numCirclesRef.value)
+}
 
 watch(numCirclesRef, (newNumCircles: number, oldNumCircles: number) => {
   stepAtLeastOnce.value = true
@@ -62,37 +112,6 @@ function initCanvas(ctx: CanvasRenderingContext2D, timestamp: number) {
   canvasCenter = new Coor(0, 0)
 
   resetCanvasWithNewCircles()
-
-  const el = new Ellipse(0, 0, 2, 1, 0)
-
-  console.log(el)
-  let d
-  d = Number(el.nearestPointToAnotherPointApproximatation(new Coor(3, 0))[1].toFixed(4));
-  console.log(`(3, 0): Python 1.0 | JavaScript: ${d} | Diff: ${(Math.abs(1.0 - d)).toFixed(4)}`)
-  d = Number(el.nearestPointToAnotherPointApproximatation(new Coor(0, 2))[1].toFixed(4));
-  console.log(`(0, 2): Python 1.0 | JavaScript: ${d} | Diff: ${(Math.abs(1.0 - d)).toFixed(4)}`)
-  d = Number(el.nearestPointToAnotherPointApproximatation(new Coor(2.0, 2))[1].toFixed(4));
-  console.log(`(2.0, 2): Python 2.014 | JavaScript: ${d} | Diff: ${(Math.abs(2.014 - d)).toFixed(4)}`)
-  d = Number(el.nearestPointToAnotherPointApproximatation(new Coor(1.8, 2))[1].toFixed(4));
-  console.log(`(1.8, 2): Python 1.788 | JavaScript: ${d} | Diff: ${(Math.abs(1.788 - d)).toFixed(4)}`)
-  d = Number(el.nearestPointToAnotherPointApproximatation(new Coor(1.6, 2))[1].toFixed(4));
-  console.log(`(1.6, 2): Python 1.599 | JavaScript: ${d} | Diff: ${(Math.abs(1.599 - d)).toFixed(4)}`)
-  d = Number(el.nearestPointToAnotherPointApproximatation(new Coor(1.4, 2))[1].toFixed(4));
-  console.log(`(1.4, 2): Python 1.443 | JavaScript: ${d} | Diff: ${(Math.abs(1.443 - d)).toFixed(4)}`)
-  d = Number(el.nearestPointToAnotherPointApproximatation(new Coor(1.2, 2))[1].toFixed(4));
-  console.log(`(1.2, 2): Python 1.315 | JavaScript: ${d} | Diff: ${(Math.abs(1.315 - d)).toFixed(4)}`)
-  d = Number(el.nearestPointToAnotherPointApproximatation(new Coor(1.0, 2))[1].toFixed(4));
-  console.log(`(1.0, 2): Python 1.213 | JavaScript: ${d} | Diff: ${(Math.abs(1.213 - d)).toFixed(4)}`)
-  d = Number(el.nearestPointToAnotherPointApproximatation(new Coor(0.8, 2))[1].toFixed(4));
-  console.log(`(0.8, 2): Python 1.133 | JavaScript: ${d} | Diff: ${(Math.abs(1.133 - d)).toFixed(4)}`)
-  d = Number(el.nearestPointToAnotherPointApproximatation(new Coor(0.6, 2))[1].toFixed(4));
-  console.log(`(0.6, 2): Python 1.074 | JavaScript: ${d} | Diff: ${(Math.abs(1.074 - d)).toFixed(4)}`)
-  d = Number(el.nearestPointToAnotherPointApproximatation(new Coor(0.4, 2))[1].toFixed(4));
-  console.log(`(0.4, 2): Python 1.032 | JavaScript: ${d} | Diff: ${(Math.abs(1.032 - d)).toFixed(4)}`)
-  d = Number(el.nearestPointToAnotherPointApproximatation(new Coor(0.2, 2))[1].toFixed(4));
-  console.log(`(0.2, 2): Python 1.008 | JavaScript: ${d} | Diff: ${(Math.abs(1.008 - d)).toFixed(4)}`)
-  d = Number(el.nearestPointToAnotherPointApproximatation(new Coor(0.0, 2))[1].toFixed(4));
-  console.log(`(0.0, 2): Python 1.0 | JavaScript: ${d} | Diff: ${(Math.abs(1.0 - d)).toFixed(4)}`)
 }
 
 function resetCanvasWithNewCircles() {
@@ -332,16 +351,8 @@ function addDebugShapes(ctx: CanvasRenderingContext2D) {
   renderRouteCircles(ctx)
 }
 
-function animate() {
-  animating.value = true
-  stopAnimationFlag.value = false
-  // Identical to `timeStamp` used in `window.requestAnimationFrame`
-  const ellapsedOffset = pauseTimestamp - startTimestamp
-  startTimestamp = (document.timeline.currentTime as number) - ellapsedOffset;
-}
-
 let frameNum = 0
-function _addShapes(ctx: CanvasRenderingContext2D, timestamp: number) {
+function addShapes(ctx: CanvasRenderingContext2D, timestamp: number) {
   // console.log(`running _addShapes`)
   initialized || initCanvas(ctx, timestamp)
 
@@ -375,12 +386,25 @@ function _addShapes(ctx: CanvasRenderingContext2D, timestamp: number) {
   return
 }
 
-export {
+const generator = new ConstellationGenerator(
   title,
-  numCirclesRef,
-  regenerateCircles,
+  display,
+  // animate,
   animationCyclesPerMinuteRef,
-  animate,
+  regenerateCircles,
   addShapes,
   addDebugShapes,
+)
+
+export {
+  generator
+  // title,
+  // numCirclesRef,
+  // regenerateCircles,
+  // animationCyclesPerMinuteRef,
+  // animate,
+  // addShapes,
+  // addDebugShapes,
 }
+
+</script>

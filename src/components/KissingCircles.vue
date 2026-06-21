@@ -1,39 +1,10 @@
 <template>
   <!-- Header -->
-  <h3>{{ title }}</h3>
+  <h3>{{ circleGenerator.title }}</h3>
   <!-- Buttons -->
   <div>
-    <button type="button" @click="regenerateCircles" :disabled=animating>Regenerate Circles</button>
-    <button v-if="!animating && !stopAnimationFlag" type="button" @click="animate">Animate Circles</button>
-    <button v-if="animating || stopAnimationFlag" type="button" @click="stopAnimationAfterCurrentStep" :disabled="stopAnimationFlag">
-      <span v-if="!stopAnimationFlag">Stop Animation</span>
-      <span v-if="stopAnimationFlag">Pending Stop...</span>
-    </button>
-  </div>
-  <!-- Basic input -->
-  <div>
-    <!-- Number of circles -->
-    <div>
-      <label for="nInput">Number of Circles:</label>
-      <input id="nInput" v-model.number.lazy="numCirclesRef">
-      <button @click="decrementNumCircles()">
-        Decrement
-      </button>
-      <button @click="incrementNumCircles()">
-        Increment
-      </button>
-    </div>
-    <!-- Animation speed -->
-    <div>
-      <label for="animationTimeInput">Animation cycles per minute</label>
-      <input id="animationTimeInput" v-model.number.lazy="animationCyclesPerMinuteRef">
-      <button @click="decrementAnimationSpeed()">
-        Decrease speed
-      </button>
-      <button @click="incrementAnimationSpeed()">
-        Increase speed
-      </button>
-    </div>
+    <AnimationController>
+    </AnimationController>
   </div>
   <!-- Shapes/Generator Chooser -->
   <!-- Canvas -->
@@ -56,64 +27,61 @@ import type { Ref } from 'vue'
 
 import BaseCanvas from './BaseCanvas.vue';
 import {
-  title,
-  numCirclesRef,
-  regenerateCircles,
-  animationCyclesPerMinuteRef,
+  generator as circleGenerator,
+  // title,
+  // numCirclesRef,
+  // regenerateShapes,
+  // animationCyclesPerMinuteRef,
+  // addShapes,
+  // addDebugShapes,
+} from '@/components/generators/centers-moving-along-circular-paths.vue'
+import animationControllerVue, {
+  animating,
+  stopAnimationFlag,
+  stepAtLeastOnce,
   animate,
   addShapes,
   addDebugShapes,
-} from './generators/centers-moving-along-circular-paths'
-import { animating, stepAtLeastOnce, stopAnimationFlag, stopAnimationAfterCurrentStep } from '@/components/generators/animation-controller'
+} from '@/components/generators/animation-controller.vue'
 
 const toggleAnimating: Ref<Function> = ref(_toggleAnimating)
 
 onMounted(() => {
 })
 
-function incrementNumCircles() {
-  numCirclesRef.value++
-}
-
-function decrementNumCircles() {
-  numCirclesRef.value--
-  numCirclesRef.value = Math.max(0, numCirclesRef.value)
-}
-
 const animationSpeedStepSizes = [1, 0.1, 0.01, 0.001]
 const numAnimationSpeedStepSizes = animationSpeedStepSizes.length
 
 function incrementAnimationSpeed() {
   for (const stepSize of animationSpeedStepSizes) {
-    if (animationCyclesPerMinuteRef.value >= stepSize) {
-      animationCyclesPerMinuteRef.value += stepSize
+    if (circleGenerator.animationCyclesPerMinuteRef.value >= stepSize) {
+      circleGenerator.animationCyclesPerMinuteRef.value += stepSize
       break
     }
   }
-  animationCyclesPerMinuteRef.value = Math.max(animationSpeedStepSizes[numAnimationSpeedStepSizes-1], animationCyclesPerMinuteRef.value)
-  animationCyclesPerMinuteRef.value = Number(animationCyclesPerMinuteRef.value.toFixed(4))
-  // animationCyclesPerMinuteRef.value = animationCyclesPerMinuteRef.value.toFixed(4) as number
+  circleGenerator.animationCyclesPerMinuteRef.value = Math.max(animationSpeedStepSizes[numAnimationSpeedStepSizes-1], generator.animationCyclesPerMinuteRef.value)
+  circleGenerator.animationCyclesPerMinuteRef.value = Number(circleGenerator.animationCyclesPerMinuteRef.value.toFixed(4))
+  // generator.animationCyclesPerMinuteRef.value = circleGenerator.animationCyclesPerMinuteRef.value.toFixed(4) as number
 }
 
 function decrementAnimationSpeed() {
   for (const stepSize of animationSpeedStepSizes) {
-    if (animationCyclesPerMinuteRef.value >= 2 * stepSize) {
-      animationCyclesPerMinuteRef.value -= stepSize
+    if (circleGenerator.animationCyclesPerMinuteRef.value >= 2 * stepSize) {
+      circleGenerator.animationCyclesPerMinuteRef.value -= stepSize
       break
     }
   }
-  animationCyclesPerMinuteRef.value = Math.max(animationSpeedStepSizes[numAnimationSpeedStepSizes-1], animationCyclesPerMinuteRef.value)
-  animationCyclesPerMinuteRef.value = Number(animationCyclesPerMinuteRef.value.toFixed(4))
+  circleGenerator.animationCyclesPerMinuteRef.value = Math.max(animationSpeedStepSizes[numAnimationSpeedStepSizes-1], generator.animationCyclesPerMinuteRef.value)
+  circleGenerator.animationCyclesPerMinuteRef.value = Number(circleGenerator.animationCyclesPerMinuteRef.value.toFixed(4))
 }
 
 function _toggleAnimating() {
   if (animating.value) {
-    stopAnimationAfterCurrentStep()
+    stopAnimationFlag.value = true
   } else {
     animate()
   }
 }
-
 
 </script>
 
