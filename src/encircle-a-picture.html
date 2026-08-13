@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Tangential Ellipse Image Packer (Averaged Colors)</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; background: #f4f4f9; }
+        canvas { border: 1px solid #ccc; background: #fff; max-width: 100%; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin-top: 20px; }
+        .controls { margin: 20px; }
+        button { padding: 8px 16px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <h2>Tangential Ellipse Packer</h2>
+    <div class="controls">
+        <input type="file" id="imageLoader" accept="image/*" />
+        <button onclick="startProcessing()">Process Image</button>
+    </div>
+    
+    <canvas id="canvas"></canvas>
+
+<script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    let sourceImageData = null;
+    let originalWidth = 0;
+    let originalHeight = 0;
+    let transformedWidth = 0;
+    let transformedHeight = 0;
+
+    // --- Configuration ---
+    const ATTEMPTS = 250000;  
+    const MIN_RADIUS = 2;    
+    const MAX_RADIUS = 4;   
+    
+    // Transform factors applied to the SOURCE image.
+    // E.g., transformY = 2.0 stretches the image vertically.
+    // When rendered with the inverse (0.5), circles become horizontal ellipses.
+    const transformX = 1.0; 
+    const transformY = 1.0;
+
+    // 1. Handle Image Upload & Pre-Transform
+    document.getElementById('imageLoader').addEventListener('change', function(e) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const img = new Image();
+            img.onload = function() {
+                originalWidth = img.width;
+                originalHeight = img.height;
+                
+                transformedWidth = Math.floor(originalWidth * transformX);
+                transformedHeight = Math.floor(originalHeight * transformY);
+
+                // Set main canvas to ORIGINAL dimensions
+                canvas.width = originalWidth;
+                canvas.height = originalHeight;
+
+                // Create offscreen canvas for the STRETCHED image
+                const offscreen = document.createElement('canvas');
+                offscreen.width = transformedWidth;
+                offscreen.height = transformedHeight;
+                const oCtx = offscreen.getContext('2d');
+                
+                // Draw image scaled to the transformed dimensions
+                oCtx.drawImage(img, 0, 0, transformedWidth, transformedHeight);
+                sourceImageData = oCtx.getImageData(0, 0, transformedWidth, transformedHeight);
+                
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillText("Image loaded and transformed. Click 'Process Image'.", 20, 30);
+            }
+            img.src = event.target.result;
+        }
+        reader.readAsDataURL(e.target.files[0]);
+    });
+
+    // 2. Area Color Averaging
+    function getAverageColor(x, y, r, imageData, width, height) {
+        let rSum = 0, gSum = 0, bSum = 0, count = 0;
+        
+        // Define bounding box for the circle
+        let minX = Math.max(0, Math.floor(x - r));
+        let maxX = Math.min(width - 1, Math.ceil(x + r));
+        let minY = Math.max(0, Math.floor(y - r));
+        let maxY = Math.min(height - 1, Math.ceil(y + r));
+        
+        let rSquared = r * r;
+
+        // Scan pixels within bounding box
+        for (let py = minY; py <= maxY; py++) {
+            for (let px = minX; px <= maxX; px++) {
+                let dx = px - x;
+                let dy = py - y;
+                
+                // If pixel is inside the circle
+                if (dx * dx + dy * dy <= rSquared) {
+                    let index = (py * width + px) * 4;
+                    rSum += imageData.data[index];
+                    gSum += imageData.data[index + 1];
+                    bSum += imageData.data[index + 2];
+                    count++;
+                }
+            }
+        }
+
+        // Fallback for extremely small radii where count might be 0
+        if (count === 0) {
+            let px = Math.max(0, Math.min(width - 1, Math.floor(x)));
+            let py = Math.max(0, Math.min(height - 1, Math.floor(y)));
+            let index = (py * width + px) * 4;
+            return `rgb(${imageData.data[index]},${imageData.data[index+1]},${imageData.data[index+2]})`;
+        }
+
+        return `rgb(${Math.round(rSum/count)},${Math.round(gSum/count)},${Math.round(bSum/count)})`;
+    }
+
+    // 3. Generation Logic (Operating on Transformed Space)
+    function generateEllipses(imageData, width, height, numAttempts) {
+        const shapes = [];
+
+        for (let i = 0; i < numAttempts; i++) {
+            let x = Math.random() * width;
+            let y = Math.random() * height;
+            let closestDist = MAX_RADIUS;
+            let valid = true;
+
+            for (let j = 0; j < shapes.length; j++) {
+                let s = shapes[j];
+                let dx = x - s.x;
+                let dy = y - s.y;
+                
+                let dist = Math.sqrt(dx * dx + dy * dy);
+                let distToEdge = dist - s.r;
+
+                if (distToEdge < MIN_RADIUS) {
+                    valid = false;
+                    break;
+                }
+                if (distToEdge < closestDist) {
+                    closestDist = distToEdge;
+                }
+            }
+
+            if (valid) {
+                let r = closestDist;
+                let color = getAverageColor(x, y, r, imageData, width, height);
+                shapes.push({x: x, y: y, r: r, color: color});
+            }
+        }
+        return shapes;
+    }
+
+    // 4. Inverse Render Logic
+    function startProcessing() {
+        if (!sourceImageData) {
+            alert("Please upload an image first.");
+            return;
+        }
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Generate shapes based on the STRETCHED image data
+        const packedCircles = generateEllipses(sourceImageData, transformedWidth, transformedHeight, ATTEMPTS);
+
+        // Save default context state
+        ctx.save();
+        
+        // Apply INVERSE transform. 
+        // This squishes the stretched coordinate space back down to the original image dimensions.
+        ctx.scale(1 / transformX, 1 / transformY);
+
+        // Draw perfect circles in the transformed context
+        packedCircles.forEach(shape => {
+            ctx.beginPath();
+            // Using arc instead of ellipse because the context scale handles the distortion
+            ctx.arc(shape.x, shape.y, shape.r, 0, 2 * Math.PI);
+            ctx.fillStyle = shape.color;
+            ctx.fill();
+        });
+
+        // Restore default context state
+        ctx.restore();
+    }
+</script>
+</body>
+</html>
