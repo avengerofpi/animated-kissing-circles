@@ -32,4 +32,33 @@ class Circle {
   }
 }
 
-export { Circle }
+class ColoredCircle extends Circle {
+  color: string
+
+  public constructor(x: number, y: number, radius: number, color: string) {
+    super(x, y, radius);
+    this.color = color;
+  }
+
+  /**
+   * Compute and return the point on this circle at angle `alpha` from the horizontal axis.
+   * Remember that in HTML canvas, the positive y-axis is downward, not upward, so angles
+   * are measured clockwise rather than counterclockwise.
+   */
+  public getPointAtAngle(alpha: number): Coor {
+    const x = this.center.x + this.radius*Math.cos(alpha)
+    const y = this.center.y + this.radius*Math.sin(alpha)
+
+    return new Coor(x, y)
+  }
+
+  public draw(ctx: CanvasRenderingContext2D) {
+    const center = this.center
+    ctx.beginPath();
+    ctx.arc(center.x, center.y, this.radius, 0, 2*Math.PI);
+    ctx.fillStyle = this.color
+    ctx.fill()
+  }
+}
+
+export { Circle, ColoredCircle }
