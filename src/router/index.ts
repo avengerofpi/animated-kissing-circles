@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 // import KissingCirclesHomeView from '../views/KissingCirclesHomeView.vue'
-import EncircleAPictureHomeView from '@/views/EncircleAPictureHomeView.vue'
+import TransformImageIntoCirclesHomeView from '@/views/TransformImageIntoCirclesHomeView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -8,7 +8,7 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: EncircleAPictureHomeView
+      component: TransformImageIntoCirclesHomeView
     },
     // {
     //   path: '/',

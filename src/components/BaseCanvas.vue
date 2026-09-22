@@ -36,16 +36,21 @@ import { ref, onMounted, watch } from 'vue'
 import type { Ref } from 'vue'
 import { Coor } from '@/models/coor'
 import { Dimensions } from '@/models/dimensions'
-import { debounce } from 'lodash'
+import { debounce, type FunctionBindKey } from 'lodash'
 
 const toggleAnimating: Ref<Function> = defineModel<Function>("toggleAnimating", { required: true, default: () => {} })
 const addShapes: Ref<Function> = defineModel<Function>("addShapes", { required: true, default: (ctx: CanvasRenderingContext2D, timestamp: number) => {} })
 const addDebugShapes: Ref<Function> = defineModel<Function>("addDebugShapes", { required: true, default: (ctx) => {} })
 const stepAtLeastOnce: Ref<boolean> = defineModel<boolean>("stepAtLeastOnce", { required: true, default: true })
+const setCanvasDimensions: Ref<Function> = defineModel<Function>("setCanvasDimensions", { required: false, default: () => {} })
 
 let ctx: CanvasRenderingContext2D
-const canvasRef: Ref<HTMLCanvasElement | null> = ref(null)
+const canvasRef = ref<HTMLCanvasElement | null>(null);
 let canvasStream: MediaStream
+
+defineExpose({
+  canvas: canvasRef
+});
 
 const debug: Ref<boolean> = ref(false)
 const recordingFlag: Ref<boolean> = ref(false)
