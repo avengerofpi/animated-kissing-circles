@@ -48,10 +48,6 @@ let ctx: CanvasRenderingContext2D
 const canvasRef = ref<HTMLCanvasElement | null>(null);
 let canvasStream: MediaStream
 
-defineExpose({
-  canvas: canvasRef
-});
-
 const debug: Ref<boolean> = ref(false)
 const recordingFlag: Ref<boolean> = ref(false)
 const downloadRef: Ref<HTMLAnchorElement | null> = ref(null)
@@ -466,4 +462,9 @@ function computeOffsetChangeFromZoomChange(oldZoom: number, newZoom: number, atC
 
   return newOffset
 }
+
+defineExpose({
+  canvas: canvasRef,
+  scale: canvasScaleRef
+});
 </script>

@@ -32,7 +32,7 @@ import { ref } from 'vue'
 import type { Ref } from 'vue'
 
 import BaseCanvas from './BaseCanvas.vue';
-import { Coor } from '@/models/coor.ts';
+import { Coor, dist } from '@/models/coor.ts';
 import { ColoredCircle } from '@/models/circle.ts';
 
 // --- State Variables ---
@@ -158,23 +158,92 @@ const generateCircles = (
   height: number,
   numAttempts: number
 ): ColoredCircle[] => {
-    const shapes: ColoredCircle[] = [];
+    // const shapes: ColoredCircle[] = [];
 
-    const X = Math.random();
-    const Y = Math.random();
-    const theta = Math.random() * Math.PI / 2;
-    const r = 50;
-    const dx = 2 * r * Math.cos(theta);
-    const dy = 2 * r * Math.sin(theta);
+    const currentTimeMillis = document.timeline.currentTime as number
+    const shift = currentTimeMillis % 10000 / 10000
+    const r = width / 300;
+    const X = shift * r;
+    const Y = shift * r;
+    const theta = shift * Math.PI / 4;
 
-    for (let x = X; x < width; x+=dx) {
-        for (let y = Y; y < height; y+=dy) {
-            let color = getAverageColor(x, y, r, imageData, width, height);
-            shapes.push(new ColoredCircle(x, y, r, color));
+    const shapes: ColoredCircle[] = generateLatticePoints(X, Y, theta, r, width, height).map(
+      ({x, y}) => {
+        let color = getAverageColor(-x, -y, r, imageData, width, height);
+        return new ColoredCircle(-x, -y, r, color);
+      }
+    )
+
+    // const a = shapes[0].center
+    // const b = shapes[1].center
+    // const d = dist(a, b)
+    // console.log(`dist(${a}, ${b}): ${d}`)
+    // return shapes;
+}
+
+function generateLatticePoints(X, Y, theta, radius, W, H) {
+    const points = [];
+    const S = radius * 2; // Grid spacing (diameter)
+
+    // 1. Define the actual bounding box
+    // Using Math.min/max makes this safe whether W/H are passed as positive or negative
+    const minX = Math.min(0, -W);
+    const maxX = Math.max(0, -W);
+    const minY = Math.min(0, -H);
+    const maxY = Math.max(0, -H);
+
+    const corners = [
+        { x: minX, y: minY },
+        { x: maxX, y: minY },
+        { x: minX, y: maxY },
+        { x: maxX, y: maxY }
+    ];
+
+    const cos = Math.cos(theta);
+    const sin = Math.sin(theta);
+
+    let minA = Infinity, maxA = -Infinity;
+    let minB = Infinity, maxB = -Infinity;
+
+    // 2. Map the 4 corners into (a, b) grid space using the inverse matrix
+    for (const c of corners) {
+        const dx = c.x - X;
+        const dy = c.y - Y;
+
+        // Inverse transform to find grid steps 'a' and 'b' for this corner
+        const a = (-dx * sin + dy * cos) / S;
+        const b = (dx * cos + dy * sin) / S;
+
+        minA = Math.min(minA, a);
+        maxA = Math.max(maxA, a);
+        minB = Math.min(minB, b);
+        maxB = Math.max(maxB, b);
+    }
+
+    // 3. Round to outer integers to ensure we cover the whole area
+    const startA = Math.floor(minA);
+    const endA = Math.ceil(maxA);
+    const startB = Math.floor(minB);
+    const endB = Math.ceil(maxB);
+
+    // 4. Loop over the known bounding box in grid space
+    for (let a = startA; a <= endA; a++) {
+        for (let b = startB; b <= endB; b++) {
+            // Your forward formula
+            const x = X - a * S * sin + b * S * cos;
+            const y = Y + a * S * cos + b * S * sin;
+
+            // 5. Strict bounding box check
+            // (Adding a tiny tolerance for JS floating-point inaccuracies)
+            const tol = 1e-9;
+            if (x >= minX - tol && x <= maxX + tol &&
+                y >= minY - tol && y <= maxY + tol) {
+                points.push({ x, y });
+            }
         }
     }
 
-    return shapes;
+    return points;
 }
 
 // 4. Inverse Render Logic

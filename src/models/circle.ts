@@ -2,9 +2,9 @@ import { Coor } from './coor'
 
 class Circle {
   center: Coor
-  radius: number | undefined
+  radius: number
 
-  public constructor(x: number, y: number, radius: number | undefined = undefined) {
+  public constructor(x: number, y: number, radius: number) {
     this.center = new Coor(x, y)
     this.radius = radius
   }
