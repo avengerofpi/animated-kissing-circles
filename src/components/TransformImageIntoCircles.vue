@@ -81,17 +81,18 @@ function renderImage(file: File) {
   reader.onload = function(e: ProgressEvent<FileReader>) {
     const img = new Image();
     img.onload = () => {
-      if (!baseCanvasRef.value?.canvas) return;
+      const canvas: HTMLCanvasElement | null | undefined = baseCanvasRef.value?.canvas;
+      if (!canvas) return;
+
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
 
       imgWidth = img.width;
       imgHeight = img.height;
 
-      const canvas = baseCanvasRef.value?.canvas
       canvas.width = imgWidth;
       canvas.height = imgHeight;
 
-      const ctx = baseCanvasRef.value?.canvas.getContext('2d');
-      if (!ctx) return;
       ctx.drawImage(img, 0, 0, imgWidth, imgHeight);
       sourceImageData = ctx.getImageData(0, 0, imgWidth, imgHeight);
 
@@ -162,35 +163,30 @@ const generateCircles = (
 
     const currentTimeMillis = document.timeline.currentTime as number
     const shift = currentTimeMillis % 10000 / 10000
-    const r = width / 300;
+    const r = 5;
+    // const r = width / 300;
     const X = shift * r;
     const Y = shift * r;
     const theta = shift * Math.PI / 4;
 
     const shapes: ColoredCircle[] = generateLatticePoints(X, Y, theta, r, width, height).map(
       ({x, y}) => {
-        let color = getAverageColor(-x, -y, r, imageData, width, height);
-        return new ColoredCircle(-x, -y, r, color);
+        let color = getAverageColor(x, y, r, imageData, width, height);
+        return new ColoredCircle(x, y, r, color);
       }
     )
 
-    // const a = shapes[0].center
-    // const b = shapes[1].center
-    // const d = dist(a, b)
-    // console.log(`dist(${a}, ${b}): ${d}`)
-    // return shapes;
+    return shapes;
 }
 
-function generateLatticePoints(X, Y, theta, radius, W, H) {
+function generateLatticePoints(X: number, Y: number, theta: number, radius: number, W: number, H: number) {
     const points = [];
     const S = radius * 2; // Grid spacing (diameter)
 
     // 1. Define the actual bounding box
     // Using Math.min/max makes this safe whether W/H are passed as positive or negative
-    const minX = Math.min(0, -W);
-    const maxX = Math.max(0, -W);
-    const minY = Math.min(0, -H);
-    const maxY = Math.max(0, -H);
+    const minX = 0, minY = 0;
+    const maxX = W, maxY = H;
 
     const corners = [
         { x: minX, y: minY },
