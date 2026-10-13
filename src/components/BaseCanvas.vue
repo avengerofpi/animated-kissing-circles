@@ -123,7 +123,7 @@ function initAndAnimate() {
   initialHeight = ctx.canvas.height;
   initialWidth = ctx.canvas.width;
 
-  canvasOffsetRef.value = new Coor(initialWidth / 2, initialHeight / 2)
+  // canvasOffsetRef.value = new Coor(initialWidth / 2, initialHeight / 2)
 
   if (canvasRef.value) {
     canvasStream = canvasRef.value.captureStream(60)
